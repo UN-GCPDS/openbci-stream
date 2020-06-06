@@ -1,25 +1,28 @@
+import sys
+import signal
+import pickle
+import logging
+import argparse
+from datetime import datetime
+
+import numpy as np
+from kafka import KafkaProducer
+from colorama import Fore, Back, Style
+
+from openbci_stream.handlers import HDF5_Writer
 from openbci_stream.consumer import OpenBCIConsumer
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
-from colorama import Fore, Back, Style
-import argparse
-import sys
-from datetime import datetime
-import numpy as np
-import signal
-import logging
-from kafka import KafkaProducer
-import pickle
 
+# Disable Kafka loggings
 logging.getLogger().disabled = True
 logging.getLogger('kafka.coordinator.consumer').disabled = True
 logging.getLogger('kafka.consumer.fetcher').disabled = True
 
-
-# from openbci_stream.acquisition.cyton_base import CytonBase
-
-parser = argparse.ArgumentParser(prog="openbci_cli", description="Command line interface for OpenBCI-Stream",
-                                 epilog="OpenBCI-Stream is software package developed by GCPDS", allow_abbrev=True)
-
+# Command line parser
+parser = argparse.ArgumentParser(prog="openbci_cli",
+                                 description="Command line interface for OpenBCI-Stream",
+                                 epilog="OpenBCI-Stream is software package developed by GCPDS",
+                                 allow_abbrev=True)
 
 # -----------------------------------------------------------------------------
 # Parent for Serial, and WiFi
@@ -27,16 +30,16 @@ parent_parser = argparse.ArgumentParser(add_help=False)
 
 # Start and Stop
 group_stream = parent_parser.add_mutually_exclusive_group()
-group_stream.add_argument(
-    '--start', action='store_true', help='Start stream')
+group_stream.add_argument('--start', action='store_true', help='Start stream')
 group_stream.add_argument('--stop', action='store_true', help='Stop stream')
 
 # Extra commands
-parent_parser.add_argument("-c", "--command", action='extend', nargs="+",
-                           help="Send commands after connection established")
+parent_parser.add_argument("-c", "--command", action='extend',
+                           nargs="+", help="Send commands after connection established")
 
 # Stream samples
-parent_parser.add_argument("--stream_samples", action='store', default=250, type=int,
+parent_parser.add_argument("--stream_samples", action='store', default=250,
+                           type=int,
                            help='Number of samples to receive in stream')
 
 # Daisy
@@ -52,42 +55,46 @@ common_parser.add_argument("--host", action='store', default='localhost',
                            help='Hostname were running acquisition system')
 
 # Output EEG
-common_parser.add_argument("--output", action='store', type=argparse.FileType('wb'),
+common_parser.add_argument("--output", action='store',
+                           type=argparse.FileType('wb'),
                            help='Write stream into file')
 
 # Output Marker
-common_parser.add_argument("--output_markers", action='store', type=argparse.FileType('wb'),
+common_parser.add_argument("--output_markers", action='store',
+                           type=argparse.FileType('wb'),
                            help='Write markers into file')
 
 # -----------------------------------------------------------------------------
-
-subparser_mode = parser.add_subparsers(
-    title='Interface', required=True, dest='interface',)
+# Interface
+subparser_mode = parser.add_subparsers(title='Interface', required=True,
+                                       dest='interface',)
 
 # Serial and Port
-subparser_serial = subparser_mode.add_parser(
-    'serial', parents=[parent_parser, common_parser], help='Interface using Serial protocol')
+subparser_serial = subparser_mode.add_parser('serial',
+                                             parents=[parent_parser,
+                                                      common_parser],
+                                             help='Interface using Serial protocol')
 subparser_serial.add_argument('--port', help='Serial port')
 
 # WiFi and IP
-subparser_wifi = subparser_mode.add_parser(
-    'wifi', parents=[parent_parser, common_parser], help='Interface using WiFi module')
+subparser_wifi = subparser_mode.add_parser('wifi',
+                                           parents=[parent_parser,
+                                                    common_parser],
+                                           help='Interface using WiFi module')
 subparser_wifi.add_argument('--ip', help='IP for WiFi module')
 
 # Stream
-subparser_stream = subparser_mode.add_parser(
-    'stream', parents=[common_parser], help='')
+subparser_stream = subparser_mode.add_parser('stream', parents=[common_parser],
+                                             help='')
 # subparser_stream.add_argument('--output', help='')
 
 # Marker
-subparser_marker = subparser_mode.add_parser(
-    'marker', parents=[common_parser], help='')
-
+subparser_marker = subparser_mode.add_parser('marker', parents=[common_parser],
+                                             help='')
 
 try:
     args = parser.parse_args()
 except Exception as e:
-    # print(e)
     parser.print_help()
     sys.exit()
 
@@ -116,17 +123,12 @@ def main():
 
     if args.interface in ['serial', 'wifi']:
 
-        if args.stream_samples:
-            kwargs = {'stream_samples': args.stream_samples}
-        else:
-            kwargs = {}
-
         if args.interface == 'serial':
-            interface = CytonRFDuino(port=args.port, host=args.host, daisy=args.daisy,
+            interface = CytonRFDuino(port=args.port, host=args.host,
+                                     daisy=args.daisy,
                                      capture_stream=False,
                                      montage=None,
-                                     **kwargs,
-                                     # stream_samples=args.stream_samples
+                                     stream_samples=args.stream_samples
                                      )
 
         elif args.interface == 'wifi':
@@ -135,8 +137,7 @@ def main():
                                   host=args.host,
                                   capture_stream=False,
                                   montage=None,
-                                  **kwargs,
-                                  # stream_samples=args.stream_samples
+                                  stream_samples=args.stream_samples
                                   )
 
         if args.command:
@@ -156,6 +157,14 @@ def main():
                 print(
                     f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
 
+                writer = HDF5_Writer(args.output)
+                header = {'sample_rate': args.stream_samples,
+                          'datetime': datetime.now().timestamp(),
+                          'montage': 'standard_1020',
+                          'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
+                          }
+                writer.add_header(header)
+
             for message in stream:
 
                 if message.topic == 'eeg':
@@ -170,14 +179,8 @@ def main():
                     print(
                         f"{Fore.YELLOW}[EEG]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t{count} samples, {channels} channels")
 
-                    timestamp = np.zeros(count)
-                    timestamp[0] = created.timestamp()
-                    timestamp = timestamp.reshape(count, 1)
-                    timestamp[timestamp == 0] = None
-
                     if args.output:
-                        np.savetxt(args.output, np.concatenate(
-                            [timestamp, eeg.T], axis=1), delimiter=',')
+                        writer.add_eeg(eeg.T, created.timestamp())
 
                 if message.topic == 'marker':
 
@@ -188,8 +191,7 @@ def main():
                     print(f"{Fore.YELLOW}[MKR]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
 
                     if args.output_markers:
-                        np.savetxt(args.output_markers, np.array(
-                            [[created.timestamp(), marker]]), delimiter=',', fmt='%s')
+                        writer.add_marker(marker, created.timestamp())
 
             if args.output:
                 args.output.close()

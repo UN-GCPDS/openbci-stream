@@ -3,15 +3,6 @@ OpenBCI-Stream
 
 High level Python module for handle OpenBCI hardware and stream data.
 
-.. container:: alert alert-block alert-warning
-
-   ::
-
-      <ul>
-          <li>This is NOT an official package from <a href='https://openbci.com/'>OpenBCI team</a>.</li>
-          <li>This module is still unstable and not recommended for use in production.</li>
-      </ul>
-
 About project
 =============
 
@@ -40,7 +31,7 @@ machine learning from the National University of Colombia at Manizales
 (`GCPDS <http://www.hermes.unal.edu.co/pages/Consultas/Grupo.xhtml;jsessionid=8701CFAD84FB5D540090846EA8912D48.tomcat6?idGrupo=615&opcion=1%3E>`__).
 
 Examples
---------
+========
 
 Read 5 seconds EEG from serial:
 

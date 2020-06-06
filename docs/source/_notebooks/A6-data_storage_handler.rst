@@ -242,13 +242,15 @@ Writer
 .. code:: ipython3
 
     from openbci_stream.handlers import HDF5_Writer
-    from datetime import timedelta
+    from datetime import datetime, timedelta
+    import numpy as np
     
     now = datetime.now()
     
     header = {'sample_rate': 1000,
               'datetime': now.timestamp(),
-              'montage': 'Custom 1020|standard_1020|Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'
+              'montage': 'standard_1020',
+              'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
              }
     
     filename = f'sample-{now.timestamp()}.h5'
@@ -274,7 +276,7 @@ Reader
     ax = plt.subplot(111)
     with HDF5_Reader(filename) as reader:
         
-        channels = reader.header['montage'].split('|')[-1].split(',')
+        channels = reader.header['ch_names']
         sample_rate = reader.header['sample_rate']
     
         t = np.linspace(0, 1, sample_rate)
