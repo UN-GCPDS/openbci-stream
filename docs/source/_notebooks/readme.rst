@@ -1,50 +1,53 @@
 OpenBCI-Stream
 ==============
 
-Hight level Python module for handle OpenBCI hardware and stream data.
+High level Python module for handle OpenBCI hardware and stream data.
 
-.. warning::
+.. container:: alert alert-block alert-warning
 
-   -  This is NOT an official package from `OpenBCI
-      team <https://openbci.com/>`__.
-   -  This module is still unstable and not recommended for use in
-      production.
+   ::
+
+      <ul>
+          <li>This is NOT an official package from <a href='https://openbci.com/'>OpenBCI team</a>.</li>
+          <li>This module is still unstable and not recommended for use in production.</li>
+      </ul>
+
+About project
+=============
 
 What is?
 --------
 
-A Python module for develop hight performance interfaces with `OpenBCI
-boards <https://openbci.com/>`__. Currently, we have support for
-Cyton+Daisy and their WiFi module, additionally, we provide a real time
-data stream with `Kafka <https://kafka.apache.org/>`__. All source code
-can be accessed from our `bitbucket
-repository <https://bitbucket.org/gcpds/python-openbci_stream/>`__.
+A Python module for high-performance interfaces development with
+`OpenBCI boards <https://openbci.com/>`__. Currently, we have support
+for Cyton+Daisy and their WiFi module, additionally, we provide a
+real-time data streaming feature using
+`Kafka <https://kafka.apache.org/>`__.
 
 What do we want?
 ----------------
 
 We want a stable, high level, easy to use and extensible Python module
-focused on the awesome hardware provided by OpenBCI that can be used for
-students and researchers, we are developing too a set of tools for
-preprocessing, real-time data handling and streaming of EEG signals.
+focalize on the hardware provided by OpenBCI, a library that can be used
+for students, hobbyist and researchers, we are developing a set of tools
+for preprocessing, real-time data handling and streaming of EEG signals.
 
 Who are we?
 -----------
 
-We are a research group concentrated on digital processing of signals
-and machine learning from the National University of Colombia at
-Manizales
+We are a research group focused on digital processing of signals and
+machine learning from the National University of Colombia at Manizales
 (`GCPDS <http://www.hermes.unal.edu.co/pages/Consultas/Grupo.xhtml;jsessionid=8701CFAD84FB5D540090846EA8912D48.tomcat6?idGrupo=615&opcion=1%3E>`__).
 
 Examples
 --------
 
-EEG acquisition from Serial
+Read 5 seconds EEG from serial:
 
 .. code:: ipython3
 
-    import time
     from openbci_stream.acquisition import CytonRFDuino
+    import time
     
     openbci = CytonRFDuino(capture_stream=True, daisy=False)
     openbci.start_stream()
@@ -53,19 +56,7 @@ EEG acquisition from Serial
     
     print(openbci.eeg_time_series.shape)
 
-
-.. parsed-literal::
-
-    WARNING:root:Stream must be stoped for read the current boardmode
-    WARNING:kafka.coordinator.consumer:group_id is None: disabling auto-commit.
-
-
-.. parsed-literal::
-
-    (8, 1018)
-
-
-Stream markers
+Stream markers through Kafka
 
 .. code:: ipython3
 
@@ -89,7 +80,7 @@ Stream markers
     time.sleep(1) 
     stream_marker('LEFT')    
 
-Saving EEG data from command line
+Starting streaming from command line and store as ‘CSV’
 
 .. code:: ipython3
 
