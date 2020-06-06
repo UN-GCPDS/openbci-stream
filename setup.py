@@ -15,11 +15,11 @@ setup(
               'openbci_stream.preprocess', 'openbci_stream.consumer', 'openbci_stream.handlers'],
 
     author='Yeison Cardona',
-    author_email='yeisoneng@gmail.com',
+    author_email='yencardonaal@unal.edu.co',
     maintainer='Yeison Cardona',
-    maintainer_email='yeisoneng@gmail.com',
+    maintainer_email='yencardonaal@unal.edu.co',
 
-    download_url='https://bitbucket.org/gcpds/openbci_stream/downloads/',
+    download_url='https://github.com/UN-GCPDS/openbci_stream',
 
     install_requires=['pyserial',
                       'scipy>=1.3.1',
@@ -51,8 +51,8 @@ setup(
     ],
 
     include_package_data=True,
-    license='Simplified BSD License',
-    description="High level Python module for handle OpenBCI hardware by GCPDS.",
+    license='BSD 2-Clause "Simplified" License',
+    description="High level Python module for handle OpenBCI EEG acquisition boards",
 
     long_description=README,
     long_description_content_type='text/markdown',
