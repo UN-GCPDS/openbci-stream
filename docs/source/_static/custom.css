@@ -1,3 +1,7 @@
+.highlight-default .highlight pre{
+    background-color: #fbfbfb;
+    border: none !important;
+}
 
 .highlight pre{
     border: 1px solid #e3e3e3;

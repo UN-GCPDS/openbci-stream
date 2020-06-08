@@ -1,3 +1,10 @@
+"""
+======================
+Command line interface
+======================
+"""
+
+import os
 import sys
 import signal
 import pickle
@@ -52,17 +59,16 @@ common_parser = argparse.ArgumentParser(add_help=False)
 
 # Host
 common_parser.add_argument("--host", action='store', default='localhost',
-                           help='Hostname were running acquisition system')
+                           help='Hostname where is running the acquisition system')
 
 # Output EEG
 common_parser.add_argument("--output", action='store',
-                           type=argparse.FileType('wb'),
-                           help='Write stream into file')
+                           type=str, help='Write stream into file')
 
-# Output Marker
-common_parser.add_argument("--output_markers", action='store',
-                           type=argparse.FileType('wb'),
-                           help='Write markers into file')
+# # Output Marker
+# common_parser.add_argument("--output_markers", action='store',
+                           # type=argparse.FileType('wb'),
+                           # help='Write markers into file')
 
 # -----------------------------------------------------------------------------
 # Interface
@@ -92,12 +98,6 @@ subparser_stream = subparser_mode.add_parser('stream', parents=[common_parser],
 subparser_marker = subparser_mode.add_parser('marker', parents=[common_parser],
                                              help='')
 
-try:
-    args = parser.parse_args()
-except Exception as e:
-    parser.print_help()
-    sys.exit()
-
 
 # ----------------------------------------------------------------------
 def main():
@@ -107,16 +107,16 @@ def main():
     def handle_ctrl_c(*_):
         """"""
         if args.output:
-            args.output.close()
-        if args.output_markers:
-            args.output_markers.close()
+            writer.close()
+            # args.output.close()
+        # if args.output_markers:
+            # args.output_markers.close()
 
         try:
             interface.stop_stream()
         except:
             pass
         finally:
-
             sys.exit()
 
     signal.signal(signal.SIGINT, handle_ctrl_c)
@@ -149,13 +149,13 @@ def main():
         elif args.stop:
             interface.stop_stream()
 
-    if args.interface == 'stream' or args.output or args.output_markers:
+    if args.interface == 'stream' or args.output:
 
         with OpenBCIConsumer(host=args.host) as stream:
 
-            if args.output or args.output_markers:
-                print(
-                    f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
+            if args.output:
+                print(f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n"
+                      f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
 
                 writer = HDF5_Writer(args.output)
                 header = {'sample_rate': args.stream_samples,
@@ -176,8 +176,9 @@ def main():
                     count = message.value['samples']
                     channels = eeg.shape[0]
 
-                    print(
-                        f"{Fore.YELLOW}[EEG]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t{count} samples, {channels} channels")
+                    print(f"{Fore.YELLOW}[EEG]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
+                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t"
+                          f"{count} samples, {channels} channels")
 
                     if args.output:
                         writer.add_eeg(eeg.T, created.timestamp())
@@ -188,23 +189,25 @@ def main():
                     created = datetime.fromtimestamp(
                         message.value['timestamp'])
                     since = (datetime.now() - created).total_seconds()
-                    print(f"{Fore.YELLOW}[MKR]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
+                    print(f"{Fore.YELLOW}[MKR]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
+                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t"
+                          f"{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
 
-                    if args.output_markers:
+                    if args.output:
                         writer.add_marker(marker, created.timestamp())
 
             if args.output:
-                args.output.close()
+                writer.close()
+                # args.output.close()
 
-            if args.output_markers:
-                args.output_markers.close()
+            # if args.output_markers:
+                # args.output_markers.close()
 
     if args.interface == 'marker':
 
         producer_eeg = KafkaProducer(bootstrap_servers=[f'{args.host}:9092'],
                                      # compression_type='gzip',
-                                     value_serializer=lambda x: pickle.dumps(
-                                         x),
+                                     value_serializer=pickle.dumps,
                                      )
 
         while True:
@@ -215,4 +218,11 @@ def main():
 
 
 if __name__ == '__main__':
+    try:
+        args = parser.parse_args()
+    except Exception as e:
+        parser.print_help()
+        # if not os.path.split(sys.argv[0])[1] == 'sphinx-build':
+        sys.exit()
+
     main()

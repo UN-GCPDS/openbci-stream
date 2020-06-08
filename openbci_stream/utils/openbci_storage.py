@@ -5,11 +5,7 @@ OpenBCI-Storage
 
 A consumer for Kafka that write the EEG data into an HDF5 file.
 
-       +------------+
-       |            |
-EEG -> |  Consumer  | -> HDF5
-       |            |
-       +------------+
+EEG -> Kafka-Consumer -> HDF5
 
 
 """

@@ -5,11 +5,9 @@ Binary to EEG
 
 A transformer for Kafka that read binary data and stream EEG data.
 
-          +---------------+
-          |               |
-Binary -> |  Transformer  | -> EEG
-          |               |
-          +---------------+
+Binary -> Kafka-Transformer -> EEG
+
+
 
 """
 
@@ -37,7 +35,7 @@ class BinaryToEEG:
         """Constructor"""
 
         self.consumer_binary = KafkaConsumer(bootstrap_servers=['localhost:9092'],
-                                             value_deserializer=lambda x: pickle.loads(x),
+                                             value_deserializer=pickle.loads,
                                              # group_id='openbci',
                                              auto_offset_reset='latest',
                                              # # heartbeat_interval_ms=500,
@@ -46,7 +44,7 @@ class BinaryToEEG:
 
         self.producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
                                           compression_type='gzip',
-                                          value_serializer=lambda x: pickle.dumps(x),
+                                          value_serializer=pickle.dumps,
                                           )
 
         self.buffer = Queue(maxsize=33)
@@ -120,11 +118,13 @@ class BinaryToEEG:
         indexes = np.argwhere(data_align == self.BIN_HEADER).reshape(1, -1)[0]
         data_align = np.array([data_align[i:i + 33] for i in indexes][:-1])
 
-        non_33 = np.argwhere([len(a) != 33 for a in data_align]).reshape(1, -1)[0]
+        non_33 = np.argwhere(
+            [len(a) != 33 for a in data_align]).reshape(1, -1)[0]
         data_align = np.delete(data_align, non_33, axis=0)
         data_align = np.stack(data_align)
 
-        no_data = np.argwhere(np.array([hex(int(b))[2] for b in data_align[:, -1]]) != 'c').reshape(1, -1)[0]
+        no_data = np.argwhere(
+            np.array([hex(int(b))[2] for b in data_align[:, -1]]) != 'c').reshape(1, -1)[0]
         data_full = np.delete(data_align, no_data, axis=0)
 
         if data_full.shape[0] % 2:
@@ -133,7 +133,8 @@ class BinaryToEEG:
         else:
             remnant = np.array([])
 
-        return data_full, b''  # , bytes(ex2.tolist()) + bytes(remnant.tolist())  + ex
+        # , bytes(ex2.tolist()) + bytes(remnant.tolist())  + ex
+        return data_full, b''
 
     # ----------------------------------------------------------------------
 
@@ -149,7 +150,8 @@ class BinaryToEEG:
 
         # EGG
         eeg_data = data[:, 2:26]
-        eeg_data = getattr(self, f'deserialize_eeg_{context["connection"]}')(eeg_data, pair, context)
+        eeg_data = getattr(self, f'deserialize_eeg_{context["connection"]}')(
+            eeg_data, pair, context)
 
         # Auxiliar
         # stop_byte = data[0][-1]

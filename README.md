@@ -1,19 +1,28 @@
 # OpenBCI-Stream 
-High level Python module for handle OpenBCI hardware and stream data.
+High level Python module for EEG acquisition and streaming with OpenBCI hardware.
 
-# About project
+## About this project
 
-## What is?
+### What is it?
 A Python module for high-performance interfaces development with [OpenBCI boards](https://openbci.com/).
 Currently, we have support for Cyton+Daisy and their WiFi module, additionally, we provide a real-time data streaming feature using [Kafka](https://kafka.apache.org/).
 
-## What do we want?
-We want a stable, high level, easy to use and extensible Python module focalize on the hardware provided by OpenBCI, a library that can be used for students, hobbyist and researchers, we are developing a set of tools for preprocessing, real-time data handling and streaming of EEG signals.
+### What we want?
+We want a stable, high level, easy to use and extensible Python module focalizes on the hardware provided by OpenBCI, a library that can be used for students, hobbyist and researchers, we are developing a set of tools for preprocessing, real-time data handling and streaming of EEG signals.
 
-## Who are we?
+### About us?
 We are a research group focused on digital processing of signals and machine learning from the National University of Colombia at Manizales ([GCPDS](http://www.hermes.unal.edu.co/pages/Consultas/Grupo.xhtml;jsessionid=8701CFAD84FB5D540090846EA8912D48.tomcat6?idGrupo=615&opcion=1>)).
 
-# Examples
+## Main features
+
+  * **Asynchronous acquisition:** After the board initialization, the data acquisition can be executed asynchronously, this feature ables to realize background operations without interrupt and affect the data sampling [read more...](../html/_notebooks/04-data_acquisition.html#initialize-stream)
+  * **Streaming data:** The EEG data is streamed with [Apache Kafka](https://kafka.apache.org/), this means that the data can be consumed from any other interface or language [read more...](../html/_notebooks/04-data_acquisition.html#access-to-stream)
+  * **Remote host:** Is possible to get OpenBCI running in one computing system and manage it from other [read more...](../html/_notebooks/A4-configure_remote_host.html)
+  * **Command line interface:** A simple interface is available for handle the start, stop and access to data stream directly from the command line [read more...](../html/_notebooks/A3-command_line_interface.html)
+  * **Markers/Events handler:**  [read more...](../html/_notebooks/07-stream_markers.html)
+  * **Distributed platforms: **
+
+## Examples
 
 Read 5 seconds EEG from serial:
 

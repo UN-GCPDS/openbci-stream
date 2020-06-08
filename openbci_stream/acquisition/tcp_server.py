@@ -1,3 +1,10 @@
+"""
+==========
+TCP server
+==========
+
+"""
+
 import socket
 import logging
 import asyncore

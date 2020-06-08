@@ -12,5 +12,4 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   openbci_stream.handlers.eegframe
    openbci_stream.handlers.hdf5_handler

@@ -1,3 +1,10 @@
+"""
+================
+OpenBCI Consumer
+================
+
+"""
+
 import pickle
 import logging
 

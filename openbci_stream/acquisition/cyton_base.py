@@ -497,7 +497,8 @@ class CytonBase(metaclass=ABCMeta):
         if ord('A') <= ord(marker) <= ord('Z'):
             self.write(f'`{marker}'.encode() * burst)
         else:
-            logging.warning(f'Marker must be between {ord("A")} and {ord("Z")}')
+            logging.warning(
+                f'Marker must be between {ord("A")} and {ord("Z")}')
 
     # ----------------------------------------------------------------------
     def daisy_attached(self):
@@ -519,8 +520,8 @@ class CytonBase(metaclass=ABCMeta):
             # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         # # if self.montage:
             # # channels = self.montage.keys()
@@ -598,7 +599,8 @@ class CytonBase(metaclass=ABCMeta):
             while not self.eeg_buffer.qsize() and (time.time() - t0 < 10):
                 time.sleep(0.25)
         else:
-            logging.warning(f"`wait_for_data` only works with `capture_stream=True`")
+            logging.warning(
+                f"`wait_for_data` only works with `capture_stream=True`")
 
     # ----------------------------------------------------------------------
     def _wait_for_no_data(self):
@@ -617,7 +619,8 @@ class CytonBase(metaclass=ABCMeta):
                 b = self.eeg_buffer.qsize()
 
         else:
-            logging.warning(f"`wait_for_no_data` only works with `capture_stream=True`")
+            logging.warning(
+                f"`wait_for_no_data` only works with `capture_stream=True`")
 
     # ----------------------------------------------------------------------
 
@@ -750,7 +753,8 @@ class CytonBase(metaclass=ABCMeta):
             eeg = np.concatenate(eeg, axis=1)
             return eeg
         else:
-            logging.warning(f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation')
+            logging.warning(
+                f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation')
             return []
 
     # ----------------------------------------------------------------------

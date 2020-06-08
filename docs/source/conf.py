@@ -105,8 +105,8 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    'page_width': '1080px',
-    'sidebar_width': '310px',
+    'page_width': '1280px',
+    'sidebar_width': '300px',
 
     # 'fixed_sidebar': True,
 
@@ -175,7 +175,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     # (master_doc, 'OpenBCI.tex', 'OpenBCI Documentation', 'Laura Andrea La Rotta Hurtado', 'manual'),
-    (master_doc, 'OpenBCI-Stream.tex', 'OpenBCI-Stream Documentation', 'Yeison Cardona', 'manual'),
+    (master_doc, 'OpenBCI-Stream.tex',
+     'OpenBCI-Stream Documentation', 'Yeison Cardona', 'manual'),
 ]
 
 
@@ -252,4 +253,4 @@ html_favicon = '_static/favico.ico'
 
 
 def setup(app):
-    app.add_stylesheet("custom.css")
+    app.add_css_file("custom.css")
