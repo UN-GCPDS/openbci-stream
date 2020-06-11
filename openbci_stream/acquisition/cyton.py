@@ -222,7 +222,7 @@ class CytonRFDuino(CytonBase):
             # logging.error(e)
             # sys.exit()
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __str__(self):
         """"""
         return "CytonRFDuino"
@@ -316,8 +316,9 @@ class CytonRFDuino(CytonBase):
         """
 
         # while self.READING:
-        while binary := self.read(size):
-
+        # while binary := self.read(size):
+        binary = self.read(size)
+        while binary:
             try:
                 kafka_context.update({'created': datetime.now().timestamp()})
                 data = {'context': kafka_context,
@@ -326,6 +327,8 @@ class CytonRFDuino(CytonBase):
                 self.binary_stream.stream(data)
             except serial.SerialException as e:
                 logging.error(e)
+
+            binary = self.read(size)
 
     # ----------------------------------------------------------------------
     def start_stream(self, clear=True, wait_for_data=False):
@@ -377,7 +380,7 @@ class CytonWiFi(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address, / , host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=1e3):
+    def __init__(self, ip_address, /, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=1e3):
         """WiFi mode connection.
 
         Parameters
@@ -420,8 +423,8 @@ class CytonWiFi(CytonBase):
         self._start_loop()
         # self._start_tcp_client()
 
+    # ----------------------------------------------------------------------
 
-    #----------------------------------------------------------------------
     def __str__(self):
         """"""
         return "CytonWiFi"
@@ -448,7 +451,8 @@ class CytonWiFi(CytonBase):
             local_ip_address = socket.gethostbyname(socket.gethostname())
             return local_ip_address
         except Exception as e:
-            logging.warning(f'{e}\nAssuming {DEFAULT_LOCAL_IP} as local ip address.')
+            logging.warning(
+                f'{e}\nAssuming {DEFAULT_LOCAL_IP} as local ip address.')
             return DEFAULT_LOCAL_IP
 
     # ----------------------------------------------------------------------
@@ -462,7 +466,8 @@ class CytonWiFi(CytonBase):
 
         try:
             logging.info(f"Sending command: '{data}'")
-            response = requests.post(f"http://{self._ip_address}/command", json={'command': data})
+            response = requests.post(
+                f"http://{self._ip_address}/command", json={'command': data})
         except Exception as e:
             logging.info(f"Error on sending command '{data}': {e}")
             return
@@ -472,7 +477,8 @@ class CytonWiFi(CytonBase):
         elif response.status_code == 502:
             logging.info(f"No confirmation from board, does not mean fail.")
         else:
-            logging.warning(f"Error code: {response.status_code} {response.text}")
+            logging.warning(
+                f"Error code: {response.status_code} {response.text}")
             self._readed = None
 
     # ----------------------------------------------------------------------
@@ -505,7 +511,8 @@ class CytonWiFi(CytonBase):
         # if not self.STREAMING:
         response = requests.get(f"http://{self._ip_address}/stream/start")
         if response.status_code != 200:
-            logging.warning(f"Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start")
+            logging.warning(
+                f"Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start")
             # self.STREAMING = True
         else:
 
@@ -525,7 +532,8 @@ class CytonWiFi(CytonBase):
         if response.status_code != 200:
             # self.STREAMING = False
         # else:
-            logging.warning(f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/start")
+            logging.warning(
+                f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/start")
 
         self.binary_stream.close()
         # self._stop_tcp_client()
@@ -549,12 +557,14 @@ class CytonWiFi(CytonBase):
         }
 
         self.local_wifi_server = WiFiShieldTCPServer(self._local_ip_address,
-                                                     lambda :getattr(self, 'binary_stream'),
+                                                     lambda: getattr(
+                                                         self, 'binary_stream'),
                                                      kafka_context,
                                                      )
         self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[
             1]
-        logging.info(f"Opened socket on {self._local_ip_address}:{self.local_wifi_server_port}")
+        logging.info(
+            f"Opened socket on {self._local_ip_address}:{self.local_wifi_server_port}")
 
     # ----------------------------------------------------------------------
     def _start_tcp_client(self):
@@ -599,7 +609,8 @@ class CytonWiFi(CytonBase):
                     "WiFi Shield is not able to connect to local server.")
 
         else:
-            logging.warning(f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
+            logging.warning(
+                f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
 
     # ----------------------------------------------------------------------
     def close(self):
@@ -615,26 +626,26 @@ class CytonWiFi(CytonBase):
         self.th_loop.start()
 
 
-
-
 ########################################################################
 class Cyton:
     """
     Main
     """
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __new__(self, mode, endpoint=None, /, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=None):
         """Constructor"""
 
         if mode == 'serial':
             if stream_samples is None:
                 stream_samples = 250
-            mode = CytonRFDuino(endpoint, host, daisy, capture_stream, montage, stream_samples)
+            mode = CytonRFDuino(endpoint, host, daisy,
+                                capture_stream, montage, stream_samples)
 
         elif mode == 'wifi':
             if stream_samples is None:
                 stream_samples = 1e3
-            mode = CytonWiFi(endpoint, host, daisy, capture_stream, montage, stream_samples)
+            mode = CytonWiFi(endpoint, host, daisy,
+                             capture_stream, montage, stream_samples)
 
         return mode
