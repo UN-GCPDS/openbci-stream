@@ -489,7 +489,6 @@ class CytonWiFi(CytonBase):
         return self._readed
 
     # ----------------------------------------------------------------------
-
     def start_stream(self, clear=True, wait_for_data=False):
         """Start a data collection asynchronously.
 
@@ -516,7 +515,6 @@ class CytonWiFi(CytonBase):
                 self._wait_for_data()
 
     # ----------------------------------------------------------------------
-
     def stop_stream(self, wait_for_no_data=False):
         """Stop streaming."""
 
