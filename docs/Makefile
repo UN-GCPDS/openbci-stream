@@ -30,8 +30,8 @@ buildapi:
 	rm -r source/_notebooks/*
 	mkdir -p source/_notebooks/images
 
-	cp ../notebooks/*.ipynb source/_notebooks/
-	cp ../notebooks/images/* source/_notebooks/images
+	cp notebooks/*.ipynb source/_notebooks/
+	cp notebooks/images/* source/_notebooks/images
 
 	#rm source/_notebooks/*.rst
 	#rm source/_notebooks/SANDBOX.ipynb
