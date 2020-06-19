@@ -79,3 +79,4 @@ if __name__ == '__main__':
             message.offset,
             message.key,
             message.value,
+            message.timestamp
