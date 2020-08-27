@@ -1,1 +1,1 @@
-from openbci_stream.acquisition.cyton import CytonRFDuino, CytonWiFi, Cyton, CytonBase
+from openbci_stream.acquisition.cyton import CytonRFDuino, CytonWiFi, Cyton, CytonBase, CytonConstants
