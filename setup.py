@@ -28,6 +28,7 @@ setup(
                       'mne',
                       'requests',
                       'colorama',
+                      'rawutil',
 
                       'crc32c',
                       'kafka-python',
