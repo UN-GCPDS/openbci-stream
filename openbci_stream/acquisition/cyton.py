@@ -149,7 +149,7 @@ from datetime import datetime
 import requests
 import serial
 
-from openbci_stream.acquisition.cyton_base import CytonBase
+from openbci_stream.acquisition.cyton_base import CytonBase, CytonConstants
 from openbci_stream.acquisition.tcp_server import WiFiShieldTCPServer
 
 import rpyc
@@ -191,7 +191,7 @@ class CytonRFDuino(CytonBase):
         if host:
             rpyc_service = rpyc.connect(host, 18861)
             self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
-                self._ip_address, False, False, pickle.dumps(montage), stream_samples)
+                port, False, False, pickle.dumps(montage), stream_samples)
             return
 
         if port is None:
@@ -280,8 +280,10 @@ class CytonRFDuino(CytonBase):
         bytes
             Data readed.
         """
-
-        return self.device.read(size)
+        try:
+            return self.device.read(size)
+        except:
+            return self.read(size)
 
     # ----------------------------------------------------------------------
     def write(self, data):
@@ -629,6 +631,9 @@ class Cyton:
     # ----------------------------------------------------------------------
     def __new__(self, mode, endpoint=None, /, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=None):
         """Constructor"""
+        if host and capture_stream:
+            logging.warning(
+                '`capture_stream` and `host` arguments are not available together yet.')
 
         if mode == 'serial':
             if stream_samples is None:
