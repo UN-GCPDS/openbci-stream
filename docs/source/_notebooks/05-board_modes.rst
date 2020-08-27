@@ -100,6 +100,7 @@ present, then ``A7(D13)`` as well.
     
     openbci = Cyton('serial', capture_stream=True)
     openbci.command(openbci.BOARD_MODE_ANALOG)
+    
     openbci.stream(15)
     
     time_axis = [datetime.fromtimestamp(_) for _ in openbci.timestamp_time_series]
@@ -121,11 +122,96 @@ present, then ``A7(D13)`` as well.
 
 .. parsed-literal::
 
-    WARNING:kafka.coordinator.consumer:group_id is None: disabling auto-commit.
+    Streaming...
+
+
+::
+
+
+    ---------------------------------------------------------------------------
+
+    ValueError                                Traceback (most recent call last)
+
+    <ipython-input-3-0e2f7303b265> in <module>
+         11 openbci.stream(15)
+         12 
+    ---> 13 time_axis = [datetime.fromtimestamp(_) for _ in openbci.timestamp_time_series]
+         14 a7, a6, a5 = openbci.aux_time_series
+         15 
+
+
+    ~/Development/gcpds/openbci_stream/docs/notebooks/openbci_stream/acquisition/cyton.py in __getattribute__(self, attr)
+        435                     "Romete mode not support stream capture, `openbci.consumer.OpenBCIConsumer` must be used.")
+        436                 return lambda: None
+    --> 437             return getattr(super().__getattribute__('remote_host'), attr)
+        438         else:
+        439             return super().__getattribute__(attr)
+
+
+    /usr/lib/python3.8/site-packages/rpyc/core/netref.py in __getattribute__(self, name)
+        159             return object.__getattribute__(self, "__array__")
+        160         else:
+    --> 161             return syncreq(self, consts.HANDLE_GETATTR, name)
+        162 
+        163     def __getattr__(self, name):
+
+
+    /usr/lib/python3.8/site-packages/rpyc/core/netref.py in syncreq(proxy, handler, *args)
+         74     """
+         75     conn = object.__getattribute__(proxy, "____conn__")
+    ---> 76     return conn.sync_request(handler, proxy, *args)
+         77 
+         78 
+
+
+    /usr/lib/python3.8/site-packages/rpyc/core/protocol.py in sync_request(self, handler, *args)
+        467         """
+        468         timeout = self._config["sync_request_timeout"]
+    --> 469         return self.async_request(handler, *args, timeout=timeout).value
+        470 
+        471     def _async_request(self, handler, args=(), callback=(lambda a, b: None)):  # serving
+
+
+    /usr/lib/python3.8/site-packages/rpyc/core/async_.py in value(self)
+        100         self.wait()
+        101         if self._is_exc:
+    --> 102             raise self._obj
+        103         else:
+        104             return self._obj
+
+
+    ValueError: need at least one array to concatenate
+    
+    ========= Remote Traceback (1) =========
+    Traceback (most recent call last):
+      File "/usr/lib/python3.8/site-packages/rpyc/core/protocol.py", line 320, in _dispatch_request
+        res = self._HANDLERS[handler](self, *args)
+      File "/usr/lib/python3.8/site-packages/rpyc/core/protocol.py", line 609, in _handle_getattr
+        return self._access_attr(obj, name, (), "_rpyc_getattr", "allow_getattr", getattr)
+      File "/usr/lib/python3.8/site-packages/rpyc/core/protocol.py", line 537, in _access_attr
+        return accessor(obj, name, *args)
+      File "/usr/lib/python3.8/site-packages/openbci_stream-1.0.0a1-py3.8.egg/openbci_stream/acquisition/cyton.py", line 439, in __getattribute__
+        return super().__getattribute__(attr)
+      File "/usr/lib/python3.8/functools.py", line 966, in __get__
+        val = self.func(instance)
+      File "/usr/lib/python3.8/site-packages/openbci_stream-1.0.0a1-py3.8.egg/openbci_stream/acquisition/cyton_base.py", line 782, in timestamp_time_series
+        timestamp = np.concatenate(timestamp, axis=0)
+      File "<__array_function__ internals>", line 5, in concatenate
+    ValueError: need at least one array to concatenate
 
 
 
-.. image:: 05-board_modes_files/05-board_modes_6_1.png
+.. code:: ipython3
+
+    openbci.eeg_buffer.qsize()
+
+
+
+
+.. parsed-literal::
+
+    0
+
 
 
 Digital mode
@@ -173,7 +259,7 @@ then also ``D13`` and ``D18``.
 
 
 
-.. image:: 05-board_modes_files/05-board_modes_8_1.png
+.. image:: 05-board_modes_files/05-board_modes_9_1.png
 
 
 Marker mode
@@ -219,7 +305,7 @@ where ``X`` is any char to add to the first ``AUX`` byte.
 
 
 
-.. image:: 05-board_modes_files/05-board_modes_10_1.png
+.. image:: 05-board_modes_files/05-board_modes_11_1.png
 
 
 Get current mode

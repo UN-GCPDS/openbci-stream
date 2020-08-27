@@ -118,10 +118,11 @@ the data is being transmitted.
 
     from openbci_stream.consumer import OpenBCIConsumer
     
-    with OpenBCIConsumer() as stream:
+    with OpenBCIConsumer(host='192.168.1.1') as stream:
         for i, message in enumerate(stream):
             if message.topic == 'eeg':
                 print(f"{i} received {message.value['samples']} samples")
+                print(message.value['data'][0].shape)
                 if i == 9:
                     break
 
@@ -133,16 +134,26 @@ the data is being transmitted.
 
 .. parsed-literal::
 
-    0 received 254 samples
-    1 received 254 samples
-    2 received 254 samples
-    3 received 254 samples
-    4 received 254 samples
-    5 received 254 samples
-    6 received 254 samples
-    7 received 254 samples
-    8 received 254 samples
-    9 received 254 samples
+    0 received 250 samples
+    (16, 250)
+    1 received 251 samples
+    (16, 251)
+    2 received 252 samples
+    (16, 252)
+    3 received 250 samples
+    (16, 250)
+    4 received 250 samples
+    (16, 250)
+    5 received 251 samples
+    (16, 251)
+    6 received 251 samples
+    (16, 251)
+    7 received 250 samples
+    (16, 250)
+    8 received 250 samples
+    (16, 250)
+    9 received 251 samples
+    (16, 251)
 
 
 ``OpenBCIConsumer`` has the argument ``start``, with this feature is

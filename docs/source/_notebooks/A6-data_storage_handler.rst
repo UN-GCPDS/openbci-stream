@@ -58,26 +58,26 @@ Add EEG data
 
 .. code:: ipython3
 
-    eeg = np.random.normal(size=(1000, 16))  # data X channels
+    eeg = np.random.normal(size=(16, 1000))  # channels x data
     writer.add_eeg(eeg)
 
 .. code:: ipython3
 
     # The number of channels cannot be changed after define the first package
-    eeg = np.random.normal(size=(1000, 8))
+    eeg = np.random.normal(size=(8, 1000))
     writer.add_eeg(eeg)
 
 .. code:: ipython3
 
     # The number of data can be changed
-    eeg = np.random.normal(size=(500, 16))
+    eeg = np.random.normal(size=(16, 500))
     writer.add_eeg(eeg)
 
 A ``timestamp`` can be added to the data, in a separated command:
 
 .. code:: ipython3
 
-    eeg = np.random.normal(size=(2000, 16))
+    eeg = np.random.normal(size=(16, 2000))
     timestamp = np.array([datetime.now().timestamp()]*2000)
     
     writer.add_eeg(eeg)
@@ -87,7 +87,7 @@ or in the same command:
 
 .. code:: ipython3
 
-    eeg = np.random.normal(size=(2000, 16))
+    eeg = np.random.normal(size=(16, 2000))
     timestamp = [datetime.now().timestamp()] * 2000
     
     writer.add_eeg(eeg, timestamp)
@@ -107,7 +107,7 @@ The above code can be written simply as:
 
 .. code:: ipython3
 
-    eeg = np.random.normal(size=(2000, 16))
+    eeg = np.random.normal(size=(16, 2000))
     timestamp = datetime.now().timestamp()
     
     writer.add_eeg(eeg, timestamp)
@@ -250,7 +250,7 @@ Writer
     header = {'sample_rate': 1000,
               'datetime': now.timestamp(),
               'montage': 'standard_1020',
-              'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
+              'channels': {i:ch for i, ch in enumerate('Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','))},
              }
     
     filename = f'sample-{now.timestamp()}.h5'
@@ -259,9 +259,18 @@ Writer
         writer.add_header(header)
         
         for i in range(60*30):
-            eeg = np.random.normal(size=(1000, 16))
+            eeg = np.random.normal(size=(16, 1000))
+            aux = np.random.normal(size=(3, 1000))
             timestamp = (now + timedelta(seconds=i)).timestamp()
             writer.add_eeg(eeg, timestamp)
+            writer.add_aux(aux)
+
+
+.. parsed-literal::
+
+    WARNING:root:OpenBCI - v1.0.0-alpha.1
+    WARNING:root:This version could be unstable.
+
 
 Reader
 ~~~~~~
@@ -280,7 +289,7 @@ Reader
         sample_rate = reader.header['sample_rate']
     
         t = np.linspace(0, 1, sample_rate)
-        for i, ch in enumerate(reader.eeg[:sample_rate].T):
+        for i, ch in enumerate(reader.eeg[:sample_rate]):
             plt.plot(t, (ch-ch.mean())*0.1+i)
         ax.set_yticklabels(channels)
 
