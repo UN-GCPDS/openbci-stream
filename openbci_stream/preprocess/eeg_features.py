@@ -56,7 +56,8 @@ def spectrum(eeg, d=None, fs=None, timestamp=None, axis=-1):
 
     if timestamp.any():
         if isinstance(timestamp[-1], (int, float)):
-            delta = datetime.fromtimestamp(timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
+            delta = datetime.fromtimestamp(
+                timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
         else:
             delta = timestamp[-1] - timestamp[0]
         fs = max(eeg.shape) / delta.total_seconds()
@@ -89,7 +90,8 @@ def welch(eeg, d=None, fs=None, timestamp=None, axis=-1):
 
     if timestamp.any():
         if isinstance(timestamp[-1], (int, float)):
-            delta = datetime.fromtimestamp(timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
+            delta = datetime.fromtimestamp(
+                timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
         else:
             delta = timestamp[-1] - timestamp[0]
         fs = max(eeg.shape) / delta.total_seconds()
@@ -100,10 +102,15 @@ def welch(eeg, d=None, fs=None, timestamp=None, axis=-1):
     if axis is None:
         if eeg.shape[0] > eeg.shape[1]:
             axis = 0
+            m_ = eeg.shape[0]
         else:
             axis = 1
+            m_ = eeg.shape[1]
+    else:
+        m_ = eeg.shape[0]
 
-    f, p = sci_welch(eeg, 1 / d, window='flattop', nperseg=min(eeg.shape[1], 1024), scaling='spectrum', axis=axis)
+    f, p = sci_welch(eeg, 1 / d, window='flattop',
+                     nperseg=min(m_, 1024), scaling='spectrum', axis=axis)
     return f, p
 
 
