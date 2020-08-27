@@ -7,8 +7,6 @@ A transformer for Kafka that read binary data and stream EEG data.
 
 Binary -> Kafka-Transformer -> EEG
 
-
-
 """
 
 import pickle
@@ -17,6 +15,7 @@ import numpy as np
 from queue import Queue
 from threading import Thread
 from datetime import datetime
+import rawutil
 
 from kafka import KafkaConsumer, KafkaProducer
 
@@ -27,7 +26,6 @@ autokill_process(name='binary_2_eeg')
 ########################################################################
 class BinaryToEEG:
     """"""
-    VREF = 4.5
     BIN_HEADER = 0xa0
 
     # ----------------------------------------------------------------------
@@ -58,21 +56,24 @@ class BinaryToEEG:
         self.offset = [0] * 8
         self._last_aux_shape = 0
 
-    # ----------------------------------------------------------------------
-    @property
-    def gain(self):
-        """Vector with the gains for each channel."""
+    # # ----------------------------------------------------------------------
+    # @property
+    # def gain(self):
+        # """Vector with the gains for each channel."""
 
-        # TODO
-        # A method for change the ganancy of each channel must be writed here
-        return [24, 24, 24, 24, 24, 24, 24, 24]
+        # # TODO
+        # # A method for change the ganancy of each channel must be writed here
+        # return 24
 
     # ----------------------------------------------------------------------
     @property
     def scale_factor_eeg(self):
         """Vector with the correct factors for scale eeg data samples."""
+        gain = 24
+        # vref = 4.5  # for V
+        vref = 4500000  # for uV
 
-        return [self.VREF / (gain * ((2 ** 23) - 1)) for gain in self.gain]
+        return vref / (gain * ((2 ** 23) - 1))
 
     # ----------------------------------------------------------------------
     def consume(self):
@@ -88,7 +89,7 @@ class BinaryToEEG:
         Parameters
         ----------
         record : int
-            Kafka stream with bibary data.
+            Kafka stream with binary data.
         """
 
         buffer = record.value
@@ -97,47 +98,35 @@ class BinaryToEEG:
 
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
 
+        if not data.shape[0]:
+            return
+
         # Thread for unpack data
         self.b = Thread(target=self.deserialize, args=(data, context))
         self.b.start()
-        # self.deserialize(data)
+        # self.deserialize(data, context)
 
     # ----------------------------------------------------------------------
-
-    def align_data(self, data):
+    def align_data(self, binary):
         """"""
-        n = len(data) % 33
-        if n:
-            data, ex = data[:-n], data[-n:]
-        else:
-            ex = b''
+        data = np.array(list(binary))
 
-        data = np.array(list(data)).reshape(-1, 33)
+        # Search for the the first index with a `BIN_HEADER`
+        start = [np.median(np.roll(data, -i, axis=0)[::33])
+                 == self.BIN_HEADER for i in range(33)].index(True)
 
-        data_align = data.reshape(-1)
-        indexes = np.argwhere(data_align == self.BIN_HEADER).reshape(1, -1)[0]
-        data_align = np.array([data_align[i:i + 33] for i in indexes][:-1])
+        # Fix the offset to complete 33 bytes divisible array
+        end = (data.shape[0] - start) % 33
 
-        non_33 = np.argwhere(
-            [len(a) != 33 for a in data_align]).reshape(1, -1)[0]
-        data_align = np.delete(data_align, non_33, axis=0)
-        data_align = np.stack(data_align)
+        data_align = data[start:-end]
+        data_align = data_align.reshape(-1, 33)
 
-        no_data = np.argwhere(
-            np.array([hex(int(b))[2] for b in data_align[:, -1]]) != 'c').reshape(1, -1)[0]
-        data_full = np.delete(data_align, no_data, axis=0)
+        # The offset could be used for the next binary data
+        remnant = binary[-end:]
 
-        if data_full.shape[0] % 2:
-            remnant = data_full[-1]
-            data_full = data_full[:-1]
-        else:
-            remnant = np.array([])
-
-        # , bytes(ex2.tolist()) + bytes(remnant.tolist())  + ex
-        return data_full, b''
+        return data_align, remnant
 
     # ----------------------------------------------------------------------
-
     def deserialize(self, data, context):
         """Fom binary to EEG.
 
@@ -146,6 +135,8 @@ class BinaryToEEG:
         data : list
             Kafka stream with bibary data.
         """
+
+        # From in index
         pair = not data[:, 1][0] % 2
 
         # EGG
@@ -161,33 +152,46 @@ class BinaryToEEG:
         self._last_aux_shape = aux.shape
 
         # Stream
-        # print(f'deserialize_eeg_{context["connection"]}', f'Daisy: {context["daisy"]}', context['boardmode'], eeg_data.shape, aux.shape)
-        self.stream([eeg_data.T, aux.T], eeg_data.shape[0], context)
+        channels = list(context['montage'].keys())
+        self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_wifi(self, eeg, *_):
+    def deserialize_eeg_wifi(self, eeg, pair, context):
         """WiFi bibary not compress data.
         """
-        eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
-        eeg_data = np.array(memoryview(eeg.astype('i1').tostring()).cast(
-            'I')).reshape(-1, 8) * self.scale_factor_eeg
+        # eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
+        # eeg_data = np.array(memoryview(eeg.astype('i1').tobytes()).cast('I'))
+        # eeg_data = eeg_data.reshape(-1, 8) * self.scale_factor_eeg
+        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
+                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = eeg_data * self.scale_factor_eeg
 
-        board = eeg_data[::2]
-        daisy = eeg_data[1::2]
-        eeg = np.concatenate([board, daisy], axis=1)
+        if context['daisy']:
+            # board = eeg_data[::2]
+            # daisy = eeg_data[1::2]
+            if pair:
+                board = eeg_data[::2]
+                daisy = eeg_data[1::2]
+            else:
+                daisy = eeg_data[::2]
+                board = eeg_data[1::2]
 
-        return eeg
+            return np.concatenate([board, daisy], axis=1)
+        else:
+            return eeg_data
 
     # ----------------------------------------------------------------------
     def deserialize_eeg_serial(self, eeg, pair, context):
         """Uncompress serial data.
         """
-        eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
-        eeg_data = np.array(memoryview(eeg.astype('i1').tostring()).cast(
-            'I')).reshape(-1, 8) * self.scale_factor_eeg
+        # eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
+        # eeg_data = np.array(memoryview(eeg.astype('i1').tobytes()).cast('I'))
+        # eeg_data = eeg_data.reshape(-1, 8) * self.scale_factor_eeg
+        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
+                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
-            # print('daisy')
 
             if pair:
                 board = eeg_data[::2]
@@ -201,15 +205,14 @@ class BinaryToEEG:
             daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5),
                                         np.arange(p.shape[0]), p) for p in daisy.T]).T
 
+            # move the last value to the first position
             daisy = np.roll(daisy, 1, axis=0)
+            # the last position is my offset, and complete with the previous offset
             self.offset, daisy[0] = daisy[0].copy(), self.offset
 
             eeg = np.concatenate([np.stack(board), np.stack(daisy)], axis=1)
 
-            # print(eeg.shape)
-
         else:
-            # print('NO daisy')
             eeg = eeg_data
 
         if len(context['montage'].keys()) > eeg.shape[1]:
@@ -255,9 +258,8 @@ class BinaryToEEG:
 
         # Standard with accel
         if stop_byte == 0xc0:
-            # print('accel')
             return 0.002 * \
-                np.array([struct.unpack('>hhh', a.astype('i1').tostring())
+                np.array([struct.unpack('>hhh', a.astype('i1').tobytes())
                           for a in aux]) / 16
 
         # Standard with raw aux
