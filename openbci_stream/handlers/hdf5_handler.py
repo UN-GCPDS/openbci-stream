@@ -59,10 +59,10 @@ class HDF5_Writer:
         """The fist data conditionate the number of channels.
         """
         if self.array_eeg is None:
-            _, channels = eeg_data.shape
+            channels, _ = eeg_data.shape
             atom_eeg = tables.Float64Atom()
             self.array_eeg = self.f.create_earray(
-                self.f.root, 'eeg_data', atom_eeg, shape=(0, channels), title='EEG time series')
+                self.f.root, 'eeg_data', atom_eeg, shape=(channels, 0), title='EEG time series')
 
         self.array_eeg.append(eeg_data)
 
@@ -73,9 +73,31 @@ class HDF5_Writer:
             self.add_timestamp(timestamp)
 
         elif timestamp != None:
-            timestamp_ = np.zeros(len(eeg_data))
+            timestamp_ = np.zeros(eeg_data.shape[1])
             timestamp_[-1] = timestamp
             self.add_timestamp(timestamp_)
+
+    # ----------------------------------------------------------------------
+    def add_aux(self, aux_data: np.ndarray) -> None:
+        """"""
+        if self.array_aux is None:
+            channels, _ = aux_data.shape
+            atom_eeg = tables.Float64Atom()
+            self.array_aux = self.f.create_earray(
+                self.f.root, 'aux_data', atom_eeg, shape=(channels, 0), title='EEG time series')
+
+        self.array_aux.append(aux_data)
+
+        # if isinstance(timestamp, (np.ndarray, list, tuple)):
+
+            # assert len(timestamp) == len(
+                # aux_data), "Is not recommended add data and timestamp from different sizes."
+            # self.add_timestamp(timestamp)
+
+        # elif timestamp != None:
+            # timestamp_ = np.zeros(len(aux_data))
+            # timestamp_[-1] = timestamp
+            # self.add_timestamp(timestamp_)
 
     # ----------------------------------------------------------------------
     def __enter__(self) -> None:
@@ -96,6 +118,7 @@ class HDF5_Writer:
         # self.array_eeg = f.create_earray(
             # f.root, 'eeg_data', atom_eeg, shape=(0, CHANNELS), title='EEG time series')
         self.array_eeg = None
+        self.array_aux = None
         self.array_dtm = self.f.create_earray(
             self.f.root, 'timestamp', atom_dtm, shape=(0,), title='EEG timestamp')
         self.array_mkr = self.f.create_earray(
@@ -143,6 +166,12 @@ class HDF5_Reader:
 
     # ----------------------------------------------------------------------
     @property
+    def aux(self) -> np.ndarray:
+        """"""
+        return self.f.root.aux_data
+
+    # ----------------------------------------------------------------------
+    @property
     def markers(self) -> Dict[str, List[timesamp]]:
         """"""
         markers = {}
@@ -156,12 +185,26 @@ class HDF5_Reader:
     @property
     def timestamp(self) -> List[timesamp]:
         """"""
-        timestamp = self.f.root.timestamp
-        nonzero = np.nonzero(timestamp)
-        args = np.arange(self.eeg.shape[0])
+        return self._timestamp(self.eeg.shape[1])
 
-        interp = interp1d(
-            args[nonzero], timestamp[nonzero], fill_value="extrapolate")
+    # ----------------------------------------------------------------------
+    @property
+    def aux_timestamp(self) -> List[timesamp]:
+        """"""
+        return self._timestamp(self.aux.shape[1])
+
+    # ----------------------------------------------------------------------
+    def _timestamp(self, length: int):
+        """"""
+        timestamp = self.f.root.timestamp
+        nonzero = np.nonzero(timestamp)[0]
+        ssr = self.header['streaming_sample_rate']
+
+        x = nonzero * (length / nonzero[-1])
+        interp = interp1d(x, timestamp[nonzero], fill_value="extrapolate")
+
+        args = np.arange(-ssr, length - ssr)
+
         timestamp = interp(args)
         return timestamp
 
