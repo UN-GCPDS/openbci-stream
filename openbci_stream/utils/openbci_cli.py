@@ -185,12 +185,18 @@ def main():
 
                 if message.topic == 'marker':
 
+                    marker = data.value['marker']
+                    dt = data.value['datetime']
+
                     marker = message.value['marker']
-                    created = datetime.fromtimestamp(
-                        message.value['timestamp'])
+                    dt = datetime.fromtimestamp(message.value['datetime'])
+
+                    # created = datetime.fromtimestamp(message.value['timestamp'])
+                    marker = message.value
+                    created = datetime.fromtimestamp(message.timestamp / 1000)
                     since = (datetime.now() - created).total_seconds()
                     print(f"{Fore.YELLOW}[MKR]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
-                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t"
+                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since*1000:0.4f} ms ago{Fore.RESET}\t"
                           f"{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
 
                     if args.output:
