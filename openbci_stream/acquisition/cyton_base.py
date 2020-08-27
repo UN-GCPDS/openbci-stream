@@ -30,17 +30,8 @@ import traceback
 
 
 ########################################################################
-class CytonBase(metaclass=ABCMeta):
-    """
-    The Cyton data format and SDK define all interactions and capabilities of
-    the board, the full instructions can be found in the official package.
-
-      * https://docs.openbci.com/Hardware/03-Cyton_Data_Format
-      * https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK
-    """
-
-    # Flags
-    READING = None
+class CytonConstants:
+    """"""
 
     VREF = 4.5
 
@@ -161,6 +152,20 @@ class CytonBase(metaclass=ABCMeta):
     WIFI_SHIELD_RESET = b';'
 
     VERSION = b'V'
+
+
+########################################################################
+class CytonBase(CytonConstants, metaclass=ABCMeta):
+    """
+    The Cyton data format and SDK define all interactions and capabilities of
+    the board, the full instructions can be found in the official package.
+
+      * https://docs.openbci.com/Hardware/03-Cyton_Data_Format
+      * https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK
+    """
+
+    # Flags
+    READING = None
 
     # ----------------------------------------------------------------------
     def __init__(self, daisy, capture_stream, montage, stream_samples):
@@ -302,11 +307,10 @@ class CytonBase(metaclass=ABCMeta):
                 self._montage = {i: i for i in range(8)}
 
     # ----------------------------------------------------------------------
-
     def deactivate_channel(self, channels):
         """Deactivate the channels specified."""
 
-        chain = ''.join([chr(self.DEACTIVATE_CHANEL[ch])
+        chain = ''.join([chr(self.DEACTIVATE_CHANEL[ch - 1])
                          for ch in channels]).encode()
         self.command(chain)
         # [self.command(self.DEACTIVATE_CHANEL[ch]) for ch in channels]
@@ -315,13 +319,12 @@ class CytonBase(metaclass=ABCMeta):
     def activate_channel(self, channels):
         """Activate the channels specified."""
 
-        chain = ''.join([chr(self.ACTIVATE_CHANEL[ch])
+        chain = ''.join([chr(self.ACTIVATE_CHANEL[ch - 1])
                          for ch in channels]).encode()
         self.command(chain)
         # [self.command(self.ACTIVATE_CHANEL[ch]) for ch in channels]
 
     # ----------------------------------------------------------------------
-
     def command(self, c):
         """Send a command to device.
 
@@ -347,7 +350,10 @@ class CytonBase(metaclass=ABCMeta):
         time.sleep(0.3)
         response = self.read(2**11)
         logging.info(f'Writed: {c}')
-        logging.info(f'Responded: {response}')
+        if len(response) > 100:
+            logging.info(f'Responded: {response[:100]}...')
+        else:
+            logging.info(f'Responded: {response}')
 
         if hasattr(response, 'encode'):
             response = response.encode()
@@ -358,12 +364,12 @@ class CytonBase(metaclass=ABCMeta):
 
     # ----------------------------------------------------------------------
     def channel_settings(self, channels,
-                         power_down=POWER_DOWN_ON,
-                         gain=GAIN_24,
-                         input_type=ADSINPUT_NORMAL,
-                         bias=BIAS_INCLUDE,
-                         srb2=SRB2_CONNECT,
-                         srb1=SRB1_DISCONNECT):
+                         power_down=CytonConstants.POWER_DOWN_ON,
+                         gain=CytonConstants.GAIN_24,
+                         input_type=CytonConstants.ADSINPUT_NORMAL,
+                         bias=CytonConstants.BIAS_INCLUDE,
+                         srb2=CytonConstants.SRB2_CONNECT,
+                         srb1=CytonConstants.SRB1_DISCONNECT):
         """Channel Settings commands.
 
         Parameters
@@ -414,18 +420,28 @@ class CytonBase(metaclass=ABCMeta):
 
         self.reset_input_buffer()
 
-        for channel in channels:
-            ch = chr(self.CHANNEL_SETTING[channel]).encode()
-            chain = b''.join([start, ch, power_down, gain, input_type, bias,
-                              srb2, srb1, end])
-            self.write(chain)
+        chain = b''
+        for ch in channels:
+            ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
+            chain += b''.join([start, ch, power_down, gain, input_type, bias,
+                               srb2, srb1, end])
 
-        time.sleep(0.3)
-        return self.read(2**11)
+        self.command(chain)
+            # time.sleep(0.3)
+            # response = self.read(2**11)
+
+            # logging.info(f'Writed: {chain}')
+            # if len(response) > 100:
+                # logging.info(f'Responded: {response[:100]}...')
+            # else:
+                # logging.info(f'Responded: {response}')
+
+        # time.sleep(0.3)
+        # return self.read(2**11)
 
     # ----------------------------------------------------------------------
-    def leadoff_impedance(self, channels, pchan=TEST_SIGNAL_NOT_APPLIED,
-                          nchan=TEST_SIGNAL_APPLIED):
+    def leadoff_impedance(self, channels, pchan=CytonConstants.TEST_SIGNAL_NOT_APPLIED,
+                          nchan=CytonConstants.TEST_SIGNAL_APPLIED):
         """LeadOff Impedance Commands
 
         Parameters
@@ -459,14 +475,22 @@ class CytonBase(metaclass=ABCMeta):
         end = b'Z'
 
         self.reset_input_buffer()
+        chain = b''
+        for ch in channels:
+            ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
+            chain += b''.join([start, ch, pchan, nchan, end])
+        self.command(chain)
+            # time.sleep(0.3)
+            # response = self.read(2**11)
 
-        for channel in channels:
-            ch = chr(self.CHANNEL_SETTING[channel]).encode()
-            chain = b''.join([start, ch, pchan, nchan, end])
-            self.write(chain)
+            # logging.info(f'Writed: {chain}')
+            # if len(response) > 100:
+                # logging.info(f'Responded: {response[:100]}...')
+            # else:
+                # logging.info(f'Responded: {response}')
 
-        time.sleep(0.3)
-        return self.read(2**11)
+        # time.sleep(0.3)
+        # return self.read(2**11)
 
     # ----------------------------------------------------------------------
     def send_marker(self, marker, burst=4):
@@ -520,8 +544,8 @@ class CytonBase(metaclass=ABCMeta):
             # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         # # if self.montage:
             # # channels = self.montage.keys()
