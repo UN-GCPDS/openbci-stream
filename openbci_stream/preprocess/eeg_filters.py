@@ -123,7 +123,8 @@ class Filter(metaclass=ABCMeta):
         """Compile filters for new sample frequency."""
         if fs is None:
             if isinstance(timestamp[-1], (int, float)):
-                delta = datetime.fromtimestamp(timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
+                delta = datetime.fromtimestamp(
+                    timestamp[-1]) - datetime.fromtimestamp(timestamp[0])
             else:
                 delta = timestamp[-1] - timestamp[0]
             fs = max(eeg.shape) / delta.total_seconds()
@@ -268,8 +269,8 @@ def compile_filters(FS):
     """
 
     global notch60, band545, band330, band245, band440
-    global delta, theta, alpha, beta, band1100
-    global impedance, band150,  band713,  band1550,  band550
+    global delta, theta, alpha, beta, band1100, mu
+    global impedance, band150, band713, band1550, band550
 
     notch60 = GenericNotch(f0=60, fs=FS)
     band545 = GenericButterBand(f0=5, f1=45, fs=FS, N=5)
@@ -278,20 +279,19 @@ def compile_filters(FS):
     band245 = GenericButterBand(f0=2, f1=45, fs=FS, N=5)
     band1100 = GenericButterBand(f0=1, f1=100, fs=FS, N=5)
 
-
     band150 = GenericButterBand(f0=1, f1=50, fs=FS, N=5)
     band713 = GenericButterBand(f0=7, f1=13, fs=FS, N=5)
     band1550 = GenericButterBand(f0=15, f1=50, fs=FS, N=5)
     band550 = GenericButterBand(f0=5, f1=50, fs=FS, N=5)
 
-
     delta = GenericButterBand(f0=2, f1=5, fs=FS, N=5)
     theta = GenericButterBand(f0=5, f1=8, fs=FS, N=5)
     alpha = GenericButterBand(f0=8, f1=12, fs=FS, N=5)
-    beta = GenericButterBand(f0=12, f1=30, fs=FS, N=5)
+    beta = GenericButterBand(f0=13, f1=30, fs=FS, N=5)
+    mu = alpha
 
     f = 1
-    impedance = GenericButterBand(f0=31.2-f, f1=31.2+f, fs=FS, N=5)
+    impedance = GenericButterBand(f0=31.2 - f, f1=31.2 + f, fs=FS, N=5)
 
 
 # Precompile filter for 250 Hz
