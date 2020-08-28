@@ -56,12 +56,12 @@ Offline measurement
 
 .. code:: ipython3
 
-    openbci = Cyton('serial', '/dev/ttyUSB5', capture_stream=True, daisy=False)
+    openbci = Cyton('serial', '/dev/ttyUSB0', capture_stream=True, daisy=False)
     openbci.command(cnt.DEFAULT_CHANNELS_SETTINGS)
     openbci.leadoff_impedance(range(1, 9), pchan=cnt.TEST_SIGNAL_NOT_APPLIED, nchan=cnt.TEST_SIGNAL_APPLIED)
     
-    openbci.stream(10)
-    data_raw = openbci.eeg_time_series
+    openbci.stream(4)
+    data_raw = openbci.eeg_time_series[:, 250:]
 
 
 .. parsed-literal::
@@ -122,7 +122,7 @@ Our ``Vpp`` can be calculated as the *maximun* - *minimum*
 
 .. parsed-literal::
 
-    54.00012802801145
+    56.05466254605543
 
 
 
@@ -158,7 +158,7 @@ Then, considering that we have ``uV`` instaead of ``V``:
 
 .. parsed-literal::
 
-    For 54.00 uVrms the electrode impedance is 12.73 KOhm
+    For 56.05 uVrms the electrode impedance is 13.21 KOhm
 
 
 The Cyton board has a 2.2K Ohm resistors in series with each electrode,
@@ -179,7 +179,7 @@ so we must remove this value in way to get the real one.
 
 .. parsed-literal::
 
-    For 54.00 uVrms the electrode-to-head impedance is 10.53 KOhm
+    For 56.05 uVrms the electrode-to-head impedance is 11.01 KOhm
 
 
 Real time measurement
@@ -191,7 +191,7 @@ same potentiometer.
 .. code:: ipython3
 
     Z = []
-    with OpenBCIConsumer('serial', '/dev/ttyUSB5', host='localhost', stream_samples=250, daisy=False) as (stream, openbci):
+    with OpenBCIConsumer('serial', '/dev/ttyUSB0', host='localhost', stream_samples=250, daisy=False) as (stream, openbci):
         
         openbci.stop_stream()
         openbci.command(cnt.DEFAULT_CHANNELS_SETTINGS)
@@ -218,28 +218,28 @@ same potentiometer.
 
 .. parsed-literal::
 
-    11.08 kOhm
-    14.34 kOhm
-    11.51 kOhm
-    12.64 kOhm
-    9.60 kOhm
-    7.59 kOhm
-    10.69 kOhm
-    5.77 kOhm
-    4.50 kOhm
-    3.81 kOhm
-    3.03 kOhm
-    4.75 kOhm
-    7.34 kOhm
-    7.99 kOhm
-    12.34 kOhm
-    12.48 kOhm
-    11.43 kOhm
-    10.94 kOhm
-    6.73 kOhm
-    9.06 kOhm
-    4.44 kOhm
-    2.99 kOhm
+    23.21 kOhm
+    0.00 kOhm
+    4.38 kOhm
+    0.75 kOhm
+    1.79 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.39 kOhm
+    1.31 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    1.92 kOhm
+    1.30 kOhm
+    0.86 kOhm
+    0.00 kOhm
+    0.00 kOhm
+    0.00 kOhm
 
 
 .. code:: ipython3

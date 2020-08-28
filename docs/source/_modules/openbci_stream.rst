@@ -15,7 +15,6 @@ Subpackages
    openbci_stream.acquisition
    openbci_stream.consumer
    openbci_stream.handlers
-   openbci_stream.preprocess
    openbci_stream.utils
 
 Submodules
