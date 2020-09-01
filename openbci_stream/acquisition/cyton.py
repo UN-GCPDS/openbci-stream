@@ -359,6 +359,8 @@ class CytonRFDuino(CytonBase):
         self.command(self.STOP_STREAM)
         super().stop_stream()
 
+        self.binary_stream.close()
+
         if wait_for_no_data:
             self._wait_for_no_data()
 

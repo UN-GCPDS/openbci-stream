@@ -307,6 +307,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                 self._montage = {i: i for i in range(8)}
 
     # ----------------------------------------------------------------------
+    @property
+    def streaming(self):
+        """"""
+        if hasattr(self, 'binary_stream'):
+            self.binary_stream.producer
+
+    # ----------------------------------------------------------------------
+
     def deactivate_channel(self, channels):
         """Deactivate the channels specified."""
 
@@ -544,8 +552,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         # # if self.montage:
             # # channels = self.montage.keys()
@@ -647,7 +655,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                 f"`wait_for_no_data` only works with `capture_stream=True`")
 
     # ----------------------------------------------------------------------
-
     def stack(self, offset=0):
         """"""
         if not self.eeg_buffer.qsize():

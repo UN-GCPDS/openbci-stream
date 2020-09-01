@@ -13,13 +13,10 @@ Navigation
    _notebooks/03-openbci_stream_installation
    _notebooks/04-data_acquisition
    _notebooks/05-board_modes
-   _notebooks/06-electrodes_impedance
-   _notebooks/07-stream_markers
-   _notebooks/08-eeg_processing
-   _notebooks/09-eeg_filtering
+   _notebooks/06-stream_markers
 
    _notebooks/A1-raw_cleaning
-   _notebooks/A2-binary_deserialization
+   _notebooks/A2-electrodes_impedance
    _notebooks/A3-command_line_interface
    _notebooks/A4-configure_remote_host
    _notebooks/A5-mne_processing
