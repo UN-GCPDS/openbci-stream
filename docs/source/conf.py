@@ -307,7 +307,6 @@ notebooks = '\n   '.join(sorted(notebooks))
 
 with open('index.rst', 'w') as file:
     file.write(f"""
-
 .. include:: {notebooks_dir}/readme.rst
 
 Navigation
@@ -318,6 +317,7 @@ Navigation
    :name: mastertoc
 
    {notebooks}
+
 
 Indices and tables
 ------------------
