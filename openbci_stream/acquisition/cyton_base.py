@@ -200,6 +200,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         elif daisy == 'auto':
             self.daisy = self.daisy_attached()
 
+        # Gain
+        self._gain = None
+
         # Montage
         self.montage = montage
 
@@ -530,7 +533,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                         self._data_eeg.put(eeg)
                         self._data_aux.put(aux)
 
-                        timestamp = np.zeros(message.value['context']['samples'])
+                        timestamp = np.zeros(
+                            message.value['context']['samples'])
                         timestamp[-1] = message.value['context']['created']
                         self._data_timestamp.put(timestamp)
 
@@ -642,7 +646,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         interpolated.
         """
 
-        timestamp = [self._data_timestamp.get() for _ in range(self._data_timestamp.qsize())]
+        timestamp = [self._data_timestamp.get()
+                     for _ in range(self._data_timestamp.qsize())]
         timestamp = np.concatenate(timestamp, axis=0)
         length = self.eeg_time_series.shape[1]
         sample_rate = self.sample_rate
@@ -771,7 +776,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             writer.add_markers(self.markers)
 
             logging.info(f'Writed a vector of shape ({eeg.shape}) for EEG data')
-            logging.info(f'Writed a vector of shape ({time.shape}) for time data')
+            logging.info(
+                f'Writed a vector of shape ({time.shape}) for time data')
             logging.info(f'Writed a vector of shape ({aux.shape}) for aux data')
 
             if bool(self.markers):

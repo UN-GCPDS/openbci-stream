@@ -12,6 +12,9 @@ For examples and descriptions refers to documentation:
 import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
 
+from openbci_stream.utils import autokill_process
+autokill_process(name='stream_rpyc')
+
 
 ########################################################################
 class StremamService(rpyc.Service):

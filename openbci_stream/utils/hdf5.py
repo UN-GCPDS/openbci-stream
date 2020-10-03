@@ -47,7 +47,7 @@ def np2json_serializer(obj):
 
 
 # ----------------------------------------------------------------------
-def interpolate_datetime(timestamp: List[timestamp_], length: int) -> List[timestamp_]:
+def interpolate_datetime(timestamp: List[timestamp_], length: Optional[int] = None) -> List[timestamp_]:
     """Interpolate uncomplete timestamp list.
 
     The input timestamp list must be a list of timestamps separated by zeros,
@@ -60,7 +60,8 @@ def interpolate_datetime(timestamp: List[timestamp_], length: int) -> List[times
     timestamp
         An array with timestamps and zeros.
     length
-        The length of the final timestamp array
+        The length of the final timestamp array, if not defined then will be the
+        same size of the input timestamp.
 
     Returns
     -------
@@ -68,7 +69,11 @@ def interpolate_datetime(timestamp: List[timestamp_], length: int) -> List[times
         An array with interpolated timestamps.
     """
 
+    if length is None:
+        length = timestamp.shape[0]
+
     nonzero = np.nonzero(timestamp)[0]
+
     x = nonzero * (length / nonzero[-1])
     interp = interp1d(x, timestamp[nonzero], fill_value="extrapolate")
     # args = np.arange(-nonzero[0], length - nonzero[0])
@@ -120,7 +125,8 @@ class HDF5Writer:
         header2 = {'shape': self.array_eeg.shape}
         if self.host_ntp:
             client = ntplib.NTPClient()
-            header2.update({'end-offset': client.request(self.host_ntp).offset * 1000})
+            header2.update(
+                {'end-offset': client.request(self.host_ntp).offset * 1000})
 
         self.array_hdr.append([json.dumps(header2, default=np2json_serializer)])
         self.f.close()
@@ -160,7 +166,8 @@ class HDF5Writer:
         """
         if host:
             client = ntplib.NTPClient()
-            header.update({'start-offset': client.request(host).offset * 1000, })
+            header.update(
+                {'start-offset': client.request(host).offset * 1000, })
         self.host_ntp = host
 
         self.array_hdr.append([json.dumps(header, default=np2json_serializer)])
@@ -177,7 +184,8 @@ class HDF5Writer:
           * Annotations can describe a complex event with a custom duration and
             long description, e.g artifacts.
         """
-        self.array_mkr.append([json.dumps([timestamp, marker], default=np2json_serializer)])
+        self.array_mkr.append(
+            [json.dumps([timestamp, marker], default=np2json_serializer)])
 
     # ----------------------------------------------------------------------
     def add_markers(self, markers: Dict[str, List[timestamp_]]) -> None:
@@ -229,7 +237,8 @@ class HDF5Writer:
             The description of the annotation.
         """
 
-        self.array_anno.append([json.dumps([onset, duration, description], default=np2json_serializer)])
+        self.array_anno.append(
+            [json.dumps([onset, duration, description], default=np2json_serializer)])
 
     # ----------------------------------------------------------------------
     def add_eeg(self, eeg_data: np.ndarray, timestamp: Optional[timestamp_] = None) -> None:
@@ -252,14 +261,16 @@ class HDF5Writer:
                 self.f.root, 'eeg_data', atom_eeg, shape=(self.channels, 0), title='EEG time series')
 
         if self.channels != eeg_data.shape[0]:
-            logging.warning(f'The number of channels {self.channels} can not be changed!')
+            logging.warning(
+                f'The number of channels {self.channels} can not be changed!')
             return
 
         self.array_eeg.append(eeg_data)
 
         if isinstance(timestamp, (np.ndarray, list, tuple)):
 
-            assert len(timestamp) == eeg_data.shape[1], f"Is not recommended add data and timestamp from different sizes. {len(timestamp)} != {eeg_data.shape[1]}"
+            assert len(
+                timestamp) == eeg_data.shape[1], f"Is not recommended add data and timestamp from different sizes. {len(timestamp)} != {eeg_data.shape[1]}"
             self.add_timestamp(timestamp)
 
         elif timestamp != None:
@@ -345,7 +356,8 @@ class HDF5Reader:
         header = json.loads(self.f.root.header[0])
         header.update(json.loads(self.f.root.header[1]))
         if 'channels' in header:
-            header['channels'] = {int(k): header['channels'][k] for k in header['channels']}
+            header['channels'] = {int(k): header['channels'][k]
+                                  for k in header['channels']}
         return header
 
     # ----------------------------------------------------------------------
@@ -403,7 +415,8 @@ class HDF5Reader:
         markers_relative = {}
         for key in self.markers:
             locs = self.markers[key]
-            markers_relative[key] = [self.timestamp_relative[np.abs(self.timestamp - loc).argmin()] for loc in locs]
+            markers_relative[key] = [self.timestamp_relative[np.abs(
+                self.timestamp - loc).argmin()] for loc in locs]
 
         return markers_relative
 
@@ -434,7 +447,8 @@ class HDF5Reader:
         """A list with the same length of EEG with markers as numbers."""
         classes = np.zeros(self.timestamp_relative.shape)
         for marker in self.markers_relative:
-            classes[self.markers_relative[marker]] = self.classes_indexes[marker]
+            classes[self.markers_relative[marker]
+                    ] = self.classes_indexes[marker]
         return classes
 
     # ----------------------------------------------------------------------
@@ -545,7 +559,8 @@ class HDF5Reader:
         for class_ in markers:
             starts = self.markers_relative[class_]
             classes.extend([class_] * len(starts))
-            data.extend([self.eeg[:, start + (tmin) * sampling_rate:start + (tmin + duration) * sampling_rate] for start in starts])
+            data.extend([self.eeg[:, start + (tmin) * sampling_rate:start
+                                  + (tmin + duration) * sampling_rate] for start in starts])
 
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
@@ -623,7 +638,8 @@ class HDF5Reader:
             'technician': self.header.get('technician', ''),
         }
 
-        f = pyedflib.EdfWriter(filename, len(edf_channel_info), file_type=pyedflib.FILETYPE_EDFPLUS)
+        f = pyedflib.EdfWriter(filename, len(
+            edf_channel_info), file_type=pyedflib.FILETYPE_EDFPLUS)
 
         f.setHeader(header)
         f.setSignalHeaders(edf_channel_info)

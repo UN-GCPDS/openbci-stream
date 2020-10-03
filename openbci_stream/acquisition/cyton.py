@@ -148,7 +148,7 @@ import logging
 import asyncore
 from threading import Thread
 from datetime import datetime
-from typing import Optional, Union, Literal, Dict, List
+from typing import Optional, Union, Literal, Dict, List, Any
 
 from .cyton_base import CytonBase
 from .tcp_server import WiFiShieldTCPServer
@@ -361,8 +361,10 @@ class CytonRFDuino(CytonBase):
 
         default = 24
         response = self.command(self.QUERY_REGISTER)
-        registers = {reg.split(',')[0]: reg.split(',')[1:] for reg in filter(None, response.decode().split('\n'))}
-        gains = [self.AD1299_GAIN_REGISTER.get(''.join(registers.get(f'CH{i}SET', '')[3:6]).replace(' ', ''), default) for i in range(1, 9)]
+        registers = {reg.split(',')[0]: reg.split(',')[1:]
+                     for reg in filter(None, response.decode().split('\n'))}
+        gains = [self.AD1299_GAIN_REGISTER.get(''.join(registers.get(
+            f'CH{i}SET', '')[3:6]).replace(' ', ''), default) for i in range(1, 9)]
         return gains
 
 
@@ -527,21 +529,34 @@ class CytonWiFi(CytonBase):
         asyncore.close_all()
 
     # ----------------------------------------------------------------------
-    def _create_tcp_server(self) -> None:
-        """Create TCP server, this server will handle the streaming EEG data."""
-
-        kafka_context = {
+    def kafka_context(self) -> Dict[str, Any]:
+        """Kafka contex generator."""
+        return {
             'daisy': self.daisy,
             'boardmode': self.boardmode,
             'montage': self.montage,
             'connection': 'wifi',
+            'gain': self._gain,
         }
 
+    # ----------------------------------------------------------------------
+    def _create_tcp_server(self) -> None:
+        """Create TCP server, this server will handle the streaming EEG data."""
+
+        # kafka_context = {
+            # 'daisy': self.daisy,
+            # 'boardmode': self.boardmode,
+            # 'montage': self.montage,
+            # 'connection': 'wifi',
+        # }
+
         self.local_wifi_server = WiFiShieldTCPServer(self._local_ip_address,
-                                                     lambda: getattr(self, 'binary_stream'),
-                                                     kafka_context,
+                                                     lambda: getattr(
+                                                         self, 'binary_stream'),
+                                                     self.kafka_context,
                                                      )
-        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[1]
+        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[
+            1]
         logging.info(
             f"Open socket on {self._local_ip_address}:{self.local_wifi_server_port}")
 
@@ -567,13 +582,20 @@ class CytonWiFi(CytonBase):
             self._gain = board_info['gains']
             self.local_wifi_server.set_gain(self._gain)
 
+        # res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
+                                     # json={
+                                        # 'ip': self._local_ip_address,
+                                        # 'port': self.local_wifi_server_port,
+                                        # 'output': 'json',
+                                        # 'delimiter': True,
+                                        # 'latency': 10000,
+                                         # })
         res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
                                      json={
                                         'ip': self._local_ip_address,
                                         'port': self.local_wifi_server_port,
-                                        'output': 'json',
-                                        'delimiter': True,
-                                        'latency': 10,
+                                        'output': 'raw',
+                                        'latency': 50,
                                          })
         if res_tcp_post.status_code == 200:
             tcp_status = res_tcp_post.json()

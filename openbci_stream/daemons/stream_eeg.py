@@ -19,6 +19,7 @@ from queue import Queue
 from threading import Thread
 from datetime import datetime
 import rawutil
+import logging
 
 from kafka import KafkaConsumer, KafkaProducer
 from typing import TypeVar, List, Dict, Tuple, Any
@@ -80,7 +81,7 @@ class BinaryToEEG:
         while True:
             for record in self.consumer_binary:
                 if DEBUG:
-                    print(f"processing {len(record.value['data'])}")
+                    logging.info(f"processing {len(record.value['data'])}")
                 self.process(record)
 
     # ----------------------------------------------------------------------
@@ -100,11 +101,13 @@ class BinaryToEEG:
 
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
         if not data.shape[0]:
-            print('No data after alignement')
+            if DEBUG:
+                logging.warning('No data after alignement')
             return
 
         # Thread for unpack data
-        self.b = Thread(target=self.deserialize, args=(data.copy(), context.copy()))
+        self.b = Thread(target=self.deserialize,
+                        args=(data.copy(), context.copy()))
         self.b.start()
 
     # ----------------------------------------------------------------------
@@ -127,8 +130,8 @@ class BinaryToEEG:
         data = np.array(list(binary))
 
         # Search for the the first index with a `BIN_HEADER`
-        start = [np.median(np.roll(data, -i, axis=0)[::33]) ==
-                 self.BIN_HEADER for i in range(33)].index(True)
+        start = [np.median(np.roll(data, -i, axis=0)[::33])
+                 == self.BIN_HEADER for i in range(33)].index(True)
 
         if (start == 0) and (data.shape[0] % 33 == 0):
             data_aligned = data
@@ -281,8 +284,10 @@ class BinaryToEEG:
                 daisy = eeg_data[::2]
                 board = eeg_data[1::2]
 
-            board = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in board.T]).T
-            daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in daisy.T]).T
+            board = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(
+                p.shape[0]), p) for p in board.T]).T
+            daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(
+                p.shape[0]), p) for p in daisy.T]).T
 
             eeg = np.concatenate([np.stack(board), np.stack(daisy)], axis=1)
 
@@ -403,7 +408,7 @@ class BinaryToEEG:
         self.producer_eeg.send('eeg', data_)
 
         if DEBUG:
-            print(f"streamed {samples} samples")
+            logging.info(f"streamed {samples} samples")
 
 
 if __name__ == '__main__':

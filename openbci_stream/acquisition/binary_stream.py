@@ -6,11 +6,12 @@ Binary stream
 This module must be run in the same machine that OpenBCI hardware was attached.
 """
 
-from kafka import KafkaProducer
 import pickle
 import logging
-
+from datetime import datetime
 from typing import Dict, Any
+
+from kafka import KafkaProducer
 
 
 ########################################################################
@@ -82,6 +83,7 @@ class BinaryStream:
 
         if len(self.accumulated) >= size:
             data['data'] = self.accumulated[:size]
+            data['context']['created'] = datetime.now().timestamp()
             self.producer.send(self.TOPIC, data)
             self.accumulated = self.accumulated[size:]
 
