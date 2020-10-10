@@ -380,7 +380,7 @@ class CytonWiFi(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address, /, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=1e3):
+    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=1e3):
         """WiFi mode connection.
 
         Parameters
@@ -631,7 +631,7 @@ class Cyton:
     """
 
     # ----------------------------------------------------------------------
-    def __new__(self, mode, endpoint=None, /, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=None):
+    def __new__(self, mode, endpoint=None, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=None):
         """Constructor"""
         if host and capture_stream:
             logging.warning(
