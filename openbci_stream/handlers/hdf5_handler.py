@@ -50,9 +50,12 @@ class HDF5_Writer:
     # ----------------------------------------------------------------------
     def add_marker(self, marker: Any, timestamp: timesamp) -> None:
         """"""
-        # self.array_mkr.append(
-            # [json.dumps({'marker': marker, 'timestamp': timestamp, })])
         self.array_mkr.append([json.dumps([timestamp, marker])])
+
+    # ----------------------------------------------------------------------
+    def add_annotation(self, onset: int, duration: int = 0, description: str = '') -> None:
+        """"""
+        self.array_anno.append([json.dumps([onset, duration, description])])
 
     # ----------------------------------------------------------------------
     def add_eeg(self, eeg_data: np.ndarray, timestamp: Optional[timesamp] = None) -> None:
@@ -123,6 +126,8 @@ class HDF5_Writer:
             self.f.root, 'timestamp', atom_dtm, shape=(0,), title='EEG timestamp')
         self.array_mkr = self.f.create_earray(
             self.f.root, 'markers', atom_json, shape=(0,), title='EEG markers')
+        self.array_anno = self.f.create_earray(
+            self.f.root, 'annotations', atom_json, shape=(0,), title='EEG annotations')
 
     # ----------------------------------------------------------------------
     def __exit__(self, exc_type: Text, exc_val: Text, exc_tb: Text) -> None:
@@ -169,6 +174,12 @@ class HDF5_Reader:
     def aux(self) -> np.ndarray:
         """"""
         return self.f.root.aux_data
+
+    # ----------------------------------------------------------------------
+    @property
+    def annotations(self) -> list:
+        """"""
+        return [json.loads(anno) for anno in self.f.root.annotations]
 
     # ----------------------------------------------------------------------
     @property
