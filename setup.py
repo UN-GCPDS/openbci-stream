@@ -47,8 +47,8 @@ setup(
 
     scripts=[
        "cmd/openbci_cli",
-       "cmd/openbci_rpyc",
-       "cmd/openbci_eeg",
+       "cmd/stream_rpyc",
+       "cmd/stream_eeg",
     ],
 
     include_package_data=True,
