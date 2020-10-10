@@ -157,6 +157,7 @@ def main():
                 print(f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n"
                       f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
 
+                # TODO
                 writer = HDF5_Writer(args.output)
                 header = {'sample_rate': args.stream_samples,
                           'datetime': datetime.now().timestamp(),

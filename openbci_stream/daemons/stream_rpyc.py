@@ -11,15 +11,17 @@ import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
 
 ########################################################################
-class OpenBCIService(rpyc.Service):
+
+
+class StremamService(rpyc.Service):
     """Server with RPyC for control OpenBCI board remotely.
     """
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def exposed_CytonRFDuino(self, *args, **kwargs):
         return CytonRFDuino(*args, **kwargs)
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def exposed_CytonWiFi(self, *args, **kwargs):
         """"""
         return CytonWiFi(*args, **kwargs)
@@ -36,13 +38,15 @@ class OpenBCIService(rpyc.Service):
         # """
         # pass
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
+
 def start_service():
     """Start the rpyc server.
     """
     from rpyc.utils.server import ThreadedServer
 
-    t = ThreadedServer(OpenBCIService,
+    t = ThreadedServer(StremamService,
                        port=18861,
                        protocol_config={
                            'allow_public_attrs': True,
