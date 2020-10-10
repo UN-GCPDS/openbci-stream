@@ -18,7 +18,7 @@ class OpenBCIConsumer:
     """"""
 
     # ----------------------------------------------------------------------
-    def __init__(self, /, start=None, endpoint=None, host='localhost', daisy='auto', montage=None, stream_samples=None):
+    def __init__(self, start=None, endpoint=None, host='localhost', daisy='auto', montage=None, stream_samples=None):
         """"""
         self.bootstrap_servers = [f'{host}:9092']
         self.topics = ['eeg', 'marker']
