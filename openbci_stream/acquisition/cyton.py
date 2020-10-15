@@ -149,8 +149,8 @@ from datetime import datetime
 import requests
 import serial
 
-from openbci_stream.acquisition.cyton_base import CytonBase, CytonConstants
-from openbci_stream.acquisition.tcp_server import WiFiShieldTCPServer
+from .cyton_base import CytonBase
+from .tcp_server import WiFiShieldTCPServer
 
 import rpyc
 
@@ -587,7 +587,6 @@ class CytonWiFi(CytonBase):
 
             if not board_info['board_connected']:
                 raise RuntimeError("No board connected to WiFi Shield.")
-                return
             self._gain = board_info['gains']
 
         res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",

@@ -8,11 +8,10 @@ attached remotely.
 """
 
 import rpyc
-from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
+from ..acquisition import CytonRFDuino, CytonWiFi
+
 
 ########################################################################
-
-
 class StremamService(rpyc.Service):
     """Server with RPyC for control OpenBCI board remotely.
     """

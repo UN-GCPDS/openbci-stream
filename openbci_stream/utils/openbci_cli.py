@@ -4,7 +4,7 @@ Command line interface
 ======================
 """
 
-import os
+# import os
 import sys
 import signal
 import pickle
@@ -12,13 +12,13 @@ import logging
 import argparse
 from datetime import datetime
 
-import numpy as np
+# import numpy as np
 from kafka import KafkaProducer
-from colorama import Fore, Back, Style
+from colorama import Fore
 
-from openbci_stream.handlers import HDF5_Writer
-from openbci_stream.consumer import OpenBCIConsumer
-from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
+from ..handlers import HDF5_Writer
+from ..consumer import OpenBCIConsumer
+from ..acquisition import CytonRFDuino, CytonWiFi
 
 # Disable Kafka loggings
 logging.getLogger().disabled = True
@@ -186,11 +186,13 @@ def main():
 
                 if message.topic == 'marker':
 
-                    marker = data.value['marker']
-                    dt = data.value['datetime']
+                    # TODO: select time to use
 
-                    marker = message.value['marker']
-                    dt = datetime.fromtimestamp(message.value['datetime'])
+                    # marker = message.value['marker']
+                    # dt = message.value['datetime']
+
+                    # marker = message.value['marker']
+                    # dt = datetime.fromtimestamp(message.value['datetime'])
 
                     # created = datetime.fromtimestamp(message.value['timestamp'])
                     marker = message.value

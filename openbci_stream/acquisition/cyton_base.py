@@ -4,8 +4,6 @@ Cyton Base
 ==========
 """
 
-import re
-# import sys
 import time
 import logging
 import pickle
@@ -21,12 +19,13 @@ from abc import ABCMeta, abstractmethod
 from multiprocessing import Process, Manager
 from threading import Thread
 
-from openbci_stream.acquisition.binary_stream import BinaryStream
+from .binary_stream import BinaryStream
+from ..consumer import OpenBCIConsumer
 
 from kafka import KafkaConsumer
-from kafka.errors import NoBrokersAvailable
-from openbci_stream import doc_urls
-import traceback
+# from kafka.errors import NoBrokersAvailable
+# from openbci_stream import doc_urls
+# import traceback
 
 
 ########################################################################
@@ -592,8 +591,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     # ----------------------------------------------------------------------
     def capture_stream(self):
         """"""
-        from openbci_stream.consumer import OpenBCIConsumer
-
         self.reset_buffers()
 
         def bulk_buffer():
@@ -624,7 +621,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         self.persistent_process.start()
 
     # ----------------------------------------------------------------------
-
     def _wait_for_data(self):
         """"""
         t0 = time.time()
