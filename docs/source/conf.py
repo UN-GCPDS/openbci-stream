@@ -45,12 +45,10 @@ extensions = [
     'sphinx.ext.viewcode',
 
     'sphinx.ext.autosectionlabel',
-
     'sphinx.ext.todo',
 
-    # 'micropython_code',
-
-    'IPython.sphinxext.ipython_console_highlighting',
+    'nbsphinx',
+    'sphinx.ext.mathjax',
 ]
 
 naoleon_google_docstring = False
@@ -225,10 +223,15 @@ epub_exclude_files = ['search.html']
 autodoc_mock_imports = [
 
     'IPython',
-    # 'base_server.WSHandler_Serial',
-    # 'base_server.WSHandler_WiFi',
-    # 'ws.base_server',
-
+    'numpy',
+    'scipy',
+    'mne',
+    'matplotlib',
+    'google',
+    'colorama',
+    'tqdm',
+    'pandas',
+    'tables',
 ]
 
 todo_include_todos = True
@@ -254,3 +257,58 @@ html_favicon = '_static/favico.ico'
 
 def setup(app):
     app.add_css_file("custom.css")
+
+
+highlight_language = 'none'
+html_sourcelink_suffix = ''
+
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc={'figure.dpi': 96}",
+]
+
+nbsphinx_execute = 'never'
+# nbsphinx_input_prompt = 'In [%s]:'
+# nbsphinx_output_prompt = 'Out[%s]:'
+nbsphinx_kernel_name = 'python3'
+
+
+notebooks_dir = 'notebooks'
+
+notebooks_list = os.listdir(os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), notebooks_dir))
+
+notebooks = []
+for notebook in notebooks_list:
+    if notebook != 'readme.ipynb' and notebook.endswith('.ipynb'):
+        notebooks.append(f"{notebooks_dir}/{notebook.replace('.ipynb', '')}")
+
+notebooks = sorted(notebooks)
+
+with open('index.rst', 'w') as file:
+    file.write("""
+.. include:: {notebooks_dir}/readme.rst
+
+Navigation
+----------
+
+.. toctree::
+   :maxdepth: 2
+   :name: mastertoc
+
+   {notebooks}
+
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+    """.format(notebooks='\n   '.join(notebooks), notebooks_dir=notebooks_dir))
+
+
+os.system("jupyter nbconvert --to rst notebooks/readme.ipynb")
+os.system("jupyter nbconvert --to markdown notebooks/readme.ipynb")
+os.system("mv notebooks/readme.md ../../README.md")

@@ -137,3 +137,6 @@ dmypy.json
 *.wpr
 *.wpu
 *.h5
+
+docs/source/notebooks/gcpds
+docs/source/notebooks/openbci_stream

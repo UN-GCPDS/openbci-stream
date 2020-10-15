@@ -1,39 +1,35 @@
-.. include:: _notebooks/00-readme.rst
 
+.. include:: notebooks/readme.rst
 
 Navigation
-==========
+----------
 
 .. toctree::
    :maxdepth: 2
    :name: mastertoc
 
-   _notebooks/01-hardware_configurations
-   _notebooks/02-kafka_configuration
-   _notebooks/03-openbci_stream_installation
-   _notebooks/04-data_acquisition
-   _notebooks/05-board_modes
-   _notebooks/06-stream_markers
-
-   _notebooks/A1-raw_cleaning
-   _notebooks/A2-electrodes_impedance
-   _notebooks/A3-command_line_interface
-   _notebooks/A4-configure_remote_host
-   _notebooks/A5-mne_processing
-   _notebooks/A6-data_storage_handler
-
-
+   notebooks/01-hardware_configurations
+   notebooks/02-kafka_configuration
+   notebooks/03-openbci_stream_installation
+   notebooks/04-data_acquisition
+   notebooks/05-board_modes
+   notebooks/06-stream_markers
+   notebooks/A1-raw_cleaning
+   notebooks/A2-electrodes_impedance
+   notebooks/A3-command_line_interface
+   notebooks/A4-configure_remote_host
+   notebooks/A5-mne_processing
+   notebooks/A6-data_storage_handler
+   notebooks/A7-latency
+   notebooks/license
+   notebooks/sandbox
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
 
-
-
-----
-
-This project is licenced under the `Simplified BSD License <_notebooks/license.html>`_
+    

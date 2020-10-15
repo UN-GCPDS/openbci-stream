@@ -310,6 +310,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     @property
     def streaming(self):
         """"""
+        # TODO
         if hasattr(self, 'binary_stream'):
             self.binary_stream.producer
 
