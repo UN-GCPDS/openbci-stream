@@ -16,9 +16,8 @@ from datetime import datetime
 from kafka import KafkaProducer
 from colorama import Fore
 
-from ..handlers import HDF5_Writer
-from ..consumer import OpenBCIConsumer
-from ..acquisition import CytonRFDuino, CytonWiFi
+from .hdf5 import HDF5Writer
+from ..acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
 
 # Disable Kafka loggings
 logging.getLogger().disabled = True
@@ -158,7 +157,7 @@ def main():
                       f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
 
                 # TODO
-                writer = HDF5_Writer(args.output)
+                writer = HDF5Writer(args.output)
                 header = {'sample_rate': args.stream_samples,
                           'datetime': datetime.now().timestamp(),
                           'montage': 'standard_1020',

@@ -20,7 +20,7 @@ from multiprocessing import Process, Manager
 from threading import Thread
 
 from .binary_stream import BinaryStream
-from ..consumer import OpenBCIConsumer
+from .consumer import OpenBCIConsumer
 
 from kafka import KafkaConsumer
 # from kafka.errors import NoBrokersAvailable
