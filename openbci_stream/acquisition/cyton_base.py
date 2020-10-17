@@ -20,7 +20,7 @@ from multiprocessing import Process, Manager
 from threading import Thread
 
 from .binary_stream import BinaryStream
-from .consumer import OpenBCIConsumer
+# from .consumer import OpenBCIConsumer
 
 from kafka import KafkaConsumer
 # from kafka.errors import NoBrokersAvailable
@@ -552,8 +552,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         # # if self.montage:
             # # channels = self.montage.keys()
@@ -591,6 +591,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     # ----------------------------------------------------------------------
     def capture_stream(self):
         """"""
+        # For prevent circular import
+        from .consumer import OpenBCIConsumer
+
         self.reset_buffers()
 
         def bulk_buffer():
@@ -782,7 +785,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             return eeg
         else:
             logging.warning(
-                f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation')
+                f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation\n'
+                f'This too could be because the `stream_eeg` daemon was not running.')
             return []
 
     # ----------------------------------------------------------------------

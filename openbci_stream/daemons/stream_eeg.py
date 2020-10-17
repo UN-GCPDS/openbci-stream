@@ -19,7 +19,7 @@ import rawutil
 
 from kafka import KafkaConsumer, KafkaProducer
 
-from ..utils import autokill_process
+from openbci_stream.utils import autokill_process
 autokill_process(name='binary_2_eeg')
 
 

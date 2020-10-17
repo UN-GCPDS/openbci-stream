@@ -8,7 +8,7 @@ OpenBCI Consumer
 import pickle
 import logging
 
-from ..acquisition import Cyton
+from .cyton import Cyton
 
 from kafka import KafkaConsumer
 

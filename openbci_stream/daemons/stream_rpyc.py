@@ -8,7 +8,7 @@ attached remotely.
 """
 
 import rpyc
-from ..acquisition import CytonRFDuino, CytonWiFi
+from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
 
 
 ########################################################################
