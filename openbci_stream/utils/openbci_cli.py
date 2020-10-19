@@ -16,8 +16,10 @@ from datetime import datetime
 from kafka import KafkaProducer
 from colorama import Fore
 
-from .hdf5 import HDF5Writer
-from ..acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
+from openbci_stream.utils.hdf5 import HDF5Writer
+# from .hdf5 import HDF5Writer
+from openbci_stream.acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
+# from ..acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
 
 # Disable Kafka loggings
 logging.getLogger().disabled = True
