@@ -4,10 +4,11 @@ Cyton Base
 ==========
 """
 
+import re
 import time
 import logging
 import pickle
-
+from datetime import datetime
 from functools import cached_property
 
 import numpy as np
@@ -27,8 +28,11 @@ from kafka import KafkaConsumer
 # from openbci_stream import doc_urls
 # import traceback
 
+from ..utils import HDF5Writer, interpolate_datetime
 
 ########################################################################
+
+
 class CytonConstants:
     """"""
 
@@ -167,7 +171,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     READING = None
 
     # ----------------------------------------------------------------------
-    def __init__(self, daisy, capture_stream, montage, stream_samples):
+    def __init__(self, daisy, capture_stream, montage, streaming_package_size):
         """"""
         # try:
             # self.binary_stream = BinaryStream()
@@ -176,6 +180,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             # logging.error('#' + '-' * 70)
             # logging.error('Kafka broker is not available!')
             # logging.error(f'Check {doc_urls.CONFIGURE_KAFKA} for instructions.')
+
+        self.sample_rate = 250
 
         # Daisy before Montage
         if daisy in [True, False]:
@@ -199,7 +205,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         # Autocapture stream
         self._auto_capture_stream = capture_stream
 
-        self.stream_samples = stream_samples
+        self.streaming_package_size = streaming_package_size
 
         # self.default_init()
 
@@ -301,9 +307,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         else:
 
             if self.daisy:
-                self._montage = {i: i for i in range(16)}
+                self._montage = {i: f'ch{i+1}' for i in range(16)}
             elif not self.daisy:
-                self._montage = {i: i for i in range(8)}
+                self._montage = {i: f'ch{i+1}' for i in range(8)}
 
     # ----------------------------------------------------------------------
     @property
@@ -352,6 +358,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
         if hasattr(self, c.decode()):
             c = getattr(self, c.decode())
+
+        if c in list(self.SAMPLE_RATE_VALUE.keys()):
+            self.sample_rate = int(self.SAMPLE_RATE_VALUE[c])
 
         self.reset_input_buffer()
         self.write(c)
@@ -654,47 +663,47 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             logging.warning(
                 f"`wait_for_no_data` only works with `capture_stream=True`")
 
-    # ----------------------------------------------------------------------
-    def stack(self, offset=0):
-        """"""
-        if not self.eeg_buffer.qsize():
-            return np.array([[], [], []])
+    # # ----------------------------------------------------------------------
+    # def stack(self, offset=0):
+        # """"""
+        # if not self.eeg_buffer.qsize():
+            # return np.array([[], [], []])
 
-        # move offset
-        [self.eeg_buffer.get() for _ in range(offset)]
-        [self.eeg_timestamp.get() for _ in range(offset)]
+        # # move offset
+        # [self.eeg_buffer.get() for _ in range(offset)]
         # [self.eeg_timestamp.get() for _ in range(offset)]
+        # # [self.eeg_timestamp.get() for _ in range(offset)]
 
-        qq = [self.eeg_buffer.get() for _ in range(self.eeg_buffer.qsize())]
-        eeg = np.concatenate(np.array(qq).T[0], axis=1)
+        # qq = [self.eeg_buffer.get() for _ in range(self.eeg_buffer.qsize())]
+        # eeg = np.concatenate(np.array(qq).T[0], axis=1)
 
-        try:
-            aux = np.concatenate(np.array(qq).T[1], axis=1)
-        except np.AxisError:  # For markers
-            aux = np.concatenate(np.array(qq).T[1])
+        # try:
+            # aux = np.concatenate(np.array(qq).T[1], axis=1)
+        # except np.AxisError:  # For markers
+            # aux = np.concatenate(np.array(qq).T[1])
 
-        ww = [self.eeg_timestamp.get()
-              for _ in range(self.eeg_timestamp.qsize())]
-        timestamp = np.concatenate(ww)
+        # ww = [self.eeg_timestamp.get()
+              # for _ in range(self.eeg_timestamp.qsize())]
+        # timestamp = np.concatenate(ww)
 
-        nonzero = np.nonzero(timestamp)
-        args = np.arange(len(timestamp))
-        interp = interp1d(
-            args[nonzero], timestamp[nonzero], fill_value="extrapolate")
-        timestamp = interp(args)
+        # nonzero = np.nonzero(timestamp)
+        # args = np.arange(len(timestamp))
+        # interp = interp1d(
+            # args[nonzero], timestamp[nonzero], fill_value="extrapolate")
+        # timestamp = interp(args)
 
-        ww = [self.eeg_markers.get()
-              for _ in range(self.eeg_markers.qsize())]
-        markers = list(zip(*ww))
+        # ww = [self.eeg_markers.get()
+              # for _ in range(self.eeg_markers.qsize())]
+        # markers = list(zip(*ww))
 
-        return np.array([eeg, aux, timestamp, markers])
+        # return np.array([eeg, aux, timestamp, markers])
 
     # ----------------------------------------------------------------------
     def start_stream(self, clear):
         """"""
 
         # try:
-        self.binary_stream = BinaryStream(self.stream_samples)
+        self.binary_stream = BinaryStream(self.streaming_package_size)
         # except NoBrokersAvailable:
             # traceback.print_exc()
             # logging.error('#' + '-' * 70)
@@ -787,7 +796,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             logging.warning(
                 f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation\n'
                 f'This too could be because the `stream_eeg` daemon was not running.')
-            return []
+            return np.array([])
 
     # ----------------------------------------------------------------------
     # @property
@@ -804,37 +813,27 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         return aux
 
     # ----------------------------------------------------------------------
-    # @property
-
     @cached_property
     def timestamp_time_series(self):
         """"""
-        timestamp = [self._data_timestamp.get()
-                     for _ in range(self._data_timestamp.qsize())]
+        timestamp = [self._data_timestamp.get() for _ in range(self._data_timestamp.qsize())]
         timestamp = np.concatenate(timestamp, axis=0)
+        length = self.eeg_time_series.shape[1]
+        sample_rate = self.sample_rate
 
-        nonzero = np.nonzero(timestamp)
-        args = np.arange(timestamp.shape[0])
-        interp = interp1d(
-            args[nonzero], timestamp[nonzero], fill_value="extrapolate")
-        timestamp = interp(args)
+        timestamp = interpolate_datetime(timestamp, length, sample_rate)
 
         return timestamp
 
     # ----------------------------------------------------------------------
-    # @property
-
     @cached_property
-    def markers_time_series(self):
+    def markers(self):
         """"""
         markers = {}
-
         for t, marker in [self._data_markers.get() for _ in range(self._data_markers.qsize())]:
             markers.setdefault(marker, []).append(t)
 
         return markers
-
-    ############################################################################
 
     # ----------------------------------------------------------------------
     def reset_buffers(self):
@@ -881,6 +880,16 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         time.sleep(s)
         self.stop_stream()
 
+    # # ----------------------------------------------------------------------
+    # def get_sample_rate(self):
+        # """"""
+        # response = self.command(self.SAMPLE_RATE_GET)
+        # try:
+            # sample_rate = re.findall('[0-9]+', response.decode())[0]
+            # return int(sample_rate)
+        # except:
+            # return None
+
     # ----------------------------------------------------------------------
     def listen_stream_markers(self, host='localhost', topics=['markers']):
         """"""
@@ -907,3 +916,32 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
         self.stream_markers = Thread(target=_send_marker)
         self.stream_markers.start()
+
+    # ----------------------------------------------------------------------
+    def save(self, filename, montage, sample_rate=None):
+        """"""
+        if sample_rate is None:
+            sample_rate = self.sample_rate
+
+        header = {'sample_rate': sample_rate,
+                  'datetime': datetime.now().timestamp(),
+                  'montage': montage,
+                  'channels': self.montage,
+                  }
+
+        with HDF5Writer(filename) as writer:
+            writer.add_header(header)
+
+            eeg = self.eeg_time_series
+            time = self.timestamp_time_series
+            aux = self.aux_time_series
+
+            writer.add_eeg(eeg, time)
+            writer.add_aux(aux)
+            writer.add_markers(self.markers)
+
+            logging.info(f'Writed a vector of shape ({eeg.shape}) for EEG data')
+            logging.info(f'Writed a vector of shape ({time.shape}) for time data')
+            logging.info(f'Writed a vector of shape ({aux.shape}) for aux data')
+            if self.markers:
+                logging.info(f'Writed {self.markers.keys()} markers')
