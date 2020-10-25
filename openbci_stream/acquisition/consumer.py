@@ -18,14 +18,14 @@ class OpenBCIConsumer:
     """"""
 
     # ----------------------------------------------------------------------
-    def __init__(self, mode=None, endpoint=None, host='localhost', daisy='auto', montage=None, stream_samples=None):
+    def __init__(self, mode=None, endpoint=None, host='localhost', daisy='auto', montage=None, streaming_package_size=None):
         """"""
         self.bootstrap_servers = [f'{host}:9092']
         self.topics = ['eeg', 'marker']
 
         if mode:
             self.openbci = Cyton(mode, endpoint, host,
-                                 daisy, False, montage, stream_samples)
+                                 daisy, False, montage, streaming_package_size)
 
     # ----------------------------------------------------------------------
     def deserialize(self, data):
