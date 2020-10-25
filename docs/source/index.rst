@@ -12,15 +12,15 @@ Navigation
    notebooks/01-hardware_configurations
    notebooks/02-kafka_configuration
    notebooks/03-data_acquisition
-   notebooks/04-distributed_acquisition
-   notebooks/05-board_modes
-   notebooks/06-stream_markers
-   notebooks/07-command_line_interface
-   notebooks/08-data_storage_handler
+   notebooks/04-board_modes
+   notebooks/05-stream_markers
+   notebooks/06-command_line_interface
+   notebooks/07-data_storage_handler
    notebooks/A1-raw_cleaning
    notebooks/A2-electrodes_impedance
-   notebooks/A3-server-based_streamer
-   notebooks/A4-latency_measurement
+   notebooks/A3-latency_measurement
+   notebooks/A4-server-based_acquisition
+   notebooks/Untitled
 
 Indices and tables
 ------------------

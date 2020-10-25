@@ -4,33 +4,11 @@ OpenBCI-Stream
 High level Python module for EEG acquisition and streaming for OpenBCI
 Cyton board.
 
-About this project
-------------------
-
-What is it?
-~~~~~~~~~~~
-
 A Python module for high-performance interfaces development with
 `OpenBCI boards <https://openbci.com/>`__. Currently, we have support
 for Cyton+Daisy and their WiFi module, additionally, we provide a
 real-time data streaming feature using
 `Kafka <https://kafka.apache.org/>`__.
-
-What we want?
-~~~~~~~~~~~~~
-
-We want a stable, high level, easy to use and extensible Python module
-focalizes on the hardware provided by OpenBCI, a library that can be
-used for students, hobbyist and researchers, we are developing a set of
-tools for preprocessing, real-time data handling and streaming of EEG
-signals.
-
-About us?
-~~~~~~~~~
-
-We are a research group focused on digital processing of signals and
-machine learning from the National University of Colombia at Manizales
-(`GCPDS <http://www.hermes.unal.edu.co/pages/Consultas/Grupo.xhtml;jsessionid=8701CFAD84FB5D540090846EA8912D48.tomcat6?idGrupo=615&opcion=1%3E>`__).
 
 Main features
 -------------

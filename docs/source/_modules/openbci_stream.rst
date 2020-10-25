@@ -13,14 +13,5 @@ Subpackages
    :maxdepth: 4
 
    openbci_stream.acquisition
-   openbci_stream.consumer
-   openbci_stream.handlers
+   openbci_stream.daemons
    openbci_stream.utils
-
-Submodules
-----------
-
-.. toctree::
-   :maxdepth: 4
-
-   openbci_stream.doc_urls
