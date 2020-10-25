@@ -41,7 +41,6 @@ setup(
                   'systemd_service',
                   'netifaces',
                   'python-nmap',
-                  # 'quickapi'
                   ],
     },
 
@@ -58,7 +57,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
 
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 
     classifiers=[
        'Development Status :: 4 - Beta',
@@ -70,7 +69,6 @@ setup(
        'Programming Language :: Python :: 3.7',
        'Programming Language :: Python :: 3.8',
        'Topic :: Scientific/Engineering',
-       'Topic :: Scientific/Engineering :: Artificial Intelligence',
        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
        'Topic :: Scientific/Engineering :: Medical Science Apps.',
        'Topic :: Software Development :: Embedded Systems',
