@@ -174,10 +174,12 @@ class BinaryToEEG:
 
         if context['daisy']:
 
+            # If offset, the pair index condition must change
             if np.array(self.offset).any():
                 eeg_data = np.concatenate([[self.offset], eeg_data], axis=0)
                 pair = not pair
 
+            # if not pair dataset, create an offeset
             if eeg_data.shape[0] % 2:
                 self.offset = eeg_data[-1]
                 eeg_data = np.delete(eeg_data, -1, axis=0)
@@ -188,8 +190,6 @@ class BinaryToEEG:
             else:
                 daisy = eeg_data[::2]
                 board = eeg_data[1::2]
-
-            # TODO: Handle offsets
 
             return np.concatenate([board, daisy], axis=1)
         else:
@@ -205,6 +205,16 @@ class BinaryToEEG:
 
         if context['daisy']:
 
+            # If offset, the pair index condition must change
+            if np.array(self.offset).any():
+                eeg_data = np.concatenate([[self.offset], eeg_data], axis=0)
+                pair = not pair
+
+            # if not pair dataset, create an offeset
+            if eeg_data.shape[0] % 2:
+                self.offset = eeg_data[-1]
+                eeg_data = np.delete(eeg_data, -1, axis=0)
+
             if pair:
                 board = eeg_data[::2]
                 daisy = eeg_data[1::2]
@@ -212,15 +222,13 @@ class BinaryToEEG:
                 daisy = eeg_data[::2]
                 board = eeg_data[1::2]
 
-            board = np.array([np.interp(np.arange(0, p.shape[0], 0.5),
-                                        np.arange(p.shape[0]), p) for p in board.T]).T
-            daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5),
-                                        np.arange(p.shape[0]), p) for p in daisy.T]).T
+            board = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in board.T]).T
+            daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in daisy.T]).T
 
-            # move the last value to the first position
-            daisy = np.roll(daisy, 1, axis=0)
-            # the last position is my offset, and complete with the previous offset
-            self.offset, daisy[0] = daisy[0].copy(), self.offset
+            # # move the last value to the first position
+            # daisy = np.roll(daisy, 1, axis=0)
+            # # the last position is my offset, and complete with the previous offset
+            # self.offset, daisy[0] = daisy[0].copy(), self.offset
 
             eeg = np.concatenate([np.stack(board), np.stack(daisy)], axis=1)
 
