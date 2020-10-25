@@ -166,7 +166,7 @@ class CytonRFDuino(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, port=None, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=250):
+    def __init__(self, port=None, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=250):
         """RFduino mode connection.
 
         Parameters
@@ -191,7 +191,7 @@ class CytonRFDuino(CytonBase):
         if host:
             rpyc_service = rpyc.connect(host, 18861)
             self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
-                port, False, False, pickle.dumps(montage), stream_samples)
+                port, False, False, pickle.dumps(montage), streaming_package_size)
             return
 
         if port is None:
@@ -208,7 +208,7 @@ class CytonRFDuino(CytonBase):
                                     write_timeout=0.01,
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_ONE)
-        super().__init__(daisy, capture_stream, montage, stream_samples)
+        super().__init__(daisy, capture_stream, montage, streaming_package_size)
 
         # self.stop_stream()
 
@@ -380,7 +380,7 @@ class CytonWiFi(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=1e3):
+    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=1e3):
         """WiFi mode connection.
 
         Parameters
@@ -395,7 +395,8 @@ class CytonWiFi(CytonBase):
 
         self._ip_address = ip_address
         self._readed = None
-        self._local_ip_address = self._get_local_ip_address()
+        # self._local_ip_address = self._get_local_ip_address()
+        self._local_ip_address = '192.168.4.2'
 
         if host == 'localhost':
             host = None
@@ -409,13 +410,13 @@ class CytonWiFi(CytonBase):
                     daisy=daisy,
                     capture_stream=False,
                     montage=pickle.dumps(montage),
-                    stream_samples=stream_samples)
+                    streaming_package_size=streaming_package_size)
             except socket.gaierror:
                 logging.error("'openbci_rpyc' daemon are running?")
 
             return
 
-        super().__init__(daisy, capture_stream, montage, stream_samples)
+        super().__init__(daisy, capture_stream, montage, streaming_package_size)
 
         self._create_tcp_server()
         time.sleep(5)
@@ -630,22 +631,22 @@ class Cyton:
     """
 
     # ----------------------------------------------------------------------
-    def __new__(self, mode, endpoint=None, host=None, daisy='auto', capture_stream=False, montage=None, stream_samples=None):
+    def __new__(self, mode, endpoint=None, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=None):
         """Constructor"""
         if host and capture_stream:
             logging.warning(
                 '`capture_stream` and `host` arguments are not available together yet.')
 
         if mode == 'serial':
-            if stream_samples is None:
-                stream_samples = 250
+            if streaming_package_size is None:
+                streaming_package_size = 250
             mode = CytonRFDuino(endpoint, host, daisy,
-                                capture_stream, montage, stream_samples)
+                                capture_stream, montage, streaming_package_size)
 
         elif mode == 'wifi':
-            if stream_samples is None:
-                stream_samples = 1e3
+            if streaming_package_size is None:
+                streaming_package_size = 1e3
             mode = CytonWiFi(endpoint, host, daisy,
-                             capture_stream, montage, stream_samples)
+                             capture_stream, montage, streaming_package_size)
 
         return mode
