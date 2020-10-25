@@ -9,6 +9,7 @@ Binary -> Kafka-Transformer -> EEG
 
 """
 
+import sys
 import pickle
 import struct
 import numpy as np
@@ -21,6 +22,8 @@ from kafka import KafkaConsumer, KafkaProducer
 
 from openbci_stream.utils import autokill_process
 autokill_process(name='binary_2_eeg')
+
+DEBUG = ('--debug' in sys.argv)
 
 
 ########################################################################
@@ -80,6 +83,8 @@ class BinaryToEEG:
         """Infinite loop for read Kafka stream."""
         while True:
             for record in self.consumer_binary:
+                if DEBUG:
+                    print(f"processing {len(record.value['data'])}")
                 self.process(record)
 
     # ----------------------------------------------------------------------
@@ -112,17 +117,21 @@ class BinaryToEEG:
         data = np.array(list(binary))
 
         # Search for the the first index with a `BIN_HEADER`
-        start = [np.median(np.roll(data, -i, axis=0)[::33])
-                 == self.BIN_HEADER for i in range(33)].index(True)
+        start = [np.median(np.roll(data, -i, axis=0)[::33]) ==
+                 self.BIN_HEADER for i in range(33)].index(True)
 
-        # Fix the offset to complete 33 bytes divisible array
-        end = (data.shape[0] - start) % 33
+        if (start == 0) and (data.shape[0] % 33 == 0):
+            data_align = data
+            remnant = b''
+        else:
+            # Fix the offset to complete 33 bytes divisible array
+            end = (data.shape[0] - start) % 33
+            data_align = data[start:-end]
+            remnant = binary[-end:]
 
-        data_align = data[start:-end]
         data_align = data_align.reshape(-1, 33)
 
         # The offset could be used for the next binary data
-        remnant = binary[-end:]
 
         return data_align, remnant
 
@@ -159,22 +168,28 @@ class BinaryToEEG:
     def deserialize_eeg_wifi(self, eeg, pair, context):
         """WiFi bibary not compress data.
         """
-        # eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
-        # eeg_data = np.array(memoryview(eeg.astype('i1').tobytes()).cast('I'))
-        # eeg_data = eeg_data.reshape(-1, 8) * self.scale_factor_eeg
         eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
                               for ch in row.reshape(-1, 3).tolist()] for row in eeg])
         eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
-            # board = eeg_data[::2]
-            # daisy = eeg_data[1::2]
+
+            if np.array(self.offset).any():
+                eeg_data = np.concatenate([[self.offset], eeg_data], axis=0)
+                pair = not pair
+
+            if eeg_data.shape[0] % 2:
+                self.offset = eeg_data[-1]
+                eeg_data = np.delete(eeg_data, -1, axis=0)
+
             if pair:
                 board = eeg_data[::2]
                 daisy = eeg_data[1::2]
             else:
                 daisy = eeg_data[::2]
                 board = eeg_data[1::2]
+
+            # TODO: Handle offsets
 
             return np.concatenate([board, daisy], axis=1)
         else:
@@ -184,9 +199,6 @@ class BinaryToEEG:
     def deserialize_eeg_serial(self, eeg, pair, context):
         """Uncompress serial data.
         """
-        # eeg = np.insert(eeg, range(3, eeg.shape[1] + 1, 3), 0, axis=1)
-        # eeg_data = np.array(memoryview(eeg.astype('i1').tobytes()).cast('I'))
-        # eeg_data = eeg_data.reshape(-1, 8) * self.scale_factor_eeg
         eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
                               for ch in row.reshape(-1, 3).tolist()] for row in eeg])
         eeg_data = eeg_data * self.scale_factor_eeg
@@ -327,6 +339,9 @@ class BinaryToEEG:
                  }
 
         self.producer_eeg.send('eeg', data_)
+
+        if DEBUG:
+            print(f"streamed {samples} samples")
 
 
 if __name__ == '__main__':
