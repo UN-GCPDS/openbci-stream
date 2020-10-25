@@ -48,6 +48,7 @@ setup(
        "cmd/openbci_cli",
        "cmd/stream_rpyc",
        "cmd/stream_eeg",
+       "cmd/stream_configure_kafka.sh",
     ],
 
     include_package_data=True,
