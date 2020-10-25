@@ -46,12 +46,12 @@ parent_parser.add_argument("-c", "--command", action='extend',
                            nargs="+", help="Send commands after connection established")
 
 # Stream samples
-parent_parser.add_argument("--stream_samples", action='store', default=250,
+parent_parser.add_argument("-s", "--streaming_package_size", action='store', default=250,
                            type=int,
                            help='Number of samples to receive in stream')
 
 # Daisy
-parent_parser.add_argument("--daisy", action='store_true',
+parent_parser.add_argument("-d", "--daisy", action='store_true',
                            help='Enable or disable daisy')
 
 # -----------------------------------------------------------------------------
@@ -73,36 +73,43 @@ common_parser.add_argument("--output", action='store',
 
 # -----------------------------------------------------------------------------
 # Interface
-subparser_mode = parser.add_subparsers(title='Interface', required=True,
-                                       dest='interface',)
+subparser_mode = parser.add_subparsers(title='Endpoint', required=True,
+                                       dest='endpoint',)
 
 # Serial and Port
 subparser_serial = subparser_mode.add_parser('serial',
                                              parents=[parent_parser,
                                                       common_parser],
-                                             help='Interface using Serial protocol')
+                                             help='Endpoint using Serial protocol')
 subparser_serial.add_argument('--port', help='Serial port')
 
 # WiFi and IP
 subparser_wifi = subparser_mode.add_parser('wifi',
                                            parents=[parent_parser,
                                                     common_parser],
-                                           help='Interface using WiFi module')
+                                           help='Endpoint  using WiFi module')
 subparser_wifi.add_argument('--ip', help='IP for WiFi module')
 
 # Stream
 subparser_stream = subparser_mode.add_parser('stream', parents=[common_parser],
-                                             help='')
+                                             help='Real-time transmission packages debugger')
 # subparser_stream.add_argument('--output', help='')
 
 # Marker
 subparser_marker = subparser_mode.add_parser('marker', parents=[common_parser],
-                                             help='')
+                                             help='Real-time markers streamer')
 
 
 # ----------------------------------------------------------------------
 def main():
     """"""
+
+    try:
+        args = parser.parse_args()
+    except Exception as e:
+        parser.print_help()
+        # if not os.path.split(sys.argv[0])[1] == 'sphinx-build':
+        sys.exit()
 
     # ----------------------------------------------------------------------
     def handle_ctrl_c(*_):
@@ -129,7 +136,7 @@ def main():
                                      daisy=args.daisy,
                                      capture_stream=False,
                                      montage=None,
-                                     stream_samples=args.stream_samples
+                                     streaming_package_size=args.streaming_package_size
                                      )
 
         elif args.interface == 'wifi':
@@ -138,7 +145,7 @@ def main():
                                   host=args.host,
                                   capture_stream=False,
                                   montage=None,
-                                  stream_samples=args.stream_samples
+                                  streaming_package_size=args.streaming_package_size
                                   )
 
         if args.command:
@@ -160,7 +167,7 @@ def main():
 
                 # TODO
                 writer = HDF5Writer(args.output)
-                header = {'sample_rate': args.stream_samples,
+                header = {'sample_rate': args.streaming_package_size,
                           'datetime': datetime.now().timestamp(),
                           'montage': 'standard_1020',
                           'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
@@ -228,11 +235,4 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        args = parser.parse_args()
-    except Exception as e:
-        parser.print_help()
-        # if not os.path.split(sys.argv[0])[1] == 'sphinx-build':
-        sys.exit()
-
     main()
