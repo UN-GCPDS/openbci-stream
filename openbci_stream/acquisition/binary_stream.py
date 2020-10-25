@@ -17,10 +17,10 @@ class BinaryStream:
     cum = b''
 
     # ----------------------------------------------------------------------
-    def __init__(self, stream_samples):
+    def __init__(self, streaming_package_size):
         """"""
         logging.info(f'Creating {self.TOPIC} Produser')
-        self.stream_samples = stream_samples
+        self.streaming_package_size = streaming_package_size
         self.producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
                                       compression_type='gzip',
                                       value_serializer=pickle.dumps,
@@ -42,7 +42,7 @@ class BinaryStream:
         elif data['context']['connection'] == 'wifi' and data['context']['daisy']:
             f = 2
 
-        if len(self.cum) > (self.stream_samples * 33 * f):
+        if len(self.cum) > (self.streaming_package_size * 33 * f):
 
             data['data'] = self.cum
             self.producer.send(self.TOPIC, data)
