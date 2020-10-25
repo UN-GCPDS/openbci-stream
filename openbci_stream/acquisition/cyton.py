@@ -395,8 +395,7 @@ class CytonWiFi(CytonBase):
 
         self._ip_address = ip_address
         self._readed = None
-        # self._local_ip_address = self._get_local_ip_address()
-        self._local_ip_address = '192.168.4.2'
+        self._local_ip_address = self._get_local_ip_address()
 
         if host == 'localhost':
             host = None
@@ -444,17 +443,21 @@ class CytonWiFi(CytonBase):
             return super().__getattribute__(attr)
 
     # ----------------------------------------------------------------------
-
     def _get_local_ip_address(self):
-        """Connect to internet for get the local IP."""
+        """Get the current network IP assigned."""
 
         try:
-            local_ip_address = socket.gethostbyname(socket.gethostname())
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip_address = s.getsockname()[0]
+            s.close()
             return local_ip_address
-        except Exception as e:
-            logging.warning(
-                f'{e}\nAssuming {DEFAULT_LOCAL_IP} as local ip address.')
-            return DEFAULT_LOCAL_IP
+
+        except:
+            logging.warning('Impossible to detect a network connection, it must '
+                            'be connected to some network if you are trying to '
+                            'use a WiFi module.')
+            sys.exit()
 
     # ----------------------------------------------------------------------
     def write(self, data):
