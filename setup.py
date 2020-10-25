@@ -12,7 +12,7 @@ setup(
     name='openbci-stream',
     version=version_str,
     packages=['openbci_stream', 'openbci_stream.acquisition',
-              'openbci_stream.consumer', 'openbci_stream.handlers'],
+              'openbci_stream.daemons', 'openbci_stream.utils'],
 
     author='Yeison Cardona',
     author_email='yencardonaal@unal.edu.co',
