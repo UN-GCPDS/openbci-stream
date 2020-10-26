@@ -38,8 +38,8 @@ parent_parser = argparse.ArgumentParser(add_help=False)
 
 # Start and Stop
 group_stream = parent_parser.add_mutually_exclusive_group()
-group_stream.add_argument('--start', action='store_true', help='Start stream')
-group_stream.add_argument('--stop', action='store_true', help='Stop stream')
+# group_stream.add_argument('--start', action='store_true', help='Start stream')
+# group_stream.add_argument('--stop', action='store_true', help='Stop stream')
 
 # Extra commands
 parent_parser.add_argument("-c", "--command", action='extend',
@@ -129,6 +129,7 @@ def main():
 
     signal.signal(signal.SIGINT, handle_ctrl_c)
 
+    started = False
     if args.endpoint in ['serial', 'wifi']:
 
         if args.endpoint == 'serial':
@@ -152,19 +153,14 @@ def main():
             for command in args.command:
                 interface.command(command.encode())
 
-        if args.start:
-            interface.start_stream()
-        elif args.stop:
-            interface.stop_stream()
+        interface.start_stream()
+        started = True
 
-    if args.endpoint == 'stream' or args.output:
+    if args.endpoint == 'stream' or args.output or started:
 
         with OpenBCIConsumer(host=args.host) as stream:
 
             if args.output:
-                print(f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n"
-                      f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
-
                 # TODO
                 writer = HDF5Writer(args.output)
                 header = {'sample_rate': args.streaming_package_size,
@@ -174,6 +170,8 @@ def main():
                           }
                 writer.add_header(header)
 
+            print(f"Writing data in {Fore.LIGHTYELLOW_EX}{Fore.RESET}\n"
+                  f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.\n")
             for message in stream:
 
                 if message.topic == 'eeg':
