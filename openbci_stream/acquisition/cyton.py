@@ -436,7 +436,7 @@ class CytonWiFi(CytonBase):
 
             if attr == 'capture_stream':
                 logging.warning(
-                    "Romete mode not support stream capture, `openbci.consumer.OpenBCIConsumer` must be used.")
+                    "Remote mode not support stream capture.")
                 return lambda: None
             return getattr(super().__getattribute__('remote_host'), attr)
         else:
