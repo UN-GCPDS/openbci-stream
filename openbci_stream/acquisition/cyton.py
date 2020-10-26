@@ -457,7 +457,10 @@ class CytonWiFi(CytonBase):
             logging.warning('Impossible to detect a network connection, it must '
                             'be connected to some network if you are trying to '
                             'use a WiFi module.')
-            sys.exit()
+            logging.warning(f'If you are using this device as server (access point) '
+                            f'the address {DEFAULT_LOCAL_IP} will be used.')
+
+            return DEFAULT_LOCAL_IP
 
     # ----------------------------------------------------------------------
     def write(self, data):
