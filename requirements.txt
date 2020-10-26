@@ -14,7 +14,6 @@ mne==0.21.0
 msgpack==1.0.0
 numexpr==2.7.1
 numpy==1.19.2
-openbci-stream==1.0a2
 ordered-set==4.0.2
 packaging==20.4
 pep517==0.8.2
