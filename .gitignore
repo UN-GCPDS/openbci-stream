@@ -140,3 +140,4 @@ dmypy.json
 
 docs/source/notebooks/gcpds
 docs/source/notebooks/openbci_stream
+openbci_stream/daemons/openbci_stream
