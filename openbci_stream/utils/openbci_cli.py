@@ -16,7 +16,7 @@ from datetime import datetime
 from kafka import KafkaProducer
 from colorama import Fore
 
-from openbci_stream.utils.hdf5 import HDF5Writer
+from openbci_stream.utils import HDF5Writer
 # from .hdf5 import HDF5Writer
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
 # from ..acquisition import CytonRFDuino, CytonWiFi, OpenBCIConsumer
@@ -129,9 +129,9 @@ def main():
 
     signal.signal(signal.SIGINT, handle_ctrl_c)
 
-    if args.interface in ['serial', 'wifi']:
+    if args.endpoint in ['serial', 'wifi']:
 
-        if args.interface == 'serial':
+        if args.endpoint == 'serial':
             interface = CytonRFDuino(port=args.port, host=args.host,
                                      daisy=args.daisy,
                                      capture_stream=False,
@@ -139,7 +139,7 @@ def main():
                                      streaming_package_size=args.streaming_package_size
                                      )
 
-        elif args.interface == 'wifi':
+        elif args.endpoint == 'wifi':
             interface = CytonWiFi(args.ip,
                                   daisy=args.daisy,
                                   host=args.host,
@@ -157,7 +157,7 @@ def main():
         elif args.stop:
             interface.stop_stream()
 
-    if args.interface == 'stream' or args.output:
+    if args.endpoint == 'stream' or args.output:
 
         with OpenBCIConsumer(host=args.host) as stream:
 
@@ -220,7 +220,7 @@ def main():
             # if args.output_markers:
                 # args.output_markers.close()
 
-    if args.interface == 'marker':
+    if args.endpoint == 'marker':
 
         producer_eeg = KafkaProducer(bootstrap_servers=[f'{args.host}:9092'],
                                      # compression_type='gzip',
