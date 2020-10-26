@@ -367,14 +367,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         time.sleep(0.3)
         response = self.read(2**11)
         logging.info(f'Writed: {c}')
-        if len(response) > 100:
-            logging.info(f'Responded: {response[:100]}...')
+        if response and len(response) > 100:
+            logging.info(f'Response: {response[:100]}...')
         else:
-            logging.info(f'Responded: {response}')
+            logging.info(f'Response: {response}')
 
-        if hasattr(response, 'encode'):
+        if response and hasattr(response, 'encode'):
             response = response.encode()
-        elif isinstance(response, (list)):
+        elif response and isinstance(response, (list)):
             response = ''.join([chr(r) for r in response]).encode()
 
         return response
@@ -561,8 +561,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         # # if self.montage:
             # # channels = self.montage.keys()
