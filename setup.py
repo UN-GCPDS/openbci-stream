@@ -22,18 +22,20 @@ setup(
     download_url='https://github.com/UN-GCPDS/openbci_stream',
 
     install_requires=['pyserial',
-                      'scipy>=1.3.1',
+                      'scipy',
                       'numpy',
                       'psutil',
                       'mne',
                       'requests',
                       'colorama',
                       'rawutil',
+                      'plumbum',
 
                       'crc32c',
                       'kafka-python',
                       'rpyc',
                       'tables',
+                      'systemd_service',
                       ],
 
     extras_require={
@@ -49,6 +51,7 @@ setup(
        "cmd/stream_rpyc",
        "cmd/stream_eeg",
        "cmd/stream_configure_kafka.sh",
+       "cmd/stream_access_point.sh",
     ],
 
     include_package_data=True,
