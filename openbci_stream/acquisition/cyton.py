@@ -189,7 +189,7 @@ class CytonRFDuino(CytonBase):
             host = None
 
         if host:
-            rpyc_service = rpyc.connect(host, 18861, protocol_config={
+            rpyc_service = rpyc.connect(host, 18861, config={
                 'allow_public_attrs': True,
                 'allow_pickle': True,
             })
@@ -383,7 +383,7 @@ class CytonWiFi(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=1e3):
+    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=250):
         """WiFi mode connection.
 
         Parameters
@@ -405,7 +405,7 @@ class CytonWiFi(CytonBase):
 
         if host:
             try:
-                rpyc_service = rpyc.connect(host, 18861, protocol_config={
+                rpyc_service = rpyc.connect(host, 18861, config={
                     'allow_public_attrs': True,
                     'allow_pickle': True,
                 })
@@ -645,19 +645,15 @@ class Cyton:
     # ----------------------------------------------------------------------
     def __new__(self, mode, endpoint=None, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=None):
         """Constructor"""
-        if host and capture_stream:
-            logging.warning(
-                '`capture_stream` and `host` arguments are not available together yet.')
+
+        if streaming_package_size is None:
+            streaming_package_size = 250
 
         if mode == 'serial':
-            if streaming_package_size is None:
-                streaming_package_size = 250
             mode = CytonRFDuino(endpoint, host, daisy,
                                 capture_stream, montage, streaming_package_size)
 
         elif mode == 'wifi':
-            if streaming_package_size is None:
-                streaming_package_size = 1e3
             mode = CytonWiFi(endpoint, host, daisy,
                              capture_stream, montage, streaming_package_size)
 
