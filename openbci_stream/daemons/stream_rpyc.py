@@ -10,8 +10,9 @@ attached remotely.
 import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
 
-
 ########################################################################
+
+
 class StremamService(rpyc.Service):
     """Server with RPyC for control OpenBCI board remotely.
     """
@@ -49,6 +50,7 @@ def start_service():
                        port=18861,
                        protocol_config={
                            'allow_public_attrs': True,
+                           'allow_pickle': True,
                        }
                        )
     t.start()

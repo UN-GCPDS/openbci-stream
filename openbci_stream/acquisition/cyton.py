@@ -189,7 +189,10 @@ class CytonRFDuino(CytonBase):
             host = None
 
         if host:
-            rpyc_service = rpyc.connect(host, 18861)
+            rpyc_service = rpyc.connect(host, 18861, protocol_config={
+                'allow_public_attrs': True,
+                'allow_pickle': True,
+            })
             self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
                 port, False, False, pickle.dumps(montage), streaming_package_size)
             return
@@ -402,12 +405,15 @@ class CytonWiFi(CytonBase):
 
         if host:
             try:
-                rpyc_service = rpyc.connect(host, 18861)
+                rpyc_service = rpyc.connect(host, 18861, protocol_config={
+                    'allow_public_attrs': True,
+                    'allow_pickle': True,
+                })
                 self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
                     self._ip_address,
                     host=None,
                     daisy=daisy,
-                    capture_stream=False,
+                    capture_stream=capture_stream,
                     montage=pickle.dumps(montage),
                     streaming_package_size=streaming_package_size)
             except socket.gaierror:
