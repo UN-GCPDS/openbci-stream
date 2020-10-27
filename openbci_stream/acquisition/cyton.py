@@ -235,10 +235,10 @@ class CytonRFDuino(CytonBase):
         """"""
         if super().__getattribute__('remote_host'):
 
-            if attr == 'capture_stream':
-                logging.warning(
-                    "Romete mode not support stream capture, `openbci.consumer.OpenBCIConsumer` must be used.")
-                return lambda: None
+            # if attr == 'capture_stream':
+                # logging.warning(
+                    # "Romete mode not support stream capture, `openbci.consumer.OpenBCIConsumer` must be used.")
+                # return lambda: None
             return getattr(super().__getattribute__('remote_host'), attr)
         else:
             return super().__getattribute__(attr)
