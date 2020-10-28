@@ -30,6 +30,7 @@ setup(
                       'colorama',
                       'rawutil',
                       'plumbum',
+                      'pyedflib',
 
                       'crc32c',
                       'kafka-python',

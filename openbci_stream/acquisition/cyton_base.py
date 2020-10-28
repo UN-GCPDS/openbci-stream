@@ -821,7 +821,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         length = self.eeg_time_series.shape[1]
         sample_rate = self.sample_rate
 
-        timestamp = interpolate_datetime(timestamp, length, sample_rate)
+        timestamp = interpolate_datetime(timestamp, length)
 
         return timestamp
 

@@ -232,6 +232,7 @@ autodoc_mock_imports = [
     'tqdm',
     'pandas',
     'tables',
+    'pyedflib',
 ]
 
 todo_include_todos = True

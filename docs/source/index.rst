@@ -20,7 +20,6 @@ Navigation
    notebooks/A2-electrodes_impedance
    notebooks/A3-latency_measurement
    notebooks/A4-server-based_acquisition
-   notebooks/markdown-cells
 
 Indices and tables
 ------------------
