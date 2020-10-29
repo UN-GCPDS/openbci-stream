@@ -2,6 +2,14 @@
 ======================
 Command line interface
 ======================
+
+This interface is useful to debug, test connections and features. It can be used
+for start acquisition or simply connect to an existing one, stream markers, and
+storage data.
+
+
+For examples and descriptions refers to documentation:
+`Data storage handler <../06-command_line_interface.ipynb>`_
 """
 
 # import os
@@ -106,9 +114,8 @@ def main():
 
     try:
         args = parser.parse_args()
-    except Exception as e:
+    except Exception:
         parser.print_help()
-        # if not os.path.split(sys.argv[0])[1] == 'sphinx-build':
         sys.exit()
 
     # ----------------------------------------------------------------------
@@ -116,10 +123,6 @@ def main():
         """"""
         if args.output:
             writer.close()
-            # args.output.close()
-        # if args.output_markers:
-            # args.output_markers.close()
-
         try:
             interface.stop_stream()
         except:
@@ -161,12 +164,11 @@ def main():
         with OpenBCIConsumer(host=args.host) as stream:
 
             if args.output:
-                # TODO
                 writer = HDF5Writer(args.output)
                 header = {'sample_rate': args.streaming_package_size,
                           'datetime': datetime.now().timestamp(),
-                          'montage': 'standard_1020',
-                          'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
+                          # 'montage': 'standard_1020',
+                          # 'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
                           }
                 writer.add_header(header)
 
@@ -192,15 +194,6 @@ def main():
 
                 if message.topic == 'marker':
 
-                    # TODO: select time to use
-
-                    # marker = message.value['marker']
-                    # dt = message.value['datetime']
-
-                    # marker = message.value['marker']
-                    # dt = datetime.fromtimestamp(message.value['datetime'])
-
-                    # created = datetime.fromtimestamp(message.value['timestamp'])
                     marker = message.value
                     created = datetime.fromtimestamp(message.timestamp / 1000)
                     since = (datetime.now() - created).total_seconds()
@@ -213,10 +206,6 @@ def main():
 
             if args.output:
                 writer.close()
-                # args.output.close()
-
-            # if args.output_markers:
-                # args.output_markers.close()
 
     if args.endpoint == 'marker':
 

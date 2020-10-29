@@ -1,7 +1,7 @@
 """
-=========
-PID-admin
-=========
+================
+Autokill process
+================
 
 Some scripts with Threading or Subprocessing calls could ends without terminate
 all the process, this script make sure you finish the current process and the
@@ -14,8 +14,9 @@ import atexit
 import signal
 from pathlib import Path
 
+
 # ----------------------------------------------------------------------
-def autokill_process(name=''):
+def autokill_process(name: str = '') -> None:
     """Make sure you finish the current process.
 
     In addition to kill the current process, it will looks for the previous
@@ -23,7 +24,7 @@ def autokill_process(name=''):
 
     Parameters
     ----------
-    name : str
+    name
         Name used for the PID file.
     """
 
@@ -49,7 +50,7 @@ def autokill_process(name=''):
 
     # ----------------------------------------------------------------------
     @atexit.register
-    def _():
+    def _() -> None:
         logging.info(f"Killing PID: {pid}")
         try:
             os.kill(-pid, signal.SIGKILL)

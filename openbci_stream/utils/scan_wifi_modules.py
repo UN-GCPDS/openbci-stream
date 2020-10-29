@@ -7,29 +7,34 @@ Scan WiFi modules
 import netifaces
 import requests
 import nmap
+from typing import Dict
+
 
 # ----------------------------------------------------------------------
-def scan():
+def scan(network: str = 'wlan0') -> Dict[str, str]:
     """Scan for WiFi modules.
 
     Explore the local network with `nmap` in search of WiFi modules, the way to
     check if a device is a WiFi module is reading the `/board` endopint, the
     `JSON` is stored and returned too.
 
+    Parameters
+    ----------
+    network
+        The network interface name used e.g. `wlan0`, `wlp2s0`, 'eth0'...
+
     Returns
     -------
     dict
-        Dictionay with IPs as keys of WiFi modules on network.
+        Dictionay with IPs as keys of WiFi modules on network and `/board` as
+        value.
     """
 
     ip_list = {}
-    try:
-        local_wlan0 = netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
-    except:
-        local_wlan0 = netifaces.ifaddresses('wlp2s0')[netifaces.AF_INET][0]['addr']
+    local_net = netifaces.ifaddresses(network)[netifaces.AF_INET][0]['addr']
 
     nm = nmap.PortScanner()
-    nm.scan(hosts=f'{local_wlan0}/24', arguments='-sn')
+    nm.scan(hosts=f'{local_net}/24', arguments='-sn')
     hosts = nm.all_hosts()
 
     for host in hosts:
