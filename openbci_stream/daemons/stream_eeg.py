@@ -3,10 +3,12 @@
 Binary to EEG
 =============
 
-A transformer for Kafka that read binary data and stream EEG data.
+A transformer for Kafka that reads binary data and stream EEG data.
 
 Binary -> Kafka-Transformer -> EEG
 
+For examples and descriptions refers to documentation:
+`Data storage handler <../A1-raw_cleaning.ipynb>`_
 """
 
 import sys
@@ -19,21 +21,28 @@ from datetime import datetime
 import rawutil
 
 from kafka import KafkaConsumer, KafkaProducer
+from typing import TypeVar, List, Dict, Tuple, Any
 
 from openbci_stream.utils import autokill_process
 autokill_process(name='binary_2_eeg')
 
 DEBUG = ('--debug' in sys.argv)
 
+KafkaStream = TypeVar('kafka-stream')
+
 
 ########################################################################
 class BinaryToEEG:
-    """"""
+    """Kafka transformer with parallel implementation for processing binary raw
+    data into EEG microvolts. This script requires the Kafka daemon running and
+    enables an `auto-kill process <openbci_stream.utils.pid_admin.rst#module-openbci_stream.utils.pid_admin>`_
+    """
+
     BIN_HEADER = 0xa0
 
     # ----------------------------------------------------------------------
     def __init__(self):
-        """Constructor"""
+        """"""
 
         self.consumer_binary = KafkaConsumer(bootstrap_servers=['localhost:9092'],
                                              value_deserializer=pickle.loads,
@@ -59,18 +68,9 @@ class BinaryToEEG:
         self.offset = [0] * 8
         self._last_aux_shape = 0
 
-    # # ----------------------------------------------------------------------
-    # @property
-    # def gain(self):
-        # """Vector with the gains for each channel."""
-
-        # # TODO
-        # # A method for change the ganancy of each channel must be writed here
-        # return 24
-
     # ----------------------------------------------------------------------
     @property
-    def scale_factor_eeg(self):
+    def scale_factor_eeg(self) -> float:
         """Vector with the correct factors for scale eeg data samples."""
         gain = 24
         # vref = 4.5  # for V
@@ -79,7 +79,7 @@ class BinaryToEEG:
         return vref / (gain * ((2 ** 23) - 1))
 
     # ----------------------------------------------------------------------
-    def consume(self):
+    def consume(self) -> None:
         """Infinite loop for read Kafka stream."""
         while True:
             for record in self.consumer_binary:
@@ -88,12 +88,12 @@ class BinaryToEEG:
                 self.process(record)
 
     # ----------------------------------------------------------------------
-    def process(self, record):
+    def process(self, record: KafkaStream) -> None:
         """Prepare the binary package for a successful unpack and stream.
 
         Parameters
         ----------
-        record : int
+        record
             Kafka stream with binary data.
         """
 
@@ -102,18 +102,30 @@ class BinaryToEEG:
         self.created = context['created']
 
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
-
         if not data.shape[0]:
             return
 
         # Thread for unpack data
         self.b = Thread(target=self.deserialize, args=(data, context))
         self.b.start()
-        # self.deserialize(data, context)
 
     # ----------------------------------------------------------------------
-    def align_data(self, binary):
-        """"""
+    def align_data(self, binary: bytes) -> Tuple[np.ndarray, bytes]:
+        """Align data following the headers and footers.
+
+        Parameters
+        ----------
+        binary
+            Data raw from OpenBCI board.
+
+        Returns
+        -------
+        data_aligned
+            Numpy array of shape (`33, LENGTH`) with headers and footer aligned.
+        remnant
+            This bytes could be used for complete next binary input.
+        """
+
         data = np.array(list(binary))
 
         # Search for the the first index with a `BIN_HEADER`
@@ -121,28 +133,29 @@ class BinaryToEEG:
                  self.BIN_HEADER for i in range(33)].index(True)
 
         if (start == 0) and (data.shape[0] % 33 == 0):
-            data_align = data
+            data_aligned = data
             remnant = b''
         else:
             # Fix the offset to complete 33 bytes divisible array
             end = (data.shape[0] - start) % 33
-            data_align = data[start:-end]
+            data_aligned = data[start:-end]
             remnant = binary[-end:]
 
-        data_align = data_align.reshape(-1, 33)
+        data_aligned = data_aligned.reshape(-1, 33)
 
-        # The offset could be used for the next binary data
-
-        return data_align, remnant
+        return data_aligned, remnant
 
     # ----------------------------------------------------------------------
-    def deserialize(self, data, context):
-        """Fom binary to EEG.
+    def deserialize(self, data: np.ndarray, context: Dict[str, Any]) -> None:
+        """From signed 24-bits integer to signed 32-bits integer.
 
         Parameters
         ----------
-        data : list
-            Kafka stream with bibary data.
+        data
+            Numpy array of shape (`33, LENGTH`)
+        context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
         """
 
         # From in index
@@ -165,9 +178,31 @@ class BinaryToEEG:
         self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_wifi(self, eeg, pair, context):
-        """WiFi bibary not compress data.
+    def deserialize_eeg_wifi(self, eeg: np.ndarray, pair: bool, context: Dict[str, Any]) -> np.ndarray:
+        """From signed 24-bits integer to signed 32-bits integer by channels.
+
+        The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
+        says that only can send packages of 33 bits, when a Daisy board is
+        attached these same packages will be sent at double speed in favor to
+        keep the desired sample rate for 16 channels.
+
+        Parameters
+        ----------
+        eeg
+            Numpy array in signed 24-bits integer (`8, LENGTH`)
+        pair
+            True if the first data is from a pair ID.
+        context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
+
+        Returns
+        -------
+        eeg_data
+            EEG data in microvolts, signed 32-bits integer, (`CHANNELS, LENGTH`),
+            if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
+
         eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
                               for ch in row.reshape(-1, 3).tolist()] for row in eeg])
         eeg_data = eeg_data * self.scale_factor_eeg
@@ -196,9 +231,32 @@ class BinaryToEEG:
             return eeg_data
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_serial(self, eeg, pair, context):
-        """Uncompress serial data.
+    def deserialize_eeg_serial(self, eeg: np.ndarray, pair: bool, context: Dict[str, Any]) -> np.ndarray:
+        """From signed 24-bits integer to signed 32-bits integer by channels.
+
+        The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
+        says that only can send packages of 33 bits, over serial (RFduino) this
+        limit is absolute, when a Daisy board is attached these same amount of
+        packages will be sent, in this case, the data must be distributed and
+        interpolated in order to complete the sample rate.
+
+        Parameters
+        ----------
+        eeg
+            Numpy array in signed 24-bits integer (`8, LENGTH`)
+        pair
+            True if the first data is from a pair ID.
+        context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
+
+        Returns
+        -------
+        eeg_data
+            EEG data in microvolts, signed 32-bits integer, (`CHANNELS, LENGTH`),
+            if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
+
         eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
                               for ch in row.reshape(-1, 3).tolist()] for row in eeg])
         eeg_data = eeg_data * self.scale_factor_eeg
@@ -225,11 +283,6 @@ class BinaryToEEG:
             board = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in board.T]).T
             daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(p.shape[0]), p) for p in daisy.T]).T
 
-            # # move the last value to the first position
-            # daisy = np.roll(daisy, 1, axis=0)
-            # # the last position is my offset, and complete with the previous offset
-            # self.offset, daisy[0] = daisy[0].copy(), self.offset
-
             eeg = np.concatenate([np.stack(board), np.stack(daisy)], axis=1)
 
         else:
@@ -241,7 +294,7 @@ class BinaryToEEG:
             return eeg[:, list(context['montage'].keys())]
 
     # ----------------------------------------------------------------------
-    def deserialize_aux(self, stop_byte, aux, context):
+    def deserialize_aux(self, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:
         """Determine the content of `AUX` bytes and format it.
 
         Auxialiar data could contain different kind of information: accelometer,
@@ -262,12 +315,13 @@ class BinaryToEEG:
 
         Parameters
         ----------
-        stop_byte : int
+        stop_byte
              0xCX where X is 0-F in hex.
-
-        aux : int
+        aux
             6 bytes of data defined and parsed based on the `Footer` bytes.
-
+        context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
 
         Returns
         -------
@@ -355,5 +409,3 @@ class BinaryToEEG:
 if __name__ == '__main__':
     tranformer = BinaryToEEG()
     tranformer.consume()
-
-

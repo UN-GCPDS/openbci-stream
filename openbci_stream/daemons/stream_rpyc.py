@@ -1,21 +1,21 @@
 """
-============
-OpenBCI-RPyC
-============
+=======================
+Distributed acquisition
+=======================
 
-OpenBCI-RPyC (Remote Python Call) is the waty to handle OpenBCI boards
-attached remotely.
+RPyC (Remote Python Call) is the way to handle OpenBCI boards attached remotely.
+
+For examples and descriptions refers to documentation:
+`Data Acquisition - Distributed acquisition <../03-data_acquisition.ipynb/#Distributed-acquisition>`_
 """
 
 import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi
 
+
 ########################################################################
-
-
 class StremamService(rpyc.Service):
-    """Server with RPyC for control OpenBCI board remotely.
-    """
+    """Server with RPyC for control OpenBCI board remotely."""
 
     # ----------------------------------------------------------------------
     def exposed_CytonRFDuino(self, *args, **kwargs):
@@ -26,24 +26,10 @@ class StremamService(rpyc.Service):
         """"""
         return CytonWiFi(*args, **kwargs)
 
-    # #----------------------------------------------------------------------
-    # def on_connect(self, conn):
-        # """code that runs when a connection is created.
-        # """
-        # pass
-
-    # #----------------------------------------------------------------------
-    # def on_disconnect(self, conn):
-        # """code that runs after the connection has already closed.
-        # """
-        # pass
 
 # ----------------------------------------------------------------------
-
-
-def start_service():
-    """Start the rpyc server.
-    """
+def start_service() -> None:
+    """Start the rpyc server."""
     from rpyc.utils.server import ThreadedServer
 
     t = ThreadedServer(StremamService,
