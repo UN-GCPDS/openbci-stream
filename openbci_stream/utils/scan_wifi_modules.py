@@ -11,7 +11,7 @@ from typing import Dict
 
 
 # ----------------------------------------------------------------------
-def scan(network: str = 'wlan0') -> Dict[str, str]:
+def scan_wifi_modules(network: str = 'wlan0') -> Dict[str, str]:
     """Scan for WiFi modules.
 
     Explore the local network with `nmap` in search of WiFi modules, the way to
@@ -49,5 +49,5 @@ def scan(network: str = 'wlan0') -> Dict[str, str]:
 
 
 if __name__ == '__main__':
-    print(scan())
+    print(scan_wifi_modules())
 
