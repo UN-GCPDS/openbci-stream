@@ -233,6 +233,10 @@ autodoc_mock_imports = [
     'pandas',
     'tables',
     'pyedflib',
+    'netifaces',
+    'nmap',
+    'rawutil',
+    'kafka',
 ]
 
 todo_include_todos = True
@@ -272,7 +276,7 @@ nbsphinx_execute = 'never'
 # nbsphinx_input_prompt = ' '
 # nbsphinx_output_prompt = ' '
 nbsphinx_kernel_name = 'python3'
-nbsphinx_prompt_width = 0
+nbsphinx_prompt_width = '0'
 
 
 nbsphinx_prolog = """
