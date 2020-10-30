@@ -3,31 +3,38 @@
 TCP server
 ==========
 
+The module WiFi for OpenBCI receive the instructions to connect with a TCP
+server, before that happens, the server must be running and waiting for clients.
+
 """
 
 import socket
 import logging
 import asyncore
 from datetime import datetime
-
-# # from openbci_stream.acquisition.binary_stream import BinaryStream
+from typing import Dict, Any, Callable
 
 
 ########################################################################
 class WiFiShieldTCPServer(asyncore.dispatcher):
-    """
-    Simple TCP server.
-    """
+    """Create a TCP server that handles the connexión of the WiFi module."""
 
     # ----------------------------------------------------------------------
-    def __init__(self, host, binary_stream, kafka_context={}):
-        """Example function with types documented in the docstring.
-
+    def __init__(self, host, binary_stream: Callable, kafka_context: Dict[str, Any] = {}):
+        """
         Parameters
         ----------
-        host : str
-            Local IP.
+        host
+            IP address of the machine that WiFi module will connect.
+        binary_stream
+            Function that return a kafka producer, this producer could not exist
+            in the very moment of creation of this class instance.
+        context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
+
         """
+
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -40,7 +47,7 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
         self.binary_stream = binary_stream
 
     # ----------------------------------------------------------------------
-    def handle_accept(self):
+    def handle_accept(self) -> None:
         """Redirect the client connection."""
         pair = self.accept()
         if pair is not None:
@@ -51,9 +58,13 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
             self.handler.handle_error = self._handle_error
 
     # ----------------------------------------------------------------------
-    def _handle_read(self):
-        """Write the input streaming into the Queue object."""
-        # self.data.extend(self.handler.recv(33 * 90))
+    def _handle_read(self) -> None:
+        """Write the input streaming into the binary stream.
+
+        There is a maximum of 3000 bytes that can read at once, so it is set to
+        2970, a 33 multiple. But this not means that read this amount of data
+        on all events, the module WiFi will send on their consideration.
+        """
 
         self.kafka_context.update({'created': datetime.now().timestamp()})
         data = {'context': self.kafka_context,
@@ -63,6 +74,6 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
         self.binary_stream().stream(data)
 
     # ----------------------------------------------------------------------
-    def _handle_error(self):
+    def _handle_error(self) -> None:
         """"""
         # I'm feeling dirty for this "solution"
