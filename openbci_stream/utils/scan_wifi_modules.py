@@ -11,7 +11,7 @@ from typing import Dict
 
 
 # ----------------------------------------------------------------------
-def scan_wifi_modules(network: str = 'wlan0') -> Dict[str, str]:
+def scan_wifi_modules(network: str = "wlan0") -> Dict[str, str]:
     """Scan for WiFi modules.
 
     Explore the local network with `nmap` in search of WiFi modules, the way to
@@ -31,15 +31,15 @@ def scan_wifi_modules(network: str = 'wlan0') -> Dict[str, str]:
     """
 
     ip_list = {}
-    local_net = netifaces.ifaddresses(network)[netifaces.AF_INET][0]['addr']
+    local_net = netifaces.ifaddresses(network)[netifaces.AF_INET][0]["addr"]
 
     nm = nmap.PortScanner()
-    nm.scan(hosts=f'{local_net}/24', arguments='-sn')
+    nm.scan(hosts=f"{local_net}/24", arguments="-sn")
     hosts = nm.all_hosts()
 
     for host in hosts:
         try:
-            response = requests.get(f'http://{host}/board', timeout=0.1)
+            response = requests.get(f"http://{host}/board", timeout=0.1)
             if response.ok:
                 ip_list[host] = response.json()
         except:
@@ -48,6 +48,5 @@ def scan_wifi_modules(network: str = 'wlan0') -> Dict[str, str]:
     return ip_list
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(scan_wifi_modules())
-

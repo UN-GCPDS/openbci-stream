@@ -17,24 +17,23 @@ from typing import Dict, Any, Callable
 
 ########################################################################
 class WiFiShieldTCPServer(asyncore.dispatcher):
-    """Create a TCP server that handles the connexión of the WiFi module."""
+    """Create a TCP server that handles the connexión of the WiFi module.
+
+    Parameters
+    ----------
+    host
+        IP address of the machine that WiFi module will connect.
+    binary_stream
+        Function that return a kafka producer, this producer could not exist in
+        the very moment of creation of this class instance.
+    context
+        Information from the acquisition side useful for deserializing and that
+        will be packaged back in the stream.
+    """
 
     # ----------------------------------------------------------------------
-    def __init__(self, host, binary_stream: Callable, kafka_context: Dict[str, Any] = {}):
-        """
-        Parameters
-        ----------
-        host
-            IP address of the machine that WiFi module will connect.
-        binary_stream
-            Function that return a kafka producer, this producer could not exist
-            in the very moment of creation of this class instance.
-        context
-            Information from the acquisition side useful for deserializing and
-            that will be packaged back in the stream.
-
-        """
-
+    def __init__(self, host, binary_stream: Callable, kafka_context: Dict[str, Any] = {}) -> None:
+        """"""
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
 

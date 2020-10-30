@@ -46,9 +46,7 @@ class BinaryToEEG:
 
         self.consumer_binary = KafkaConsumer(bootstrap_servers=['localhost:9092'],
                                              value_deserializer=pickle.loads,
-                                             # group_id='openbci',
                                              auto_offset_reset='latest',
-                                             # # heartbeat_interval_ms=500,
                                              )
         self.consumer_binary.subscribe(['binary'])
 

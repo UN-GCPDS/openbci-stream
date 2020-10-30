@@ -93,11 +93,16 @@ class HDF5Writer:
 
     >>> with HDF5Writer('file.h5') as write:
             writer.add_marker('LEFT', datetime.now().timestamp())
+
+    Parameters
+    ----------
+    filename
+        Path where the edf file will be created.
     """
 
     # ----------------------------------------------------------------------
     def __init__(self, filename: str) -> None:
-        """Constructor"""
+        """"""
         if filename.endswith('h5'):
             self.filename = f'{filename}'
         else:
@@ -279,11 +284,17 @@ class HDF5Reader:
     This class support export to other formmats like
     `MNE epochs <https://mne.tools/stable/generated/mne.Epochs.html>`_
     and `EDF <https://www.edfplus.info/>`_.
+
+
+    Parameters
+    ----------
+    filename
+        Path with the location of the hdf file.
     """
 
     # ----------------------------------------------------------------------
     def __init__(self, filename: str) -> None:
-        """Constructor"""
+        """"""
         self.filename = filename
         self._open()
 
