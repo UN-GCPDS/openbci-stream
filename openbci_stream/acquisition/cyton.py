@@ -89,6 +89,9 @@ EEG Data for 16 channels
 |              | sample(8)   | sample(7)                | avg(sample(6),sample(8)) |
 +--------------+-------------+--------------------------+--------------------------+
 
+This transmission only applies to Cyton + Daisy and RFduino, if WiFi shield is
+used then all data is transmitted, and is not necessary to interpolate.
+
 
 Aux Data
 --------
@@ -145,44 +148,59 @@ import logging
 import asyncore
 from threading import Thread
 from datetime import datetime
-
-import requests
-import serial
+from typing import Optional, Union, Literal, Dict
 
 from .cyton_base import CytonBase
 from .tcp_server import WiFiShieldTCPServer
 
 import rpyc
+import serial
+import requests
 
 DEFAULT_LOCAL_IP = "192.168.1.1"
+
+MODE = Literal['serial', 'wifi', None]
+DAISY = Literal['auto', True, False]
 
 
 ########################################################################
 class CytonRFDuino(CytonBase):
     """
-    RFduino is the default communication mode for Cyton 32 bit, this set a
+    RFduino is the default communication mode for Cyton, this set a
     serial comunication through a USB dongle with a sample frequency of `250`
     Hz, for 8 or 16 channels.
+
+    Parameters
+    ----------
+    port
+        Serial port.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz',
+        'F4']` and a dictionary means specific channels `{1: 'Fp1', 2: 'Fp2',
+        3: 'F3', 4: 'Fz', 5: 'F4'}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, port=None, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=250):
-        """RFduino mode connection.
-
-        Parameters
-        ----------
-        port : str, optional
-            Specific serial port for connection.
-        montage: dic, list, optional
-            Decription of channels used.
-        timeout: float, optional.
-            Read timeout for serial connection.
-        write_timeout: float, optional.
-            Write timeout for serial connection.
-        """
+    def __init__(self, port: Optional = None, host: Optional[str] = None,
+                 daisy: DAISY = 'auto',
+                 montage: Optional[Union[list, dict]] = None,
+                 streaming_package_size: int = 250,
+                 capture_stream: bool = False) -> None:
+        """"""
 
         self.remote_host = None
-
         self._markers = None
 
         if host == 'localhost':
@@ -206,51 +224,20 @@ class CytonRFDuino(CytonBase):
             logging.error("No device was auto detected.")
             sys.exit()
 
-        # try:
         self.device = serial.Serial(port, 115200, timeout=0.1,
                                     write_timeout=0.01,
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_ONE)
         super().__init__(daisy, capture_stream, montage, streaming_package_size)
 
-        # self.stop_stream()
-
-        # Getter call
-        # self.boardmode
-
-        # self.command(self.SOFT_RESET)  # to update the status information
-
-        # except Exception as e:
-            # logging.error(f"Impossible to connect with {port}.")
-            # logging.error(e)
-            # sys.exit()
-
     # ----------------------------------------------------------------------
-    def __str__(self):
-        """"""
-        return "CytonRFDuino"
-
-    # ----------------------------------------------------------------------
-    def __getattribute__(self, attr):
-        """"""
-        if super().__getattribute__('remote_host'):
-
-            # if attr == 'capture_stream':
-                # logging.warning(
-                    # "Romete mode not support stream capture, `openbci.consumer.OpenBCIConsumer` must be used.")
-                # return lambda: None
-            return getattr(super().__getattribute__('remote_host'), attr)
-        else:
-            return super().__getattribute__(attr)
-
-    # ----------------------------------------------------------------------
-    def _get_serial_ports(self):
-        """Look for first available port with OpenBCI device.
+    def _get_serial_ports(self) -> Optional[str]:
+        """Look for first available serial port.
 
         Returns
         -------
         str
-            String with the port name or None if no ports were founded.
+            String with the port name or `None` if no ports were founded.
         """
 
         if os.name == 'nt':
@@ -270,57 +257,68 @@ class CytonRFDuino(CytonBase):
                     continue
 
     # ----------------------------------------------------------------------
-    def read(self, size):
+    def read(self, size: int) -> bytes:
         """Read size bytes from the serial port.
 
         Parameters
         ----------
-        size : int
+        size
             Size of input buffer.
 
         Returns
         -------
-        bytes
-            Data readed.
+        read
+            Data read.
         """
+
         try:
             return self.device.read(size)
         except:
+            # If there is no data yet, call again
             return self.read(size)
 
     # ----------------------------------------------------------------------
-    def write(self, data):
-        """Output the given data over the serial port."""
-
-        return self.device.write(data)
+    def write(self, data: bytes) -> None:
+        """Write the given data over the serial port."""
+        self.device.write(data)
 
     # ----------------------------------------------------------------------
-    def reset_input_buffer(self):
+    def reset_input_buffer(self) -> None:
         """Clear input buffer, discarding all that is in the buffer."""
         self.device.reset_input_buffer()
 
     # ----------------------------------------------------------------------
     def close(self):
         """Close the serial communication."""
-
         self.device.close()
 
     # ----------------------------------------------------------------------
-    def _stream_data(self, size=2**8, kafka_context={}):
-        """Load binary data and put in a queue.
+    def _stream_data(self, size: Optional[int] = 2**8,
+                     kafka_context: Optional[Dict] = {}) -> None:
+        """Write binary raw into a kafka producer.
 
-        For optimizations issues the data must be read in packages but write one
-        to one in a queue, this method must be executed on a thread.
+        This method will feed the producer while the serial device has data to
+        be read. The `context` is a dictionary that contains:
+
+          * **created:**  The `timestamp` for the exact moment when binary data
+            was read.
+          * **daisy:** `True` if Daisy board is attached, otherwise `False`.
+          * **boardmode:** Can be `default`, `digital`, ''analog', 'debug' or
+            `marker`.
+          * **montage:** A list means consecutive channels e.g. `['Fp1', 'Fp2',
+            'F3', 'Fz', 'F4']` and a dictionary means specific channels
+            `{1: 'Fp1', 2: 'Fp2', 3: 'F3', 4: 'Fz', 5: 'F4'}`.
+          * **connection:** Can be `serial` or `wifi`.
 
         Parameters
         ----------
-        size : int, optional
-            The buffer length for read.
-        kafka_context : dict
-
+        size
+            The buffer length to read.
+        kafka_context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
         """
 
-        # while self.READING:
         while binary := self.read(size):
             try:
                 kafka_context.update({'created': datetime.now().timestamp()})
@@ -332,43 +330,36 @@ class CytonRFDuino(CytonBase):
                 logging.error(e)
 
     # ----------------------------------------------------------------------
-    def start_stream(self, clear=True, wait_for_data=False):
-        """"""
+    def start_stream(self) -> None:
+        """Initialize a Thread for reading data from the serial port and
+        streaming into a Kafka producer.
+        """
+
         kafka_context = {'daisy': self.daisy,
                          'boardmode': self.boardmode,
                          'montage': self.montage,
                          'connection': 'serial',
-                         # 'created': datetime.now().timestamp(),
                          }
 
         self.command(self.START_STREAM)
-        super().start_stream(clear)
+        super().start_stream()
 
         # Thread for read data
         if hasattr(self, "thread_data_collect") and self.thread_data_collect.isAlive():
             pass
         else:
-            self.thread_data_collect = Thread(
-                target=self._stream_data, args=(2**8, kafka_context))
+            self.thread_data_collect = Thread(target=self._stream_data,
+                                              args=(2**8, kafka_context))
             self.thread_data_collect.start()
 
-        if wait_for_data:
-            self._wait_for_data()
-
     # ----------------------------------------------------------------------
-    def stop_stream(self, wait_for_no_data=False):
-        """Stop a data collection that run asynchronously."""
-
+    def stop_stream(self) -> None:
+        """Stop the data collection that runs asynchronously."""
         self.command(self.STOP_STREAM)
         super().stop_stream()
-
         self.binary_stream.close()
 
-        if wait_for_no_data:
-            self._wait_for_no_data()
-
     # ----------------------------------------------------------------------
-
     def reset_input_buffer(self):
         """Device handled process, flush input data."""
         self.device.reset_input_buffer()
@@ -378,22 +369,38 @@ class CytonRFDuino(CytonBase):
 ########################################################################
 class CytonWiFi(CytonBase):
     """
-    This module implement a TCP connection using the WiFi module, this module
-    was designed for works with se same syntax that `CytonRFDuino`.
+    This module implement a TCP connection for the WiFi module with a sample
+    frequency from `250` Hz up to 16 kHz, for 8 or 16 channels (8 kHz for 16
+    channels).
+
+    Parameters
+    ----------
+    ip_address
+        IP addres for the WiFi shield.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz',
+        'F4']` and a dictionary means specific channels `{1: 'Fp1', 2: 'Fp2',
+        3: 'F3', 4: 'Fz', 5: 'F4'}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=250):
-        """WiFi mode connection.
-
-        Parameters
-        ----------
-        ip_address: str.
-            IP address with for WiFi module.
-        montage: dictl, list, optional
-            Decription of channels used.
-        """
-
+    def __init__(self, ip_address: str, host: str = None, daisy: DAISY = 'auto',
+                 montage: Optional[Union[list, dict]] = None,
+                 streaming_package_size: int = 250,
+                 capture_stream: Optional[bool] = False) -> None:
+        """"""
         self.remote_host = None
 
         self._ip_address = ip_address
@@ -424,32 +431,11 @@ class CytonWiFi(CytonBase):
         super().__init__(daisy, capture_stream, montage, streaming_package_size)
 
         self._create_tcp_server()
-        time.sleep(5)
-
+        time.sleep(5)  # secure delay
         self._start_loop()
-        # self._start_tcp_client()
 
     # ----------------------------------------------------------------------
-
-    def __str__(self):
-        """"""
-        return "CytonWiFi"
-
-    # ----------------------------------------------------------------------
-    def __getattribute__(self, attr):
-        """"""
-        if super().__getattribute__('remote_host'):
-
-            if attr == 'capture_stream':
-                logging.warning(
-                    "Remote mode not support stream capture.")
-                return lambda: None
-            return getattr(super().__getattribute__('remote_host'), attr)
-        else:
-            return super().__getattribute__(attr)
-
-    # ----------------------------------------------------------------------
-    def _get_local_ip_address(self):
+    def _get_local_ip_address(self) -> str:
         """Get the current network IP assigned."""
 
         try:
@@ -469,7 +455,7 @@ class CytonWiFi(CytonBase):
             return DEFAULT_LOCAL_IP
 
     # ----------------------------------------------------------------------
-    def write(self, data):
+    def write(self, data: Union[str, bytes]) -> None:
         """Send command to board through HTTP protocole."""
 
         if hasattr(data, 'decode'):
@@ -495,70 +481,49 @@ class CytonWiFi(CytonBase):
             self._readed = None
 
     # ----------------------------------------------------------------------
-
-    def read(self, size=None):
+    def read(self, size=None) -> bytes:
         """Read the response for some command.
 
-        Not all command return response.
+        Unlike serial mode, over WiFi there is not read and write individual
+        commands, the response is got in the same write command. This
+        implementation tries to emulate the the behavior of serial read/write
+        for compatibility reasons. Not all command return a response.
         """
 
-        time.sleep(0.2)  # very important dealy for wait a response.
+        time.sleep(0.2)  # critical dealy for wait a response.
         return self._readed
 
     # ----------------------------------------------------------------------
-    def start_stream(self, clear=True, wait_for_data=False):
-        """Start a data collection asynchronously.
+    def start_stream(self) -> None:
+        """Initialize a TCP client on the WiFi shield and sends the command to
+        starts stream."""
 
-        Send a command to the board for start the streaming through TCP.
-
-        Parameters
-        ----------
-        milliseconds: int, optional
-            The duration of data for packing.
-        """
-
-        super().start_stream(clear)
+        super().start_stream()
         self._start_tcp_client()
 
-        # if not self.STREAMING:
         response = requests.get(f"http://{self._ip_address}/stream/start")
         if response.status_code != 200:
             logging.warning(
                 f"Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start")
-            # self.STREAMING = True
-        else:
-
-            if wait_for_data:
-                self._wait_for_data()
 
     # ----------------------------------------------------------------------
-    def stop_stream(self, wait_for_no_data=False):
-        """Stop streaming."""
+    def stop_stream(self) -> None:
+        """Stop the data collection that runs asynchronously and sends the
+        command to stops stream."""
 
         super().stop_stream()
 
-        # if self.STREAMING:
-            # self.stop_loop()
         response = requests.get(f"http://{self._ip_address}/stream/stop")
         if response.status_code != 200:
-            # self.STREAMING = False
-        # else:
             logging.warning(
                 f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/start")
 
         self.binary_stream.close()
-        # self._stop_tcp_client()
         asyncore.close_all()
 
-        if wait_for_no_data:
-            self._wait_for_no_data()
-
     # ----------------------------------------------------------------------
-    def _create_tcp_server(self):
-        """Create TCP server.
-
-        This server will handle the streaming EEG data.
-        """
+    def _create_tcp_server(self) -> None:
+        """Create TCP server, this server will handle the streaming EEG data."""
 
         kafka_context = {
             'daisy': self.daisy,
@@ -568,21 +533,17 @@ class CytonWiFi(CytonBase):
         }
 
         self.local_wifi_server = WiFiShieldTCPServer(self._local_ip_address,
-                                                     lambda: getattr(
-                                                         self, 'binary_stream'),
+                                                     lambda: getattr(self, 'binary_stream'),
                                                      kafka_context,
                                                      )
-        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[
-            1]
+        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[1]
         logging.info(
-            f"Opened socket on {self._local_ip_address}:{self.local_wifi_server_port}")
+            f"Open socket on {self._local_ip_address}:{self.local_wifi_server_port}")
 
     # ----------------------------------------------------------------------
     def _start_tcp_client(self):
-        """Connect the board to the TCP server.
-
-        Send configuration of the previous server created to the board, so they
-        can connected to.
+        """Connect the board to the TCP server. Sends configuration of the
+        previously server created to the board, so they can connected to.
         """
 
         if self._ip_address is None:
@@ -591,8 +552,6 @@ class CytonWiFi(CytonBase):
         logging.info(f"Init WiFi connection with IP: {self._ip_address}")
 
         self.requests_session = requests.Session()
-
-        # requests.get(f"http://{self._ip_address}/yt")
         response = requests.get(f"http://{self._ip_address}/board")
 
         if response.status_code == 200:
@@ -623,15 +582,14 @@ class CytonWiFi(CytonBase):
                 f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
 
     # ----------------------------------------------------------------------
-    def close(self):
-        """Stop TCP server."""
+    def close(self) -> None:
+        """Stops TCP server and data acquisition."""
         self.stop_stream()
         requests.delete(f"http://{self._ip_address}/tcp")
-        # asyncore.close_all()
 
     # ----------------------------------------------------------------------
     def _start_loop(self):
-        """Start the TCP server. """
+        """Start the TCP server on a thread asyncore loop."""
         self.th_loop = Thread(target=asyncore.loop, args=(), )
         self.th_loop.start()
 
@@ -639,22 +597,58 @@ class CytonWiFi(CytonBase):
 ########################################################################
 class Cyton:
     """
-    Main
+    `Cyton` is a shortcut for `CytonRFDuino` or `CytonWiFi`:
+
+    >>> Cyton('serial', ...)
+
+    is equals to:
+
+    >>> CytonRFDuino(...)
+
+    and
+
+    >>> Cyton('wifi', ...)
+
+    the same that do:
+
+    >>> CytonWiFi(...)
+
+    Parameters
+    ----------
+    mode
+        `serial` or `wifi`
+    endpoint
+        Serial port for RFduino or IP address for WiFi module.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz',
+        'F4']` and a dictionary means specific channels `{1: 'Fp1', 2: 'Fp2',
+        3: 'F3', 4: 'Fz', 5: 'F4'}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
     """
 
     # ----------------------------------------------------------------------
-    def __new__(self, mode, endpoint=None, host=None, daisy='auto', capture_stream=False, montage=None, streaming_package_size=None):
-        """Constructor"""
-
-        if streaming_package_size is None:
-            streaming_package_size = 250
+    def __new__(self, mode: MODE, endpoint: str = None, host: str = None,
+                daisy: DAISY = 'auto',
+                montage: Optional[Union[list, dict]] = None,
+                streaming_package_size: int = 250,
+                capture_stream: Optional[bool] = False) -> Union[CytonRFDuino, CytonWiFi]:
+        """"""
 
         if mode == 'serial':
-            mode = CytonRFDuino(endpoint, host, daisy,
-                                capture_stream, montage, streaming_package_size)
+            return CytonRFDuino(endpoint, host, daisy, montage,
+                                streaming_package_size, capture_stream)
 
         elif mode == 'wifi':
-            mode = CytonWiFi(endpoint, host, daisy,
-                             capture_stream, montage, streaming_package_size)
-
-        return mode
+            return CytonWiFi(endpoint, host, daisy, montage,
+                             streaming_package_size, capture_stream)
