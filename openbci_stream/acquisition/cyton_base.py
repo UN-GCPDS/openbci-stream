@@ -8,33 +8,26 @@ import re
 import time
 import logging
 import pickle
+from threading import Thread
 from datetime import datetime
 from functools import cached_property
-
-import numpy as np
-
-from scipy.interpolate import interp1d
-
-# from functools import cached_property
 from abc import ABCMeta, abstractmethod
 from multiprocessing import Process, Manager
-from threading import Thread
+from typing import Optional, Union, Literal, Dict, List, TypeVar, Any
+
+import numpy as np
+from kafka import KafkaConsumer
 
 from .binary_stream import BinaryStream
-# from .consumer import OpenBCIConsumer
-
-from kafka import KafkaConsumer
-# from kafka.errors import NoBrokersAvailable
-# from openbci_stream import doc_urls
-# import traceback
-
 from ..utils import HDF5Writer, interpolate_datetime
 
+DAISY = Literal['auto', True, False]
+QUEUE = TypeVar('Queue', Manager().Queue())
+
+
 ########################################################################
-
-
 class CytonConstants:
-    """"""
+    """Default constants defined in the `Cyton SDK <https://docs.openbci.com/docs/02Cyton/CytonSDK>`_"""
 
     VREF = 4.5
 
@@ -156,31 +149,39 @@ class CytonConstants:
 
     VERSION = b'V'
 
+    # ----------------------------------------------------------------------
+    def __init__(self) -> None:
+        """"""
+
 
 ########################################################################
 class CytonBase(CytonConstants, metaclass=ABCMeta):
     """
     The Cyton data format and SDK define all interactions and capabilities of
-    the board, the full instructions can be found in the official package.
+    the board, the full instructions can be found in the official documentation.
 
       * https://docs.openbci.com/Hardware/03-Cyton_Data_Format
       * https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK
+
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz',
+        'F4']` and a dictionary means specific channels `{1: 'Fp1', 2: 'Fp2',
+        3: 'F3', 4: 'Fz', 5: 'F4'}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
     """
 
-    # Flags
-    READING = None
-
     # ----------------------------------------------------------------------
-    def __init__(self, daisy, capture_stream, montage, streaming_package_size):
+    def __init__(self, daisy: DAISY, montage: Optional[Union[list, dict]],
+                 streaming_package_size: int, capture_stream: bool) -> None:
         """"""
-        # try:
-            # self.binary_stream = BinaryStream()
-        # except NoBrokersAvailable:
-            # traceback.print_exc()
-            # logging.error('#' + '-' * 70)
-            # logging.error('Kafka broker is not available!')
-            # logging.error(f'Check {doc_urls.CONFIGURE_KAFKA} for instructions.')
-
+        # Default sample rate for serial and wifi mode
         self.sample_rate = 250
 
         # Daisy before Montage
@@ -192,50 +193,20 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         # Montage
         self.montage = montage
 
-        # Data Structure
+        # Data Structure with special queue that can live across process
         self._data_eeg = Manager().Queue()
         self._data_aux = Manager().Queue()
         self._data_markers = Manager().Queue()
         self._data_timestamp = Manager().Queue()
-        # self._data_offset = Manager().Queue()
 
-        # self.sample_rate = sample_rate
         self.reset_input_buffer()
-
-        # Autocapture stream
         self._auto_capture_stream = capture_stream
-
         self.streaming_package_size = streaming_package_size
 
-        # self.default_init()
-
-    # ----------------------------------------------------------------------
-
-    @property
-    def gain(self):
-        """Vector with the gains for each channel."""
-
-        # TODO
-        # A method for change the ganancy of each channel must be writed here
-
-        if hasattr(self, '_gain'):
-            return self._gain
-        else:
-            return [24, 24, 24, 24, 24, 24, 24, 24]
-
     # ----------------------------------------------------------------------
     @property
-    def scale_factor_eeg(self):
-        """Vector with the correct factors for scale eeg data samples."""
-
-        return [self.VREF / (gain * ((2 ** 23) - 1)) for gain in self.gain]
-
-    # ----------------------------------------------------------------------
-    @property
-    def boardmode(self):
-        """"""
-        # if hasattr(self, '_boardmode') and self._boardmode:
-            # return self._boardmode
+    def boardmode(self) -> str:
+        """Stop stream and ask for the current boardmode."""
 
         self.command(self.STOP_STREAM)
         response = self.command(self.BOARD_MODE_GET)
@@ -247,54 +218,26 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         logging.warning(
             'Stream must be stoped for read the current boardmode')
 
-    # # ----------------------------------------------------------------------
-    # @boardmode.setter
-    # def boardmode(self, mode):
-        # """"""
-        # self.command(mode)
-        # self._boardmode = self.BOARD_MODE_VALUE[mode]
-
-    # # ----------------------------------------------------------------------
-    # @property
-    # def sample_rate(self):
-        # """"""
-        # response = self.command(self.SAMPLE_RATE_GET)
-        # # if response is None:
-            # # return self.sample_rate
-        # try:
-            # value, multiple, _ = re.findall(
-                # '([0-9]+)([K]*)(Hz)', response.decode())[0]
-            # # return f'SAMPLE_RATE_{value}{multiple}SPS'
-            # return self.SAMPLE_RATE_VALUE[getattr(self, f'SAMPLE_RATE_{value}{multiple}SPS')]
-        # except:
-            # return self.sample_rate
-
-    # # ----------------------------------------------------------------------
-    # @sample_rate.setter
-    # def sample_rate(self, sr):
-        # """"""
-        # if not sr in self.SAMPLE_RATE_VALUE.keys():
-            # sr = getattr(self, sr)
-        # self.command(sr)
-
     # ----------------------------------------------------------------------
     @property
-    def montage(self):
-        """"""
+    def montage(self) -> Union[List, Dict]:
+        """The current montage configured on initialization."""
         return self._montage
 
     # ----------------------------------------------------------------------
     @montage.setter
-    def montage(self, montage):
+    def montage(self, montage: Union[List, Dict, None]) -> None:
         """Define the information with que electrodes names.
 
-        If a list is passed the format will be supposed with index as channels,
-        the index can be set explicitly with a dictionary instead of a list.
+        A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz',
+        'F4']` and a dictionary means specific channels `{1: 'Fp1', 2: 'Fp2',
+        3: 'F3', 4: 'Fz', 5: 'F4'}`. Internally the montage is always a
+        dictionary.
 
         Parameters
         ----------
-        montage : list, dict, None, optional
-            Decription of channels used.
+        montage :
+            Object for generate the montage parameter.
         """
 
         if isinstance(montage, (bytes)):
@@ -305,55 +248,61 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         elif isinstance(montage, (dict)):
             self._montage = {i: ch for i, ch in enumerate(montage.values())}
         else:
-
+            # Default
             if self.daisy:
                 self._montage = {i: f'ch{i+1}' for i in range(16)}
             elif not self.daisy:
                 self._montage = {i: f'ch{i+1}' for i in range(8)}
 
     # ----------------------------------------------------------------------
-    @property
-    def streaming(self):
-        """"""
-        # TODO
-        if hasattr(self, 'binary_stream'):
-            self.binary_stream.producer
+    def deactivate_channel(self, channels: List[int]) -> None:
+        """Deactivate the channels specified.
 
-    # ----------------------------------------------------------------------
-
-    def deactivate_channel(self, channels):
-        """Deactivate the channels specified."""
+        Parameters
+        ----------
+        channels :
+            1-based indexing channels.
+        """
 
         chain = ''.join([chr(self.DEACTIVATE_CHANEL[ch - 1])
                          for ch in channels]).encode()
         self.command(chain)
-        # [self.command(self.DEACTIVATE_CHANEL[ch]) for ch in channels]
 
     # ----------------------------------------------------------------------
-    def activate_channel(self, channels):
-        """Activate the channels specified."""
+    def activate_channel(self, channels: List[int]) -> None:
+        """Activate the channels specified.
+
+        Parameters
+        ----------
+        channels :
+            1-based indexing channels.
+        """
 
         chain = ''.join([chr(self.ACTIVATE_CHANEL[ch - 1])
                          for ch in channels]).encode()
         self.command(chain)
-        # [self.command(self.ACTIVATE_CHANEL[ch]) for ch in channels]
 
     # ----------------------------------------------------------------------
-    def command(self, c):
+    def command(self, c: Union[str, bytes]) -> str:
         """Send a command to device.
 
         Before send the commmand the input buffer is cleared, and after that
-        waits 300 ms for a response.
+        waits 300 ms for a response. Is possible to send a raw bytes, a
+        `CytonConstants` attribute or the constant name e.g.
+
+        >>> comand(b'~4')
+        >>> command(CytonConstants.SAMPLE_RATE_1KSPS)
+        >>> command('SAMPLE_RATE_1KSPS')
 
         Parameters
         ----------
-        c : bytes
+        c
             Command to send.
 
         Returns
         -------
         str
-            If the command generate a response this will be sended back.
+            If the command generate a response this will be returned.
         """
 
         if hasattr(self, c.decode()):
@@ -366,7 +315,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         self.write(c)
         time.sleep(0.3)
         response = self.read(2**11)
-        logging.info(f'Writed: {c}')
+        logging.info(f'Writing: {c}')
         if response and len(response) > 100:
             logging.info(f'Response: {response[:100]}...')
         else:
@@ -380,51 +329,54 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         return response
 
     # ----------------------------------------------------------------------
-    def channel_settings(self, channels,
-                         power_down=CytonConstants.POWER_DOWN_ON,
-                         gain=CytonConstants.GAIN_24,
-                         input_type=CytonConstants.ADSINPUT_NORMAL,
-                         bias=CytonConstants.BIAS_INCLUDE,
-                         srb2=CytonConstants.SRB2_CONNECT,
-                         srb1=CytonConstants.SRB1_DISCONNECT):
+    def channel_settings(self, channels: List[int],
+                         power_down: Optional[bytes] = CytonConstants.POWER_DOWN_ON,
+                         gain: Optional[bytes] = CytonConstants.GAIN_24,
+                         input_type: Optional[bytes] = CytonConstants.ADSINPUT_NORMAL,
+                         bias: Optional[bytes] = CytonConstants.BIAS_INCLUDE,
+                         srb2: Optional[bytes] = CytonConstants.SRB2_CONNECT,
+                         srb1: Optional[bytes] = CytonConstants.SRB1_DISCONNECT) -> None:
         """Channel Settings commands.
 
         Parameters
         ----------
-        channels : list
-            List of channels that will share the configuration specified.
-        power_down : bytes, optional
-            POWER_DOWN_ON (default), POWER_DOWN_OFF.
-        gain: bytes, optional
-            GAIN_24 (default), GAIN_12, GAIN_8, GAIN_6, GAIN_4, GAIN_2, GAIN_1.
-        input_type : bytes, optional
-            Select the ADC channel input source: ADSINPUT_NORMAL (default),
-            ADSINPUT_SHORTED, ADSINPUT_BIAS_MEAS, ADSINPUT_MVDD, ADSINPUT_TEMP,
-            ADSINPUT_TESTSIG, ADSINPUT_BIAS_DRP, ADSINPUT_BIAS_DRN,
-        bias : bytes, optional
+        channels
+            1-based indexing channels list that will share the configuration
+            specified.
+        power_down
+            `POWER_DOWN_ON` (default), `POWER_DOWN_OFF`.
+        gainoptional
+            `GAIN_24` (default), `GAIN_12`, `GAIN_8`, `GAIN_6`, `GAIN_4`,
+            `GAIN_2`, `GAIN_1`.
+        input_type
+            Select the ADC channel input source: `ADSINPUT_NORMAL` (default),
+            `ADSINPUT_SHORTED`, `ADSINPUT_BIAS_MEAS`, `ADSINPUT_MVDD`,
+            `ADSINPUT_TEMP`, `ADSINPUT_TESTSIG`, `ADSINPUT_BIAS_DRP`,
+            `ADSINPUT_BIAS_DRN`,
+        bias
             Select to include the channel input in BIAS generation:
-            BIAS_INCLUDE (default), BIAS_REMOVE.
-        srb2 : bytes, optional
+            `BIAS_INCLUDE` (default), `BIAS_REMOVE`.
+        srb2
             Select to connect this channel’s P input to the SRB2 pin. This
-            closes a switch between P input and SRB2 for the given channel,
-            and allows the P input also remain connected to the ADC:
-            SRB2_CONNECT (default), SRB2_DISCONNECT.
-        srb1 : bytes, optional
+            closes a switch between P input and SRB2 for the given channel, and
+            allows the P input also remain connected to the ADC: `SRB2_CONNECT`
+            (default), `SRB2_DISCONNECT`.
+        srb1
             Select to connect all channels’ N inputs to SRB1. This effects all
-            pins, and disconnects all N inputs from the ADC:
-            SRB1_DISCONNECT (default), SRB1_CONNECT.
+            pins, and disconnects all N inputs from the ADC: `SRB1_DISCONNECT`
+            (default), `SRB1_CONNECT`.
+
 
         Returns
         -------
 
         On success:
-
-          * If streaming, no confirmation of success. Note: WiFi Shields will always get a response, even if streaming.
-          * If not streaming, returns Success: Channel set for 3$$$, where 3 is the channel that was requested to be set.
+            * If streaming, no confirmation of success. Note: WiFi Shields will always get a response, even if streaming.
+            * If not streaming, returns Success: Channel set for 3$$$, where 3 is the channel that was requested to be set.
 
         On failure:
-
           * If not streaming, NOTE: WiFi shield always sends the following responses without $$$
+
               * Not enough characters received, Failure: too few chars$$$ (example user sends x102000X)
               * 9th character is not the upper case `X`, Failure: 9th char not X$$$ (example user sends x1020000V)
               * Too many characters or some other issue, Failure: Err: too many chars$$$
@@ -432,11 +384,10 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
         """
 
-        start = b'x'
-        end = b'X'
-
         self.reset_input_buffer()
 
+        start = b'x'
+        end = b'X'
         chain = b''
         for ch in channels:
             ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
@@ -444,31 +395,23 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                                srb2, srb1, end])
 
         self.command(chain)
-            # time.sleep(0.3)
-            # response = self.read(2**11)
-
-            # logging.info(f'Writed: {chain}')
-            # if len(response) > 100:
-                # logging.info(f'Responded: {response[:100]}...')
-            # else:
-                # logging.info(f'Responded: {response}')
-
-        # time.sleep(0.3)
-        # return self.read(2**11)
 
     # ----------------------------------------------------------------------
-    def leadoff_impedance(self, channels, pchan=CytonConstants.TEST_SIGNAL_NOT_APPLIED,
-                          nchan=CytonConstants.TEST_SIGNAL_APPLIED):
+    def leadoff_impedance(self, channels: List[int],
+                          pchan: Optional[bytes] = CytonConstants.TEST_SIGNAL_NOT_APPLIED,
+                          nchan: Optional[bytes] = CytonConstants.TEST_SIGNAL_APPLIED) -> None:
         """LeadOff Impedance Commands
 
         Parameters
         ----------
-        channels : list
-            List of channels that will share the configuration specified.
-        pchan : bytes, optional
-            TEST_SIGNAL_NOT_APPLIED (default), TEST_SIGNAL_APPLIED.
-        nchan : bytes, optional
-            TEST_SIGNAL_APPLIED (default), TEST_SIGNAL_NOT_APPLIED.
+        channels
+            1-based indexing channels list that will share the configuration
+            specified.
+        pchan
+            `TEST_SIGNAL_NOT_APPLIED` (default), `TEST_SIGNAL_APPLIED`.
+        nchan
+            `TEST_SIGNAL_APPLIED` (default), `TEST_SIGNAL_NOT_APPLIED`.
+
 
         Returns
         -------
@@ -481,6 +424,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         On failure:
 
           * If not streaming, NOTE: WiFi shield always sends the following responses without $$$
+
               * Not enough characters received, Failure: too few chars$$$ (example user sends z102000Z)
               * 5th character is not the upper case ‘Z’, Failure: 5th char not Z$$$ (example user sends z1020000X)
               * Too many characters or some other issue, Failure: Err: too many chars$$$
@@ -497,20 +441,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
             chain += b''.join([start, ch, pchan, nchan, end])
         self.command(chain)
-            # time.sleep(0.3)
-            # response = self.read(2**11)
-
-            # logging.info(f'Writed: {chain}')
-            # if len(response) > 100:
-                # logging.info(f'Responded: {response[:100]}...')
-            # else:
-                # logging.info(f'Responded: {response}')
-
-        # time.sleep(0.3)
-        # return self.read(2**11)
 
     # ----------------------------------------------------------------------
-    def send_marker(self, marker, burst=4):
+    def send_marker(self, marker: Union[str, bytes, int], burst: int = 4) -> None:
         """Send marker to device.
 
         The marker sended will be added to the `AUX` bytes in the next data
@@ -523,9 +456,11 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
         Parameters
         ----------
-        marker : str, bytes, int
-            A single value required.
-        burst : int, optional
+        marker
+            A single value with the desired marker. Only can be a capitalized
+            letter, or an integer between 65 and 90. These limitations are
+            imposed by this library and not by the SDK
+        burst
             How many times the marker will be send.
 
         """
@@ -542,7 +477,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                 f'Marker must be between {ord("A")} and {ord("Z")}')
 
     # ----------------------------------------------------------------------
-    def daisy_attached(self):
+    def daisy_attached(self) -> bool:
         """Check if a Daisy module is attached.
 
         This command will activate the Daisy module is this is available.
@@ -553,53 +488,19 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             Daisy module activated.
 
         """
-        # self.command(self.SOFT_RESET)  # to update the status information
         response = self.command(self.USE_16CH_ONLY)
-        # self.activate_channel(range(16))
-
         if not response:
-            # logging.warning(f"Channels no setted correctly")
             return self.daisy_attached()
 
         daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
                      or ('8' in response.decode(errors='ignore')))
 
-        # # if self.montage:
-            # # channels = self.montage.keys()
-        # if not self._montage and daisy:
-            # # channels = range(16)
-            # self.montage = range(16)
-        # elif not self._montage and not daisy:
-            # # channels = range(8)
-            # self.montage = range(8)
-
-        # # self.default_init()
-
-        # logging.info(f"Using channels: {channels}")
-
         return daisy
 
-    # # ----------------------------------------------------------------------
-    # def default_init(self, pchan=TEST_SIGNAL_NOT_APPLIED, nchan=TEST_SIGNAL_APPLIED):
-        # """"""
-        # channels = self.montage.keys()
-        # self.leadoff_impedance(channels,
-                               # pchan,
-                               # nchan,
-                               # )
-        # # self.leadoff_impedance(channels,
-                               # # self.TEST_SIGNAL_NOT_APPLIED,  # pchan
-                               # # self.TEST_SIGNAL_APPLIED,  # nchan
-                               # # )
-        # # self.leadoff_impedance(channels,
-                               # # self.TEST_SIGNAL_NOT_APPLIED,  # pchan
-                               # # self.TEST_SIGNAL_NOT_APPLIED,  # nchan
-                               # # )
-        # self.activate_channel(channels)
-
     # ----------------------------------------------------------------------
-    def capture_stream(self):
-        """"""
+    def capture_stream(self) -> None:
+        """Create a process for connecting to the stream and capture data from it."""
+
         # For prevent circular import
         from .consumer import OpenBCIConsumer
 
@@ -616,110 +517,33 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                         self._data_eeg.put(eeg)
                         self._data_aux.put(aux)
 
-                        timestamp = np.zeros(message.value['samples'])
-                        timestamp[-1] = message.value['binary_created']
+                        timestamp = np.zeros(message.value['context']['samples'])
+                        timestamp[-1] = message.value['context']['created']
                         self._data_timestamp.put(timestamp)
 
                     elif message.topic == 'marker':
 
                         timestamp = message.value['timestamp']
-                        # timestamp = message.timestamp / 1000
                         marker = message.value['marker']
                         self._data_markers.put((timestamp, marker))
-
-                    # self._data_offset.put(message.offset)
 
         self.persistent_process = Process(target=bulk_buffer)
         self.persistent_process.start()
 
     # ----------------------------------------------------------------------
-    def _wait_for_data(self):
-        """"""
-        t0 = time.time()
-        if hasattr(self, 'persistent_process'):
-            while not self.eeg_buffer.qsize() and (time.time() - t0 < 10):
-                time.sleep(0.25)
-        else:
-            logging.warning(
-                f"`wait_for_data` only works with `capture_stream=True`")
-
-    # ----------------------------------------------------------------------
-    def _wait_for_no_data(self):
-        """"""
-        t0 = time.time()
-        if hasattr(self, 'persistent_process'):
-
-            a = self.eeg_buffer.qsize()
-            time.sleep(3)
-            b = self.eeg_buffer.qsize()
-
-            while a != b:
-
-                a = self.eeg_buffer.qsize()
-                time.sleep(3)
-                b = self.eeg_buffer.qsize()
-
-        else:
-            logging.warning(
-                f"`wait_for_no_data` only works with `capture_stream=True`")
-
-    # # ----------------------------------------------------------------------
-    # def stack(self, offset=0):
-        # """"""
-        # if not self.eeg_buffer.qsize():
-            # return np.array([[], [], []])
-
-        # # move offset
-        # [self.eeg_buffer.get() for _ in range(offset)]
-        # [self.eeg_timestamp.get() for _ in range(offset)]
-        # # [self.eeg_timestamp.get() for _ in range(offset)]
-
-        # qq = [self.eeg_buffer.get() for _ in range(self.eeg_buffer.qsize())]
-        # eeg = np.concatenate(np.array(qq).T[0], axis=1)
-
-        # try:
-            # aux = np.concatenate(np.array(qq).T[1], axis=1)
-        # except np.AxisError:  # For markers
-            # aux = np.concatenate(np.array(qq).T[1])
-
-        # ww = [self.eeg_timestamp.get()
-              # for _ in range(self.eeg_timestamp.qsize())]
-        # timestamp = np.concatenate(ww)
-
-        # nonzero = np.nonzero(timestamp)
-        # args = np.arange(len(timestamp))
-        # interp = interp1d(
-            # args[nonzero], timestamp[nonzero], fill_value="extrapolate")
-        # timestamp = interp(args)
-
-        # ww = [self.eeg_markers.get()
-              # for _ in range(self.eeg_markers.qsize())]
-        # markers = list(zip(*ww))
-
-        # return np.array([eeg, aux, timestamp, markers])
-
-    # ----------------------------------------------------------------------
-    def start_stream(self, clear):
-        """"""
-
-        # try:
+    def start_stream(self) -> None:
+        """Create the binary stream channel."""
         self.binary_stream = BinaryStream(self.streaming_package_size)
-        # except NoBrokersAvailable:
-            # traceback.print_exc()
-            # logging.error('#' + '-' * 70)
-            # logging.error('Kafka broker is not available!')
-            # logging.error(f'Check {doc_urls.CONFIGURE_KAFKA} for instructions.')
 
-        if clear:
-            self.reset_buffers()
-            self.reset_input_buffer()
+        self.reset_buffers()
+        self.reset_input_buffer()
 
         if self._auto_capture_stream:
             self.capture_stream()
 
     # ----------------------------------------------------------------------
-    def stop_stream(self):
-        """"""
+    def stop_stream(self) -> None:
+        """Stop the acquisition daemon if exists."""
         if hasattr(self, 'persistent_process'):
             self.persistent_process.terminate()
             self.persistent_process.join()
@@ -727,68 +551,56 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     # ----------------------------------------------------------------------
     @abstractmethod
     def close(self):
-        """Device handled process, stop data stream."""
+        """Stops data stream."""
         pass
 
     # ----------------------------------------------------------------------
     @abstractmethod
     def write(self):
-        """"""
-        """Device handled process, write bytes."""
+        """Write bytes."""
         pass
 
     # ----------------------------------------------------------------------
     @abstractmethod
     def read(self):
-        """Device handled process, read binary data."""
+        """Read binary data."""
         pass
 
     # ----------------------------------------------------------------------
     def reset_input_buffer(self):
-        """Device handled process, flush input data."""
+        """Flush input data."""
         pass
-
-    ############################################################################
-    # Preprocessing queue properties
 
     # ----------------------------------------------------------------------
     @property
-    def eeg_buffer(self):
-        """Return the deserialized data buffer."""
-
+    def eeg_buffer(self) -> QUEUE:
+        """Return the deserialized data buffer for EEG."""
         return self._data_eeg
 
     # ----------------------------------------------------------------------
     @property
-    def timestamp_buffer(self):
-        """Return the deserialized data buffer."""
-
+    def timestamp_buffer(self) -> QUEUE:
+        """Return the deserialized data buffer for timestamps."""
         return self._data_timestamp
 
     # ----------------------------------------------------------------------
     @property
-    def markers_buffer(self):
-        """Return the deserialized data buffer."""
-
+    def markers_buffer(self) -> QUEUE:
+        """Return the deserialized data buffer for markers."""
         return self._data_markers
 
     # ----------------------------------------------------------------------
     @property
-    def aux_buffer(self):
-        """Return the deserialized data buffer."""
-
+    def aux_buffer(self) -> QUEUE:
+        """Return the deserialized data buffer for auxiliar data."""
         return self._data_aux
 
-    ############################################################################
-    # Buffers time series
-
     # ----------------------------------------------------------------------
-    # @property
     @cached_property
-    def eeg_time_series(self):
-        """"""
-        eeg = [self._data_eeg.get() for _ in range(self._data_eeg.qsize())]
+    def eeg_time_series(self) -> np.ndarray:
+        """Return data acquired in shape (`channels, time`)."""
 
+        eeg = [self._data_eeg.get() for _ in range(self._data_eeg.qsize())]
         if eeg:
             eeg = np.concatenate(eeg, axis=1)
             return eeg
@@ -799,12 +611,11 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             return np.array([])
 
     # ----------------------------------------------------------------------
-    # @property
     @cached_property
-    def aux_time_series(self):
-        """"""
-        aux = [self._data_aux.get() for _ in range(self._data_aux.qsize())]
+    def aux_time_series(self) -> np.ndarray:
+        """Return auxiliar data acquired in shape (`AUX, time`)."""
 
+        aux = [self._data_aux.get() for _ in range(self._data_aux.qsize())]
         try:
             aux = np.concatenate(aux, axis=1)
         except np.AxisError:
@@ -814,8 +625,13 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
     # ----------------------------------------------------------------------
     @cached_property
-    def timestamp_time_series(self):
-        """"""
+    def timestamp_time_series(self) -> np.ndarray:
+        """Return timestamps acquired.
+
+        Since there is only one timestamp for package, the others values are
+        interpolated.
+        """
+
         timestamp = [self._data_timestamp.get() for _ in range(self._data_timestamp.qsize())]
         timestamp = np.concatenate(timestamp, axis=0)
         length = self.eeg_time_series.shape[1]
@@ -827,8 +643,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
     # ----------------------------------------------------------------------
     @cached_property
-    def markers(self):
-        """"""
+    def markers(self) -> Dict[str, list]:
+        """Return a dictionary with markes as keys and a list of timestamps as
+        values e.g
+
+        >>> {'LEFT': [1603150888.752062, 1603150890.752062, 1603150892.752062],
+             'RIGHT': [1603150889.752062, 1603150891.752062, 1603150893.752062],}
+        """
+
         markers = {}
         for t, marker in [self._data_markers.get() for _ in range(self._data_markers.qsize())]:
             markers.setdefault(marker, []).append(t)
@@ -836,7 +658,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         return markers
 
     # ----------------------------------------------------------------------
-    def reset_buffers(self):
+    def reset_buffers(self) -> None:
         """Discard buffers."""
 
         for buffer in [self._data_eeg,
@@ -861,46 +683,33 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                 del self.__dict__[cached]
 
     # ----------------------------------------------------------------------
-    def stream(self, s=1, clear=True):
+    def stream(self, duration: int) -> None:
         """Start a synchronous process for start stream data.
 
-        This call will hang until time completed.
+        This call will hangs until durations be completed.
 
         Parameters
         ----------
-        s : int, optional
+        duration
             Seconds for data collection.
-        clear : bool, optional
-            Reset buffer before start data collect.
-        raw : bool, optional
-            Ignore the deserialize process, all data is stored in binary format.
         """
 
-        self.start_stream(clear)
-        time.sleep(s)
+        self.start_stream()
+        time.sleep(duration)
         self.stop_stream()
 
-    # # ----------------------------------------------------------------------
-    # def get_sample_rate(self):
-        # """"""
-        # response = self.command(self.SAMPLE_RATE_GET)
-        # try:
-            # sample_rate = re.findall('[0-9]+', response.decode())[0]
-            # return int(sample_rate)
-        # except:
-            # return None
-
     # ----------------------------------------------------------------------
-    def listen_stream_markers(self, host='localhost', topics=['markers']):
-        """"""
+    def listen_stream_markers(self, host: Optional[str] = 'localhost',
+                              topics: Optional[List[str]] = ['markers']) -> None:
+        """Redirect markers form Kafka stream to board, this feature needs
+        `markers` boardmode configured."""
+
         bootstrap_servers = [f'{host}:9092']
 
         markers_consumer = KafkaConsumer(
             bootstrap_servers=bootstrap_servers,
-            # value_deserializer=lambda x: pickle.loads(x),
-            # group_id='openbci',
+            value_deserializer=pickle.loads,
             auto_offset_reset='latest',
-
         )
         markers_consumer.subscribe(topics)
 
@@ -918,14 +727,26 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         self.stream_markers.start()
 
     # ----------------------------------------------------------------------
-    def save(self, filename, montage, sample_rate=None):
-        """"""
+    def save(self, filename: str, montage_name: str,
+             sample_rate: Optional[int] = None) -> None:
+        """Create a hdf file with acquiered data.
+
+        Parameters
+        ----------
+        filename
+            Path with the destination of the hdf file.
+        montage_name
+            Montage name for MNE e.g 'standard_1020'.
+        sample_rate
+            The sampling rate for acquired data.
+
+        """
         if sample_rate is None:
             sample_rate = self.sample_rate
 
         header = {'sample_rate': sample_rate,
                   'datetime': datetime.now().timestamp(),
-                  'montage': montage,
+                  'montage': montage_name,
                   'channels': self.montage,
                   }
 
@@ -945,3 +766,12 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             logging.info(f'Writed a vector of shape ({aux.shape}) for aux data')
             if self.markers:
                 logging.info(f'Writed {self.markers.keys()} markers')
+
+    # ----------------------------------------------------------------------
+    def __getattribute__(self, attr: str) -> Any:
+        """Some attributes must be acceded from RPyC."""
+
+        if super().__getattribute__('remote_host'):
+            return getattr(super().__getattribute__('remote_host'), attr)
+        else:
+            return super().__getattribute__(attr)

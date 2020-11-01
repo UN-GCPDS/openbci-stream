@@ -44,6 +44,7 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
         self.kafka_context = kafka_context
 
         self.binary_stream = binary_stream
+        self._gain = None
 
     # ----------------------------------------------------------------------
     def handle_accept(self) -> None:
@@ -57,6 +58,11 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
             self.handler.handle_error = self._handle_error
 
     # ----------------------------------------------------------------------
+    def set_gain(self, gain) -> None:
+        """"""
+        self._gain = gain
+
+    # ----------------------------------------------------------------------
     def _handle_read(self) -> None:
         """Write the input streaming into the binary stream.
 
@@ -66,6 +72,15 @@ class WiFiShieldTCPServer(asyncore.dispatcher):
         """
 
         self.kafka_context.update({'created': datetime.now().timestamp()})
+
+        if self._gain:
+            self.kafka_context.update({'gain': self._gain})
+        else:
+            if self.kafka_context['daisy']:
+                self.kafka_context.update({'gain': [24] * 16})
+            else:
+                self.kafka_context.update({'gain': [24] * 8})
+
         data = {'context': self.kafka_context,
                 'data': self.handler.recv(33 * 90),
                 }

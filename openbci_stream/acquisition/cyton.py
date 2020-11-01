@@ -148,7 +148,7 @@ import logging
 import asyncore
 from threading import Thread
 from datetime import datetime
-from typing import Optional, Union, Literal, Dict
+from typing import Optional, Union, Literal, Dict, List
 
 from .cyton_base import CytonBase
 from .tcp_server import WiFiShieldTCPServer
@@ -228,7 +228,7 @@ class CytonRFDuino(CytonBase):
                                     write_timeout=0.01,
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_ONE)
-        super().__init__(daisy, capture_stream, montage, streaming_package_size)
+        super().__init__(daisy, montage, streaming_package_size, capture_stream)
 
     # ----------------------------------------------------------------------
     def _get_serial_ports(self) -> Optional[str]:
@@ -283,11 +283,6 @@ class CytonRFDuino(CytonBase):
         self.device.write(data)
 
     # ----------------------------------------------------------------------
-    def reset_input_buffer(self) -> None:
-        """Clear input buffer, discarding all that is in the buffer."""
-        self.device.reset_input_buffer()
-
-    # ----------------------------------------------------------------------
     def close(self):
         """Close the serial communication."""
         self.device.close()
@@ -298,17 +293,7 @@ class CytonRFDuino(CytonBase):
         """Write binary raw into a kafka producer.
 
         This method will feed the producer while the serial device has data to
-        be read. The `context` is a dictionary that contains:
-
-          * **created:**  The `timestamp` for the exact moment when binary data
-            was read.
-          * **daisy:** `True` if Daisy board is attached, otherwise `False`.
-          * **boardmode:** Can be `default`, `digital`, ''analog', 'debug' or
-            `marker`.
-          * **montage:** A list means consecutive channels e.g. `['Fp1', 'Fp2',
-            'F3', 'Fz', 'F4']` and a dictionary means specific channels
-            `{1: 'Fp1', 2: 'Fp2', 3: 'F3', 4: 'Fz', 5: 'F4'}`.
-          * **connection:** Can be `serial` or `wifi`.
+        be read.
 
         Parameters
         ----------
@@ -339,6 +324,7 @@ class CytonRFDuino(CytonBase):
                          'boardmode': self.boardmode,
                          'montage': self.montage,
                          'connection': 'serial',
+                         'gain': self._get_gain(),
                          }
 
         self.command(self.START_STREAM)
@@ -361,9 +347,13 @@ class CytonRFDuino(CytonBase):
 
     # ----------------------------------------------------------------------
     def reset_input_buffer(self):
-        """Device handled process, flush input data."""
+        """Clear input buffer, discarding all that is in the buffer."""
         self.device.reset_input_buffer()
         self.device.flushInput()
+
+    # ----------------------------------------------------------------------
+    def _get_gain(self) -> List:
+        """"""
 
 
 ########################################################################
@@ -428,7 +418,7 @@ class CytonWiFi(CytonBase):
 
             return
 
-        super().__init__(daisy, capture_stream, montage, streaming_package_size)
+        super().__init__(daisy, montage, streaming_package_size, capture_stream)
 
         self._create_tcp_server()
         time.sleep(5)  # secure delay
@@ -560,6 +550,7 @@ class CytonWiFi(CytonBase):
             if not board_info['board_connected']:
                 raise RuntimeError("No board connected to WiFi Shield.")
             self._gain = board_info['gains']
+            self.local_wifi_server.set_gain(self._gain)
 
         res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
                                      json={

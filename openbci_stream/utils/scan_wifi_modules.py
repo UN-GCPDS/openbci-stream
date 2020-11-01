@@ -4,9 +4,7 @@ Scan WiFi modules
 =================
 """
 
-import netifaces
 import requests
-import nmap
 from typing import Dict
 
 
@@ -29,6 +27,10 @@ def scan_wifi_modules(network: str = "wlan0") -> Dict[str, str]:
         Dictionay with IPs as keys of WiFi modules on network and `/board` as
         value.
     """
+
+    # Optional requieres are imported only inside the function
+    import netifaces
+    import nmap
 
     ip_list = {}
     local_net = netifaces.ifaddresses(network)[netifaces.AF_INET][0]["addr"]
