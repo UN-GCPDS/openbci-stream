@@ -1,13 +1,15 @@
 # OpenBCI-Stream 
 High level Python module for EEG/EMG/ECG acquisition and distributed streaming for OpenBCI Cyton board.
 
-![GitHub top language](https://img.shields.io/github/languages/top/un-gcpds/openbci-stream)
-![PyPI - License](https://img.shields.io/pypi/l/openbci-stream)
-![PyPI](https://img.shields.io/pypi/v/openbci-stream)
-![PyPI - Status](https://img.shields.io/pypi/status/openbci-stream)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/openbci-stream)
-![GitHub last commit](https://img.shields.io/github/last-commit/un-gcpds/openbci-stream)
-![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/UN-GCPDS/openbci-stream)
+![GitHub top language](https://img.shields.io/github/languages/top/un-gcpds/openbci-stream?)
+![PyPI - License](https://img.shields.io/pypi/l/openbci-stream?)
+![PyPI](https://img.shields.io/pypi/v/openbci-stream?)
+![PyPI - Status](https://img.shields.io/pypi/status/openbci-stream?)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/openbci-stream?)
+![GitHub last commit](https://img.shields.io/github/last-commit/un-gcpds/openbci-stream?)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/UN-GCPDS/openbci-stream?)
+[![Documentation Status](https://readthedocs.org/projects/openbci-stream/badge/?version=latest)](https://openbci-stream.readthedocs.io/en/latest/?badge=latest)
+
 
 
 Consist in a set of scripts which deals with the configuration and connection with the board, is compatible with both connection modes supported by [Cyton](https://shop.openbci.com/products/cyton-biosensing-board-8-channel?variant=38958638542): RFduino (Serial dongle) and WiFi (with the OpenBCI WiFi Shield). These drivers are a stand-alone library that can be used to handle the board from three different endpoints: (i) a [Command Line Interface](06-command_line_interface.ipynb) (CLI) with simple instructions configure, start and stop data acquisition, debug stream status and register events markers; (ii) a [Python Module](03-data_acuisition.ipynb) with high-level instructions and asynchronous acquisition; (iii) an object-proxying using Remote Python Call (RPyC) for [distributed implementations](A4-server-based-acquisition.ipynb) that can manipulate the Python modules as if they were local, this last mode needs a daemon running in the remote host that will be listening connections and driving instructions.
