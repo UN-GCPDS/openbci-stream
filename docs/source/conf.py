@@ -237,6 +237,7 @@ autodoc_mock_imports = [
     'nmap',
     'rawutil',
     'kafka',
+    'rpyc',
 ]
 
 todo_include_todos = True
