@@ -305,9 +305,7 @@ class CytonRFDuino(CytonBase):
             that will be packaged back in the stream.
         """
 
-        binary = self.read(size)
-        # while binary := self.read(size):
-        while binary:
+        while binary := self.read(size):
             try:
                 kafka_context.update({'created': datetime.now().timestamp()})
                 data = {'context': kafka_context,
@@ -316,7 +314,6 @@ class CytonRFDuino(CytonBase):
                 self.binary_stream.stream(data)
             except serial.SerialException as e:
                 logging.error(e)
-            binary = self.read(size)
 
     # ----------------------------------------------------------------------
     def start_stream(self) -> None:

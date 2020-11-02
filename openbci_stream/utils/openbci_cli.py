@@ -216,9 +216,7 @@ def main():
 
         while True:
             marker = input(f'{Fore.YELLOW}>>> {Fore.RESET}')
-            mkr = marker.strip()
-            # if mkr := marker.strip():
-            if mkr:
+            if mkr := marker.strip():
                 producer_eeg.send(
                     'marker', {'timestamp': datetime.now().timestamp(), 'marker': mkr})
 

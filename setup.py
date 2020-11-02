@@ -62,7 +62,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
 
-    python_requires='>=3.7',
+    python_requires='>=3.8',
 
     classifiers=[
        'Development Status :: 4 - Beta',
@@ -71,7 +71,6 @@ setup(
        'Intended Audience :: Healthcare Industry',
        'Intended Audience :: Science/Research',
        'License :: OSI Approved :: BSD License',
-       'Programming Language :: Python :: 3.7',
        'Programming Language :: Python :: 3.8',
        'Topic :: Scientific/Engineering',
        'Topic :: Scientific/Engineering :: Human Machine Interfaces',
