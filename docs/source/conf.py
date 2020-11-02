@@ -304,7 +304,6 @@ for notebook in notebooks_list:
         notebooks.append(f"{notebooks_dir}/{notebook.replace('.ipynb', '')}")
 
 notebooks = '\n   '.join(sorted(notebooks))
-# notebooks = ''
 
 with open('index.rst', 'w') as file:
     file.write(f"""
