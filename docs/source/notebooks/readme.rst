@@ -4,6 +4,9 @@ OpenBCI-Stream
 High level Python module for EEG/EMG/ECG acquisition and distributed
 streaming for OpenBCI Cyton board.
 
+|GitHub top language| |PyPI - License| |PyPI| |PyPI - Status| |PyPI -
+Python Version| |GitHub last commit| |CodeFactor Grade|
+
 Consist in a set of scripts which deals with the configuration and
 connection with the board, is compatible with both connection modes
 supported by
@@ -36,6 +39,14 @@ time-series data. A crucial issue stays on `time
 synchronization <A4-server-based_acquisition.ipynb#Step-5---Configure-time-server>`__,
 is required that all system components in the network be referenced to
 the same local real-time protocol (RTP) server.
+
+.. |GitHub top language| image:: https://img.shields.io/github/languages/top/un-gcpds/openbci-stream
+.. |PyPI - License| image:: https://img.shields.io/pypi/l/openbci-stream
+.. |PyPI| image:: https://img.shields.io/pypi/v/openbci-stream
+.. |PyPI - Status| image:: https://img.shields.io/pypi/status/openbci-stream
+.. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/openbci-stream
+.. |GitHub last commit| image:: https://img.shields.io/github/last-commit/un-gcpds/openbci-stream
+.. |CodeFactor Grade| image:: https://img.shields.io/codefactor/grade/github/UN-GCPDS/openbci-stream
 
 Main features
 -------------

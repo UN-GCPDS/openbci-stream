@@ -238,6 +238,7 @@ autodoc_mock_imports = [
     'rawutil',
     'kafka',
     'rpyc',
+    'serial',
 ]
 
 todo_include_todos = True
