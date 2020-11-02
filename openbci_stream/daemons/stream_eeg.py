@@ -56,8 +56,6 @@ class BinaryToEEG:
                                           )
 
         self.buffer = Queue(maxsize=33)
-        self._unsampled = Queue(maxsize=3)
-        [self._unsampled.put([0] * 8) for i in range(3)]
 
         self._last_marker = 0
         self.counter = 0
@@ -224,8 +222,8 @@ class BinaryToEEG:
                 board = eeg_data[1::2]
 
             return np.concatenate([board, daisy], axis=1)
-        else:
-            return eeg_data
+
+        return eeg_data
 
     # ----------------------------------------------------------------------
     def deserialize_eeg_serial(self, eeg: np.ndarray, pair: bool, context: Dict[str, Any]) -> np.ndarray:
@@ -287,8 +285,8 @@ class BinaryToEEG:
 
         if len(context['montage'].keys()) > eeg.shape[1]:
             return eeg
-        else:
-            return eeg[:, list(context['montage'].keys())]
+
+        return eeg[:, list(context['montage'].keys())]
 
     # ----------------------------------------------------------------------
     def deserialize_aux(self, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:

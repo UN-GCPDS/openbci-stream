@@ -501,8 +501,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         return daisy
 
@@ -561,24 +561,20 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     @abstractmethod
     def close(self):
         """Stops data stream."""
-        pass
 
     # ----------------------------------------------------------------------
     @abstractmethod
     def write(self):
         """Write bytes."""
-        pass
 
     # ----------------------------------------------------------------------
     @abstractmethod
     def read(self):
         """Read binary data."""
-        pass
 
     # ----------------------------------------------------------------------
     def reset_input_buffer(self):
         """Flush input data."""
-        pass
 
     # ----------------------------------------------------------------------
     @property
@@ -613,11 +609,11 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if eeg:
             eeg = np.concatenate(eeg, axis=1)
             return eeg
-        else:
-            logging.warning(
-                f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation\n'
-                f'This too could be because the `stream_eeg` daemon was not running.')
-            return np.array([])
+
+        logging.warning(
+            f'No EEG data captured, make sure to activate `capture_stream` in the {self} instantiation\n'
+            f'This too could be because the `stream_eeg` daemon was not running.')
+        return np.array([])
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -679,7 +675,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             try:
                 with buffer.mutex:
                     buffer.clear()
-            except:
+            except AttributeError:
                 while not buffer.empty():
                     buffer.get()
 
@@ -730,7 +726,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                     print(f"MARKER {marker}")
                 except Exception as e:
                     print(f"MARKER {e}")
-                    pass
 
         self.stream_markers = Thread(target=_send_marker)
         self.stream_markers.start()
@@ -773,7 +768,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             logging.info(f'Writed a vector of shape ({eeg.shape}) for EEG data')
             logging.info(f'Writed a vector of shape ({time.shape}) for time data')
             logging.info(f'Writed a vector of shape ({aux.shape}) for aux data')
-            if self.markers:
+
+            if bool(self.markers):
                 logging.info(f'Writed {self.markers.keys()} markers')
 
     # ----------------------------------------------------------------------
@@ -782,5 +778,5 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
         if super().__getattribute__('remote_host'):
             return getattr(super().__getattribute__('remote_host'), attr)
-        else:
-            return super().__getattribute__(attr)
+
+        return super().__getattribute__(attr)
