@@ -22,7 +22,7 @@ from .binary_stream import BinaryStream
 from ..utils import HDF5Writer, interpolate_datetime
 
 DAISY = Literal['auto', True, False]
-QUEUE = TypeVar('Queue', Manager().Queue())
+QUEUE = TypeVar('Queue')
 
 
 ########################################################################
@@ -33,6 +33,7 @@ class CytonConstants:
 
     BIN_HEADER = 0xa0
 
+    VERSION = b'V'
     START_STREAM = b'b'
     STOP_STREAM = b's'
 
@@ -147,7 +148,15 @@ class CytonConstants:
     WIFI_SHIELD_STATUS = b':'
     WIFI_SHIELD_RESET = b';'
 
-    VERSION = b'V'
+    AD1299_GAIN_REGISTER = {
+        '000': 1,
+        '001': 2,
+        '010': 4,
+        '011': 6,
+        '100': 8,
+        '101': 12,
+        '110': 24,
+    }
 
     # ----------------------------------------------------------------------
     def __init__(self) -> None:
