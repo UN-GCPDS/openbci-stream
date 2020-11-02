@@ -21,6 +21,8 @@ help:
 
 
 buildapi:
+
+	rm source/_modules/*
 	sphinx-apidoc -fMeET -o source/_modules ../openbci_stream
 
 	jupyter nbconvert --to rst source/notebooks/readme.ipynb
