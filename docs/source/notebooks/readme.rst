@@ -1,95 +1,55 @@
 OpenBCI-Stream
 ==============
 
-High level Python module for EEG acquisition and streaming for OpenBCI
-Cyton board.
+High level Python module for EEG/EMG/ECG acquisition and distributed
+streaming for OpenBCI Cyton board.
 
-A Python module for high-performance interfaces development with
-`OpenBCI boards <https://openbci.com/>`__. Currently, we have support
-for Cyton+Daisy and their WiFi module, additionally, we provide a
-real-time data streaming feature using
-`Kafka <https://kafka.apache.org/>`__.
+Consist in a set of scripts which deals with the configuration and
+connection with the board, is compatible with both connection modes
+supported by
+`Cyton <https://shop.openbci.com/products/cyton-biosensing-board-8-channel?variant=38958638542>`__:
+RFduino (Serial dongle) and WiFi (with the OpenBCI WiFi Shield). These
+drivers are a stand-alone library that can be used to handle the board
+from three different endpoints: (i) a `Command Line
+Interface <06-command_line_interface.ipynb>`__ (CLI) with simple
+instructions configure, start and stop data acquisition, debug stream
+status and register events markers; (ii) a `Python
+Module <03-data_acuisition.ipynb>`__ with high-level instructions and
+asynchronous acquisition; (iii) an object-proxying using Remote Python
+Call (RPyC) for `distributed
+implementations <A4-server-based-acquisition.ipynb>`__ that can
+manipulate the Python modules as if they were local, this last mode
+needs a daemon running in the remote host that will be listening
+connections and driving instructions.
+
+The main functionality of the drivers reside on to serve a real-time and
+distributed access to data flow, even on single machine implementations,
+this is achieved by the implementation of
+`Kafka <https://kafka.apache.org/>`__ and their capabilities to create
+multiple topics for classifying the streaming, these topics are used to
+separate the neurophysiological data from the `event
+markers <05-stream_markers>`__, so the clients can subscript to a
+specific topic for injecting or read content, this means that is
+possible to implement an event register in a separate process that
+stream markers for all clients in real-time without handle dense
+time-series data. A crucial issue stays on `time
+synchronization <A4-server-based_acquisition.ipynb#Step-5---Configure-time-server>`__,
+is required that all system components in the network be referenced to
+the same local real-time protocol (RTP) server.
 
 Main features
 -------------
 
--  **Asynchronous acquisition:** After the board initialization, the
-   data acquisition can be executed asynchronously, this feature ables
-   to realize background operations without interrupt and affect the
-   data sampling `read
-   more… <../html/_notebooks/04-data_acquisition.html#initialize-stream>`__
--  **Streaming data:** The EEG data is streamed with `Apache
-   Kafka <https://kafka.apache.org/>`__, this means that the data can be
-   consumed from any other interface or language `read
-   more… <../html/_notebooks/04-data_acquisition.html#access-to-stream>`__
--  **Remote host:** Is possible to get OpenBCI running in one computing
-   system and manage it from other `read
-   more… <../html/_notebooks/A4-configure_remote_host.html>`__
--  **Command line interface:** A simple interface is available for
-   handle the start, stop and access to data stream directly from the
-   command line `read
-   more… <../html/_notebooks/A3-command_line_interface.html>`__
--  **Markers/Events handler:** `read
-   more… <../html/_notebooks/07-stream_markers.html>`__
--  **Distributed platforms:**
-
-Examples
---------
-
-Read 5 seconds EEG from serial:
-
-.. code:: ipython3
-
-    from openbci_stream.acquisition import CytonRFDuino
-    import time
-    
-    openbci = CytonRFDuino(capture_stream=True, daisy=False)
-    openbci.start_stream()
-    time.sleep(5)
-    openbci.stop_stream()
-    
-    print(openbci.eeg_time_series.shape)
-
-Stream markers through Kafka
-
-.. code:: ipython3
-
-    import time
-    from datetime import datetime
-    import pickle
-    from kafka import KafkaProducer
-    
-    producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
-                                 value_serializer=lambda x: pickle.dumps(x))
-    
-    def stream_marker(marker):
-        producer_eeg.send('marker', {'timestamp': datetime.now().timestamp(), 
-                                     'marker': marker})
-    
-    stream_marker('RIGHT')
-    time.sleep(1) 
-    stream_marker('LEFT')
-    time.sleep(1) 
-    stream_marker('RIGHT')
-    time.sleep(1) 
-    stream_marker('LEFT')    
-
-Starting streaming from command line and store as ‘CSV’
-
-.. code:: ipython3
-
-    $ python openbci_cli.py serial  --start  --output 'eeg_out.csv'
-    Writing data in 
-    Ctrl+C for stop it.
-    
-    [EEG] 2020-03-04 22:57:57.117478        0.0146s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:57:58.138276        0.0153s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:57:59.158153        0.0161s ago     302 samples, 8 channels
-    [EEG] 2020-03-04 22:58:00.179612        0.0155s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:58:01.199204        0.0164s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:58:02.219734        0.0154s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:58:03.239956        0.0159s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:58:04.259876        0.0134s ago     254 samples, 8 channels
-    [EEG] 2020-03-04 22:58:05.281410        0.0170s ago     256 samples, 8 channels
-    [EEG] 2020-03-04 22:58:06.301453        0.0199s ago     256 samples, 8 channels
-    [EEG] 2020-03-04 22:58:07.322150        0.0141s ago     254 samples, 8 channels
+-  **Asynchronous acquisition:** Acquisition and deserialization is done
+   in uninterrupted parallel processes, in this way the sampling rate
+   keeps stable as long as possible.
+-  **Distributed streaming system:** The acquisition, processing,
+   visualizations and any other system that needs to be feeded with
+   EEG/EMG/ECG real-time data can be run with their own architecture.
+-  **Remote board handle:** Same code syntax for develop and debug
+   Cython boards connected in any node in the distributed system.
+-  **Command line interface:** A simple interface for handle the start,
+   stop and access to data stream directly from the command line.
+-  **Markers/Events handler:** Beside the *marker boardmode* available
+   in Cyton, a stream channel for the reading and writing of markers are
+   available for use it in any development.

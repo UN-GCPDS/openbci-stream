@@ -294,6 +294,7 @@ notebooks_dir = 'notebooks'
 
 notebooks_list = os.listdir(os.path.join(
     os.path.abspath(os.path.dirname(__file__)), notebooks_dir))
+notebooks_list = filter(lambda s: not s.startswith('__'), notebooks_list)
 
 notebooks = []
 for notebook in notebooks_list:
@@ -325,6 +326,3 @@ Indices and tables
 * :ref:`search`
 
     """)
-
-os.system("jupyter nbconvert --to rst notebooks/readme.ipynb")
-os.system("jupyter nbconvert --to markdown notebooks/readme.ipynb --output ../../README.md")

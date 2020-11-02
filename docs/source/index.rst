@@ -9,6 +9,7 @@ Navigation
    :maxdepth: 2
    :name: mastertoc
 
+   notebooks/00-installation
    notebooks/01-hardware_configurations
    notebooks/02-kafka_configuration
    notebooks/03-data_acquisition
