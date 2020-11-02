@@ -224,10 +224,11 @@ class CytonRFDuino(CytonBase):
             logging.error("No device was auto detected.")
             sys.exit()
 
-        self.device = serial.Serial(port, 115200, timeout=0.1,
+        self.device = serial.Serial(port, 115200, timeout=0.3,
                                     write_timeout=0.01,
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_ONE)
+
         super().__init__(daisy, montage, streaming_package_size, capture_stream)
 
     # ----------------------------------------------------------------------
@@ -352,8 +353,17 @@ class CytonRFDuino(CytonBase):
         self.device.flushInput()
 
     # ----------------------------------------------------------------------
-    def _get_gain(self) -> List:
-        """"""
+    def _get_gain(self) -> list:
+        """Return the gains from ADS1299 register.
+
+        As defined in the `datasheet <https://www.ti.com/lit/ds/symlink/ads1299.pdf?ts=1604333779995&ref_url=https%253A%252F%252Fwww.google.com%252F>`_
+        """
+
+        default = 24
+        response = self.command(self.QUERY_REGISTER)
+        registers = {reg.split(',')[0]: reg.split(',')[1:] for reg in filter(None, response.decode().split('\n'))}
+        gains = [self.AD1299_GAIN_REGISTER.get(''.join(registers.get(f'CH{i}SET', '')[3:6]).replace(' ', ''), default) for i in range(1, 9)]
+        return gains
 
 
 ########################################################################
