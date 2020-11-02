@@ -57,7 +57,7 @@ setup(
 
     include_package_data=True,
     license='BSD 2-Clause "Simplified" License',
-    description="High level Python module for handle OpenBCI EEG acquisition boards",
+    description="High level Python module for EEG/EMG/ECG acquisition and distributed streaming for OpenBCI Cyton board.",
 
     long_description=README,
     long_description_content_type='text/markdown',
