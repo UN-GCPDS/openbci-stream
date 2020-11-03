@@ -192,12 +192,17 @@ def main():
                     if args.output:
                         writer.add_eeg(eeg.T, created.timestamp())
 
-                if message.topic == 'marker':
+                if message.topic in ['marker', 'annotation']:
+
+                    if message.topic == 'marker':
+                        head = 'MKR'
+                    elif message.topic == 'annotation':
+                        head = 'ANNO'
 
                     marker = message.value
                     created = datetime.fromtimestamp(message.timestamp / 1000)
                     since = (datetime.now() - created).total_seconds()
-                    print(f"{Fore.YELLOW}[MKR]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
+                    print(f"{Fore.YELLOW}[{head}]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
                           f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since*1000:0.4f} ms ago{Fore.RESET}\t"
                           f"{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
 
