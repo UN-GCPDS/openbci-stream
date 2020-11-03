@@ -154,7 +154,16 @@ class HDF5Writer:
 
     # ----------------------------------------------------------------------
     def add_marker(self, marker: Any, timestamp: timestamp_) -> None:
-        """Add a pair of marker-timestamp to the hdf5 file."""
+        """Add a pair of marker-timestamp to the hdf5 file.
+
+        There is some difference between markers and annotations:
+
+          * Markers are writed as time series.
+          * Annotations are writed as a list of events.
+          * Markers are mainly for repetitions of the same event.
+          * Annotations can describe a complex event with a custom duration and
+            long description, e.g artifacts.
+        """
         self.array_mkr.append([json.dumps([timestamp, marker], default=np2json_serializer)])
 
     # ----------------------------------------------------------------------
@@ -183,12 +192,30 @@ class HDF5Writer:
                 self.add_marker(marker, timestamp)
 
     # ----------------------------------------------------------------------
-    def add_annotation(self, onset: int, duration: int = 0, description: str = '') -> None:
+    def add_annotation(self, onset: timestamp_, duration: int = 0, description: str = '') -> None:
         """Add EDF annotations to the hdf5 file.
 
         These annotations will be exported with EDF file and follow the format
         defined by `pyedflib <https://pyedflib.readthedocs.io/en/latest/ref/edfwriter.html#pyedflib.EdfWriter.writeAnnotation>`_.
+
+        There is some difference between markers and annotations:
+
+          * Markers are writed as time series.
+          * Annotations are writed as a list of events.
+          * Markers are mainly for repetitions of the same event.
+          * Annotations can describe a complex event with a custom duration and
+            long description, e.g artifacts.
+
+        Parameters
+        ----------
+        onset
+            Timestamp for annotation.
+        duration
+            The duration of the event.
+        description
+            The description of the annotation.
         """
+
         self.array_anno.append([json.dumps([onset, duration, description], default=np2json_serializer)])
 
     # ----------------------------------------------------------------------
@@ -322,8 +349,20 @@ class HDF5Reader:
     # ----------------------------------------------------------------------
     @cached_property
     def annotations(self) -> list:
-        """A list of annotations."""
-        return [json.loads(anno) for anno in self.f.root.annotations]
+        """A list of annotations.
+
+        The `HDF5Writer` write the annotations with timestamps, but `EDF` needs
+        the relative time from start in seconds.
+        """
+
+        anotations = [json.loads(an) for an in self.f.root.annotations]
+        start = datetime.fromtimestamp(self.timestamp[0])
+
+        for index, an in enumerate(anotations):
+            onset = (datetime.fromtimestamp(a[0]) - start).total_seconds()
+            anotations[index][0] = onset
+
+        return anotations
 
     # ----------------------------------------------------------------------
     @cached_property
