@@ -74,7 +74,7 @@ class OpenBCIConsumer:
         """"""
 
         self.bootstrap_servers = [f'{host}:9092']
-        self.topics = ['eeg', 'marker']
+        self.topics = ['eeg', 'marker', 'annotation']
 
         if mode:
             self.openbci = Cyton(mode, endpoint, host,
