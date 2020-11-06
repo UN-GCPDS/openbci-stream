@@ -190,8 +190,9 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     def __init__(self, daisy: DAISY, montage: Optional[Union[list, dict]],
                  streaming_package_size: int, capture_stream: bool) -> None:
         """"""
-        # Default sample rate for serial and wifi mode
+        # Default values
         self.sample_rate = 250
+        self.boardmode = 'default'
 
         # Daisy before Montage
         if daisy in [True, False]:
@@ -211,21 +212,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         self.reset_input_buffer()
         self._auto_capture_stream = capture_stream
         self.streaming_package_size = streaming_package_size
-
-    # ----------------------------------------------------------------------
-    @property
-    def boardmode(self) -> str:
-        """Stop stream and ask for the current boardmode."""
-
-        self.command(self.STOP_STREAM)
-        response = self.command(self.BOARD_MODE_GET)
-
-        for mode in [b'analog', b'digital', b'debug', b'default', b'marker']:
-            if mode in response:
-                return mode.decode()
-
-        logging.warning(
-            'Stream must be stoped for read the current boardmode')
 
     # ----------------------------------------------------------------------
     @property
@@ -317,8 +303,13 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if hasattr(self, c.decode()):
             c = getattr(self, c.decode())
 
+        # asume that default is 250, then, new values are getted from commands
         if c in list(self.SAMPLE_RATE_VALUE.keys()):
             self.sample_rate = int(self.SAMPLE_RATE_VALUE[c])
+
+        # asume that default is `default`, then, new values are getted from commands
+        if c in list(self.BOARD_MODE_VALUE.keys()):
+            self.boardmode = self.BOARD_MODE_VALUE[c]
 
         self.reset_input_buffer()
         self.write(c)
@@ -501,8 +492,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         return daisy
 

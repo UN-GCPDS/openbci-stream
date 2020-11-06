@@ -7,7 +7,7 @@ OpenBCI Consumer
 import pickle
 import logging
 from .cyton import Cyton
-from typing import Tuple, Optional, Union, Literal
+from typing import Tuple, Optional, Union, Literal, List
 
 from kafka import KafkaConsumer
 
@@ -50,10 +50,6 @@ class OpenBCIConsumer:
         If specified, will try to start streaming with this connection mode.
     endpoint
         Serial port for RFduino or IP address for WiFi module.
-    host
-        IP address for the server that has the OpenBCI board attached, by
-        default its assume that is the same machine where is it executing, this
-        is the `localhost`.
     daisy
         Daisy board can be detected on runtime or declare it specifically.
     montage
@@ -63,6 +59,12 @@ class OpenBCIConsumer:
     streaming_package_size
         The streamer will try to send packages of this size, this is NOT the
         sampling rate for data acquisition.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    topics
+        List of topics to listen.
     """
 
     # ----------------------------------------------------------------------
@@ -70,11 +72,12 @@ class OpenBCIConsumer:
                  daisy: DAISY = 'auto',
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: Optional[int] = None,
-                 host: Optional[str] = 'localhost') -> None:
+                 host: Optional[str] = 'localhost',
+                 topics: Optional[List[str]] = ['eeg', 'marker', 'annotation']) -> None:
         """"""
 
         self.bootstrap_servers = [f'{host}:9092']
-        self.topics = ['eeg', 'marker', 'annotation']
+        self.topics = topics
 
         if mode:
             self.openbci = Cyton(mode, endpoint, host,

@@ -113,7 +113,13 @@ class HDF5Writer:
 
     # ----------------------------------------------------------------------
     def close(self) -> None:
-        """Close the file handler."""
+        """Close the file handler.
+
+        Before to close, add some extra values into the header.
+        """
+        header2 = {'shape': self.array_eeg.shape,
+                   }
+        self.array_hdr.append([json.dumps(header2, default=np2json_serializer)])
         self.f.close()
 
     # ----------------------------------------------------------------------
@@ -301,7 +307,7 @@ class HDF5Writer:
     # ----------------------------------------------------------------------
     def __exit__(self, exc_type: Text, exc_val: Text, exc_tb: Text) -> None:
         """"""
-        self.f.close()
+        self.close()
 
 
 ########################################################################
@@ -330,6 +336,7 @@ class HDF5Reader:
     def header(self) -> Dict[str, Any]:
         """The header of the hdf file."""
         header = json.loads(self.f.root.header[0])
+        header.update(json.loads(self.f.root.header[1]))
         if 'channels' in header:
             header['channels'] = {int(k): header['channels'][k] for k in header['channels']}
         return header
@@ -355,11 +362,14 @@ class HDF5Reader:
         the relative time from start in seconds.
         """
 
+        if not hasattr(self.f.root, 'annotations'):
+            return []
+
         anotations = [json.loads(an) for an in self.f.root.annotations]
         start = datetime.fromtimestamp(self.timestamp[0])
 
         for index, an in enumerate(anotations):
-            onset = (datetime.fromtimestamp(a[0]) - start).total_seconds()
+            onset = (datetime.fromtimestamp(an[0]) - start).total_seconds()
             anotations[index][0] = onset
 
         return anotations
@@ -368,6 +378,10 @@ class HDF5Reader:
     @cached_property
     def markers(self) -> Dict[str, List[timestamp_]]:
         """A dictionary with the markers and timestamps as values."""
+
+        if not hasattr(self.f.root, 'markers'):
+            return {}
+
         markers = {}
         for mkr in self.f.root.markers:
             t, marker = json.loads(mkr)
