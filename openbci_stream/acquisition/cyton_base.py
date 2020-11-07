@@ -523,7 +523,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
                     elif message.topic == 'marker':
 
-                        timestamp = message.value['timestamp']
+                        # timestamp = message.value['timestamp']
+                        timestamp = message.timestamp / 1000
                         marker = message.value['marker']
                         self._data_markers.put((timestamp, marker))
 
