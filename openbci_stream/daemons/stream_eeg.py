@@ -390,14 +390,7 @@ class BinaryToEEG:
 
         """
         context.update({'samples': samples})
-
-        data_ = {'context': context,
-                 'data': data,
-                 # 'binary_created': self.created,
-                 # 'created': datetime.now().timestamp(),
-                 # 'samples': samples,
-                 }
-
+        data_ = {'context': context, 'data': data, }
         self.producer_eeg.send('eeg', data_)
 
         if DEBUG:
