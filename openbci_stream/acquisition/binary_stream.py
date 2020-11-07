@@ -72,6 +72,7 @@ class BinaryStream:
         data
             Dictionary with context and raw binary data.
         """
+        self.accumulated += data['data']
 
         if data['context']['connection'] == 'wifi' and data['context']['daisy']:
             f = 2
