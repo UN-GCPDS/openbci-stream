@@ -95,6 +95,7 @@ class BinaryToEEG:
 
         buffer = record.value
         context = buffer['context']
+        context['binary_created'] = record.timestamp / 1000
 
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
         if not data.shape[0]:
@@ -388,7 +389,7 @@ class BinaryToEEG:
             The number of samples in this package.
 
         """
-        context.update({'samples': samples, })
+        context.update({'samples': samples})
 
         data_ = {'context': context,
                  'data': data,

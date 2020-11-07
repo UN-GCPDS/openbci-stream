@@ -180,9 +180,9 @@ def main():
 
                     eeg, aux = message.value['data']
                     created = datetime.fromtimestamp(
-                        message.value['binary_created'])
+                        message.value['context']['binary_created'])
                     since = (datetime.now() - created).total_seconds()
-                    count = message.value['samples']
+                    count = message.value['context']['samples']
                     channels = eeg.shape[0]
 
                     print(f"{Fore.YELLOW}[EEG]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
