@@ -17,28 +17,28 @@ from typing import Dict, Any
 class BinaryStream:
     """Kafka producer for equal size packages streaming.
 
-    The dictionary streamed contain two objects: `contex` and `data`.
+    The dictionary streamed contain two objects: `data` and `context`.
+
+    **data:** Bytes with binary raw data.
 
     **context:** A dictionary with the following keys:
 
-    * **created:**  The `timestamp` for the exact moment when binary data was read.
+    * **binary_created:**  The `timestamp` for the first kafka stream with binary data.
     * **daisy:** `True` if Daisy board is attached, otherwise `False`.
     * **boardmode:** Can be `default`, `digital`, ''analog', 'debug' or `marker`.
     * **montage:** A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz', 'F4']` and a dictionary means specific channels  `{1: 'Fp1', 2: 'Fp2', 3: 'F3', 4: 'Fz', 5: 'F4'}`.
     * **connection:** Can be `serial` or `wifi`.
     * **gain:** Array with gains.
 
-    **data:** Bytes with binary raw data.
-
     e.g
 
-    >>> contex = {'created': 1604196938.727064,
-                  'daisy': False,
-                  'boardmode': 'default',
-                  'montage': ['Fp1', 'Fp2', 'F3', 'Fz', 'F4'],
-                  'connection': 'wifi',
-                  'gain': [24, 24, 24, 24, 24, 24, 24, 24]
-                  }
+    >>> context = {'binary_created': 1604196938.727064,
+                   'daisy': False,
+                   'boardmode': 'default',
+                   'montage': ['Fp1', 'Fp2', 'F3', 'Fz', 'F4'],
+                   'connection': 'wifi',
+                   'gain': [24, 24, 24, 24, 24, 24, 24, 24]
+                   }
     """
 
     TOPIC = 'binary'
