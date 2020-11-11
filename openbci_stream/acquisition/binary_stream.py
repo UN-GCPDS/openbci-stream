@@ -79,7 +79,7 @@ class BinaryStream:
         else:
             f = 1
 
-        if len(self.accumulated) > (self.streaming_package_size * 33 * f):
+        if len(self.accumulated) >= (self.streaming_package_size * 33 * f):
             data['data'] = self.accumulated
             self.producer.send(self.TOPIC, data)
             self.accumulated = b''
