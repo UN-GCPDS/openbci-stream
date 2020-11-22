@@ -144,9 +144,8 @@ def main():
                                      )
 
         elif args.endpoint == 'wifi':
-            interface = CytonWiFi(args.ip,
+            interface = CytonWiFi(args.ip, host=args.host,
                                   daisy=args.daisy,
-                                  host=args.host,
                                   capture_stream=False,
                                   montage=None,
                                   streaming_package_size=args.streaming_package_size
