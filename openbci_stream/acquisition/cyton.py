@@ -457,11 +457,10 @@ class CytonWiFi(CytonBase):
     def write(self, data: Union[str, bytes]) -> None:
         """Send command to board through HTTP protocole.
 
-
         Parameters
         ----------
         data :
-            Commands to send, It should not be more than 3 characters long.
+            Commands to send, It should not be more than 31 characters long.
         """
 
         if hasattr(data, 'decode'):
