@@ -391,8 +391,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         chain = b''
         for ch in channels:
             ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
-            chain += b''.join([start, ch, power_down, gain, input_type, bias,
-                               srb2, srb1, end])
+
+            c = b''.join([start, ch, power_down, gain, input_type, bias, srb2,
+                          srb1, end])
+            if len(chain + c) > 31:  # Over WiFi there is a limit of 31 chars
+                self.command(chain)
+                chain = c
+            else:
+                chain += c
 
         self.command(chain)
 
@@ -412,10 +418,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         nchan
             `TEST_SIGNAL_APPLIED` (default), `TEST_SIGNAL_NOT_APPLIED`.
 
-
         Returns
         -------
-
         On success:
 
           * If streaming, no confirmation of success. Note: WiFi Shields will always get a response, even if streaming.
@@ -429,7 +433,6 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
               * 5th character is not the upper case ‘Z’, Failure: 5th char not Z$$$ (example user sends z1020000X)
               * Too many characters or some other issue, Failure: Err: too many chars$$$
           * If not all commands are not received within 1 second, Timeout processing multi byte message - please send all commands at once as of v2$$$
-
         """
 
         start = b'z'
@@ -439,8 +442,15 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         chain = b''
         for ch in channels:
             ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
-            chain += b''.join([start, ch, pchan, nchan, end])
-        self.command(chain)
+
+            c = b''.join([start, ch, pchan, nchan, end])
+            if len(chain + c) > 31:  # Over WiFi there is a limit of 31 chars
+                self.command(chain)
+                chain = c
+            else:
+                chain += c
+
+        return self.command(chain)
 
     # ----------------------------------------------------------------------
     def send_marker(self, marker: Union[str, bytes, int], burst: int = 4) -> None:
@@ -495,7 +505,10 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
                      or ('8' in response.decode(errors='ignore')))
 
-        return daisy
+        if daisy:
+            logging.info('Daisy detected.')
+        else:
+            logging.info('Daisy not detected.')
 
     # ----------------------------------------------------------------------
     def capture_stream(self) -> None:
