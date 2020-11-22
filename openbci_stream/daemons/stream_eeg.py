@@ -61,7 +61,7 @@ class BinaryToEEG:
         self.counter = 0
 
         self.remnant = b''
-        self.offset = [0] * 8
+        self.offset = None, None
         self._last_aux_shape = 0
 
     # ----------------------------------------------------------------------
@@ -102,7 +102,7 @@ class BinaryToEEG:
             return
 
         # Thread for unpack data
-        self.b = Thread(target=self.deserialize, args=(data, context))
+        self.b = Thread(target=self.deserialize, args=(data.copy(), context.copy()))
         self.b.start()
 
     # ----------------------------------------------------------------------
@@ -154,13 +154,10 @@ class BinaryToEEG:
             that will be packaged back in the stream.
         """
 
-        # From in index
-        pair = not data[:, 1][0] % 2
-
         # EGG
         eeg_data = data[:, 2:26]
         eeg_data = getattr(self, f'deserialize_eeg_{context["connection"]}')(
-            eeg_data, pair, context)
+            eeg_data, data[:, 1], context)
 
         # Auxiliar
         # stop_byte = data[0][-1]
@@ -174,7 +171,7 @@ class BinaryToEEG:
         self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_wifi(self, eeg: np.ndarray, pair: bool, context: Dict[str, Any]) -> np.ndarray:
+    def deserialize_eeg_wifi(self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
         """From signed 24-bits integer to signed 32-bits integer by channels.
 
         The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
@@ -186,8 +183,8 @@ class BinaryToEEG:
         ----------
         eeg
             Numpy array in signed 24-bits integer (`8, LENGTH`)
-        pair
-            True if the first data is from a pair ID.
+        ids
+            List of IDs for eeg data.
         context
             Information from the acquisition side useful for deserializing and
             that will be packaged back in the stream.
@@ -205,29 +202,30 @@ class BinaryToEEG:
 
         if context['daisy']:
 
-            # If offset, the pair index condition must change
-            if np.array(self.offset).any():
-                eeg_data = np.concatenate([[self.offset], eeg_data], axis=0)
-                pair = not pair
+            # # If offset, the pair index condition must change
+            if np.array(self.offset[0]).any():
+                eeg_data = np.concatenate([[self.offset[0]], eeg_data], axis=0)
+                ids = np.concatenate([[self.offset[1]], ids], axis=0)
+                # pair = not pair
+
+            if ids[0] != ids[1]:
+                eeg_data = np.delete(eeg_data, 0, axis=0)
+                ids = np.delete(ids, 0, axis=0)
 
             # if not pair dataset, create an offeset
             if eeg_data.shape[0] % 2:
-                self.offset = eeg_data[-1]
+                self.offset = eeg_data[-1], ids[-1]
                 eeg_data = np.delete(eeg_data, -1, axis=0)
-
-            if pair:
-                board = eeg_data[::2]
-                daisy = eeg_data[1::2]
+                ids = np.delete(ids, -1, axis=0)
             else:
-                daisy = eeg_data[::2]
-                board = eeg_data[1::2]
+                self.offset = None, None
 
-            return np.concatenate([board, daisy], axis=1)
+            return eeg_data.reshape(-1, 16)
 
         return eeg_data
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_serial(self, eeg: np.ndarray, pair: bool, context: Dict[str, Any]) -> np.ndarray:
+    def deserialize_eeg_serial(self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
         """From signed 24-bits integer to signed 32-bits integer by channels.
 
         The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
@@ -240,8 +238,8 @@ class BinaryToEEG:
         ----------
         eeg
             Numpy array in signed 24-bits integer (`8, LENGTH`)
-        pair
-            True if the first data is from a pair ID.
+        ids
+            List of IDs for eeg data.
         context
             Information from the acquisition side useful for deserializing and
             that will be packaged back in the stream.
@@ -259,17 +257,22 @@ class BinaryToEEG:
 
         if context['daisy']:
 
-            # If offset, the pair index condition must change
-            if np.array(self.offset).any():
-                eeg_data = np.concatenate([[self.offset], eeg_data], axis=0)
-                pair = not pair
+            even = not ids[0] % 2
 
-            # if not pair dataset, create an offeset
+            # If offset, the even index condition must change
+            if np.array(self.offset[0]).any():
+                eeg_data = np.concatenate([[self.offset[0]], eeg_data], axis=0)
+                ids = np.concatenate([[self.offset[1]], ids], axis=0)
+                even = not even
+
+            # if not even dataset, create an offset
             if eeg_data.shape[0] % 2:
-                self.offset = eeg_data[-1]
+                self.offset = eeg_data[-1], ids[-1]
                 eeg_data = np.delete(eeg_data, -1, axis=0)
+                ids = np.delete(ids, -1, axis=0)
 
-            if pair:
+            # Data can start with a even or odd id
+            if even:
                 board = eeg_data[::2]
                 daisy = eeg_data[1::2]
             else:
@@ -284,10 +287,7 @@ class BinaryToEEG:
         else:
             eeg = eeg_data
 
-        if len(context['montage'].keys()) > eeg.shape[1]:
-            return eeg
-
-        return eeg[:, list(context['montage'].keys())]
+        return eeg
 
     # ----------------------------------------------------------------------
     def deserialize_aux(self, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:
@@ -390,7 +390,14 @@ class BinaryToEEG:
 
         """
         context.update({'samples': samples})
-        data_ = {'context': context, 'data': data, }
+
+        data_ = {'context': context,
+                 'data': data,
+                 # 'binary_created': self.created,
+                 # 'created': datetime.now().timestamp(),
+                 # 'samples': samples,
+                 }
+
         self.producer_eeg.send('eeg', data_)
 
         if DEBUG:
