@@ -65,30 +65,41 @@ class OpenBCIConsumer:
         is the `localhost`.
     topics
         List of topics to listen.
+    auto_start
+        If `mode` and `endpoint` are passed, then start the stream automatically.
     """
 
     # ----------------------------------------------------------------------
     def __init__(self, mode: MODE = None, endpoint: Optional[str] = None,
                  daisy: DAISY = 'auto',
                  montage: Optional[Union[list, dict]] = None,
-                 streaming_package_size: Optional[int] = None,
+                 streaming_package_size: Optional[int] = 250,
                  host: Optional[str] = 'localhost',
-                 topics: Optional[List[str]] = ['eeg', 'marker', 'annotation']) -> None:
+                 topics: Optional[List[str]] = ['eeg', 'marker', 'annotation'],
+                 auto_start: Optional[bool] = True) -> None:
         """"""
 
         self.bootstrap_servers = [f'{host}:9092']
         self.topics = topics
+        self.auto_start = auto_start
 
         if mode:
-            self.openbci = Cyton(mode, endpoint, host,
-                                 daisy, False, montage, streaming_package_size)
+
+            self.openbci = Cyton(mode=mode,
+                                 endpoint=endpoint, host=host,
+                                 daisy=daisy,
+                                 capture_stream=False,
+                                 montage=montage,
+                                 streaming_package_size=streaming_package_size,
+                                 )
 
     # ----------------------------------------------------------------------
     def __enter__(self) -> Tuple[KafkaConsumer, Optional[Cyton]]:
         """Start stream and create consumer."""
 
-        if hasattr(self, 'openbci'):
+        if hasattr(self, 'openbci') and self.auto_start:
             self.openbci.start_stream()
+
         self.consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers,
                                       value_deserializer=pickle.loads,
                                       auto_offset_reset='latest',
@@ -114,3 +125,4 @@ class OpenBCIConsumer:
             logging.warning(exc_val)
         if exc_tb:
             logging.warning(exc_tb)
+
