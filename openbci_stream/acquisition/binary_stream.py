@@ -23,7 +23,7 @@ class BinaryStream:
 
     **context:** A dictionary with the following keys:
 
-    * **binary_created:**  The `timestamp` for the first kafka stream with binary data.
+    * **binary_created:**  The `timestamp` for the exact moment when binary data was read.
     * **daisy:** `True` if Daisy board is attached, otherwise `False`.
     * **boardmode:** Can be `default`, `digital`, ''analog', 'debug' or `marker`.
     * **montage:** A list means consecutive channels e.g. `['Fp1', 'Fp2', 'F3', 'Fz', 'F4']` and a dictionary means specific channels  `{1: 'Fp1', 2: 'Fp2', 3: 'F3', 4: 'Fz', 5: 'F4'}`.
@@ -78,11 +78,12 @@ class BinaryStream:
             f = 2
         else:
             f = 1
+        size = self.streaming_package_size * 33 * f
 
-        if len(self.accumulated) >= (self.streaming_package_size * 33 * f):
-            data['data'] = self.accumulated
+        if len(self.accumulated) >= size:
+            data['data'] = self.accumulated[:size]
             self.producer.send(self.TOPIC, data)
-            self.accumulated = b''
+            self.accumulated = self.accumulated[size:]
 
     # ----------------------------------------------------------------------
     def close(self) -> None:
