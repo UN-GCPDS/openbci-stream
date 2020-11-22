@@ -6,14 +6,6 @@ openbci\_stream.utils package
    :no-undoc-members:
    :no-show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   openbci_stream.utils.openbci_stream
-
 Submodules
 ----------
 

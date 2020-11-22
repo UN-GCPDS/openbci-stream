@@ -6,14 +6,6 @@ openbci\_stream.daemons package
    :no-undoc-members:
    :no-show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   openbci_stream.daemons.openbci_stream
-
 Submodules
 ----------
 
