@@ -446,17 +446,23 @@ class CytonWiFi(CytonBase):
             return local_ip_address
 
         except:
-            logging.warning('Impossible to detect a network connection, it must '
-                            'be connected to some network if you are trying to '
-                            'use a WiFi module.')
-            logging.warning(f'If you are using this device as server (access point) '
+            logging.warning('Impossible to detect a network connection, the WiFi'
+                            'module and this machine must share the same network.')
+            logging.warning(f'If you are using this machine as server (access point) '
                             f'the address {DEFAULT_LOCAL_IP} will be used.')
 
             return DEFAULT_LOCAL_IP
 
     # ----------------------------------------------------------------------
     def write(self, data: Union[str, bytes]) -> None:
-        """Send command to board through HTTP protocole."""
+        """Send command to board through HTTP protocole.
+
+
+        Parameters
+        ----------
+        data :
+            Commands to send, It should not be more than 3 characters long.
+        """
 
         if hasattr(data, 'decode'):
             data = data.decode()
