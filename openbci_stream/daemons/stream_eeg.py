@@ -95,10 +95,12 @@ class BinaryToEEG:
 
         buffer = record.value
         context = buffer['context']
-        context['binary_created'] = record.timestamp / 1000
+        # context['binary_created'] = record.timestamp / 1000
+        context['binary_created'] = context['created']
 
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
         if not data.shape[0]:
+            print('No data after alignement')
             return
 
         # Thread for unpack data

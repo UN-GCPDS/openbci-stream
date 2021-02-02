@@ -22,7 +22,7 @@ import logging
 from datetime import datetime, date
 from functools import cached_property
 from typing import Dict, Any, Optional, Text, List, TypeVar, Union
-
+import ntplib
 import mne
 import tables
 import pyedflib
@@ -117,8 +117,11 @@ class HDF5Writer:
 
         Before to close, add some extra values into the header.
         """
-        header2 = {'shape': self.array_eeg.shape,
-                   }
+        header2 = {'shape': self.array_eeg.shape}
+        if self.host_ntp:
+            client = ntplib.NTPClient()
+            header2.update({'end-offset': client.request(self.host_ntp).offset * 1000})
+
         self.array_hdr.append([json.dumps(header2, default=np2json_serializer)])
         self.f.close()
 
@@ -132,7 +135,7 @@ class HDF5Writer:
         self.array_dtm.append(timestamp)
 
     # ----------------------------------------------------------------------
-    def add_header(self, header: Dict[str, Any]) -> None:
+    def add_header(self, header: Dict[str, Any], host: Optional[str] = None) -> None:
         """Set the header for hdf5 file.
 
         A header is basically a dictionary with all kinds of useful information.
@@ -155,6 +158,10 @@ class HDF5Writer:
           * **recording_additional:** str wit the additional recording information.
           * **technician:** str with the technicians name.
         """
+        if host:
+            client = ntplib.NTPClient()
+            header.update({'start-offset': client.request(host).offset * 1000, })
+        self.host_ntp = host
 
         self.array_hdr.append([json.dumps(header, default=np2json_serializer)])
 
@@ -396,7 +403,7 @@ class HDF5Reader:
         markers_relative = {}
         for key in self.markers:
             locs = self.markers[key]
-            markers_relative[key] = [self.timestamp_relative[np.abs(self.timestamp - loc).argmin() + 1] for loc in locs]
+            markers_relative[key] = [self.timestamp_relative[np.abs(self.timestamp - loc).argmin()] for loc in locs]
 
         return markers_relative
 
@@ -408,10 +415,18 @@ class HDF5Reader:
 
     # ----------------------------------------------------------------------
     @cached_property
-    def timestamp_relative(self) -> List[int]:
-        """A list of timestamps in milliseconds."""
-        m = (self.timestamp - self.timestamp[0]) * 1e3
-        return np.array(np.round(m), dtype=int)
+    def timestamp_relative(self, fast=False) -> List[int]:
+        """A list of timestamps in milliseconds.
+
+        If `fast` the a simple relation between sample rate and data length is
+        calculate instead.
+        """
+
+        if fast:
+            return np.linspace(0, (self.eeg.shape[1] / self.header['sample_rate']) * 1000, self.eeg.shape[1])
+        else:
+            m = (self.timestamp - self.timestamp[0]) * 1e3
+            return np.array(np.round(m), dtype=int)
 
     # ----------------------------------------------------------------------
     @cached_property

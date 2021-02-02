@@ -185,8 +185,13 @@ def main():
                     channels = eeg.shape[0]
 
                     print(f"{Fore.YELLOW}[EEG]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
-                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since:0.4f}s ago{Fore.RESET}\t"
-                          f"{count} samples, {channels} channels")
+                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since*1000:0.2f} ms ago{Fore.RESET}\t"
+                          f"({channels},{count}) eeg", end='')
+
+                    if aux.size:
+                        print(f"\t({aux.shape[0]},{aux.shape[1]}) aux")
+                    else:
+                        print('')
 
                     if args.output:
                         writer.add_eeg(eeg.T, created.timestamp())
@@ -196,13 +201,13 @@ def main():
                     if message.topic == 'marker':
                         head = 'MKR'
                     elif message.topic == 'annotation':
-                        head = 'ANNO'
+                        head = 'ANN'
 
                     marker = message.value
                     created = datetime.fromtimestamp(message.timestamp / 1000)
                     since = (datetime.now() - created).total_seconds()
                     print(f"{Fore.YELLOW}[{head}]{Fore.RESET} {Fore.LIGHTYELLOW_EX}{created}{Fore.RESET}\t"
-                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since*1000:0.4f} ms ago{Fore.RESET}\t"
+                          f"{Fore.LIGHTRED_EX if since>1 else Fore.RESET}{since*1000:0.2f} ms ago{Fore.RESET}\t"
                           f"{Fore.LIGHTBLUE_EX}{marker}{Fore.RESET}")
 
                     if args.output:

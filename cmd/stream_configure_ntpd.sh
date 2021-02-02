@@ -33,7 +33,7 @@ tos orphan 5
 
 # Fallback to local clock if all else fails
 server  127.127.1.0     # local clock
-fudge   127.127.1.0 stratum 10
+fudge   127.127.1.0 stratum 3
 
 # By default, the server allows:
 # - all queries from the local host
