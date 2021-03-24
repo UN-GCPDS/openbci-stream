@@ -13,6 +13,7 @@ pacman -S ntp
 
 FILE=/etc/ntp.conf
 secure_file $FILE
+rm $FILE
 echo "
 # Please consider joining the pool:
 #
@@ -22,6 +23,8 @@ echo "
 # - https://wiki.archlinux.org/index.php/Network_Time_Protocol_daemon
 # - http://support.ntp.org/bin/view/Support/GettingStarted
 # - the ntp.conf man page
+
+tinker panic 0
 
 # Associate to Arch's NTP pool
 server 0.arch.pool.ntp.org
@@ -33,7 +36,7 @@ tos orphan 5
 
 # Fallback to local clock if all else fails
 server  127.127.1.0     # local clock
-fudge   127.127.1.0 stratum 3
+fudge   127.127.1.0 stratum 16
 
 # By default, the server allows:
 # - all queries from the local host
@@ -42,7 +45,7 @@ restrict default kod limited nomodify nopeer noquery notrap
 restrict 191.168.1.0 mask 255.255.255.0 nomodify notrap
 restrict 127.0.0.1
 restrict -6 ::1
-
+restrict ::1
 
 # Location of drift file
 driftfile /var/lib/ntp/ntp.drift

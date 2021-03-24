@@ -32,6 +32,9 @@ setup(
        "cmd/stream_eeg",
        "cmd/stream_configure_kafka.sh",
        "cmd/stream_access_point.sh",
+       "cmd/stream_configure_ntpd.sh",
+       "cmd/stream_install_kafka.sh",
+       "cmd/stream_tlwr.sh",
     ],
 
     include_package_data=True,
