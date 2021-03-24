@@ -474,8 +474,12 @@ class CytonWiFi(CytonBase):
             logging.info(f"Sending command: '{data}'")
             response = requests.post(
                 f"http://{self._ip_address}/command", json={'command': data})
-        except Exception as e:
-            logging.info(f"Error on sending command '{data}': {e}")
+        except requests.exceptions.ConnectionError as msg:
+            if 'Connection aborted' in str(msg):
+                time.sleep(0.3)
+                return self.write(data)
+        except Exception as msg:
+            logging.warning(f"Error on sending command '{data}':{msg}")
             return
 
         if response.status_code == 200:
@@ -588,14 +592,14 @@ class CytonWiFi(CytonBase):
                                         # 'port': self.local_wifi_server_port,
                                         # 'output': 'json',
                                         # 'delimiter': True,
-                                        # 'latency': 10000,
+                                        # 'latency': 1000,
                                          # })
         res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
                                      json={
                                         'ip': self._local_ip_address,
                                         'port': self.local_wifi_server_port,
                                         'output': 'raw',
-                                        'latency': 50,
+                                        'latency': 1000,
                                          })
         if res_tcp_post.status_code == 200:
             tcp_status = res_tcp_post.json()
@@ -610,6 +614,24 @@ class CytonWiFi(CytonBase):
                 f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
 
     # ----------------------------------------------------------------------
+
+    def set_latency(self, latency: int) -> None:
+        """"""
+        try:
+            response = requests.post(
+                f"http://{self._ip_address}/latency", json={'latency': latency, })
+        except Exception as e:
+            logging.warning(f"Error on setting latency '{data}': {e}")
+            return
+
+        if response.status_code == 200:
+            return
+        else:
+            logging.warning(
+                f"Error code: {response.status_code} {response.text}")
+
+    # ----------------------------------------------------------------------
+
     def close(self) -> None:
         """Stops TCP server and data acquisition."""
         self.stop_stream()

@@ -8,6 +8,9 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 version_str = open(os.path.join(
    'openbci_stream', '_version.txt'), 'r').read().strip()
 
+with open('requirements.txt') as f:
+   requirements = f.read().splitlines()
+
 setup(
     name='openbci-stream',
     version=version_str,
@@ -21,31 +24,7 @@ setup(
 
     download_url='https://github.com/UN-GCPDS/openbci_stream',
 
-    install_requires=['pyserial',
-                      'scipy',
-                      'numpy',
-                      'psutil',
-                      'mne',
-                      'requests',
-                      'colorama',
-                      'rawutil',
-                      'plumbum',
-                      'pyedflib',
-
-                      'crc32c',
-                      'kafka-python',
-                      'rpyc',
-                      'tables',
-                      'systemd_service',
-                      ],
-
-    extras_require={
-        'utils': ['nmap',
-                  'systemd_service',
-                  'netifaces',
-                  'python-nmap',
-                  ],
-    },
+    install_requires=requirements,
 
     scripts=[
        "cmd/openbci_cli",
