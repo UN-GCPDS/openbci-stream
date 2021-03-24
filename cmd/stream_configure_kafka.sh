@@ -55,13 +55,20 @@ echo "Starting daemons"
 systemctl enable kafka.service zookeeper@kafka.service
 systemctl start kafka.service zookeeper@kafka.service
 
+echo "Removing previous partitions"
+kafka-topics.sh --bootstrap-server localhost:2181 --delete --topic binary
+kafka-topics.sh --bootstrap-server localhost:2181 --delete --topic beeg
+kafka-topics.sh --bootstrap-server localhost:2181 --delete --topic marker
+kafka-topics.sh --bootstrap-server localhost:2181 --delete --topic annotation
+kafka-topics.sh --bootstrap-server localhost:2181 --delete --topic feedback
+
 echo "Creating partitions"
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic binary
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic eeg
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic marker
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic annotation
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic command
-kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic feedback
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic binary
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic eeg
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic marker
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic annotation
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic command
+kafka-topics.sh --create --bootstrap-server localhost:2181 --replication-factor 1 --partitions 1 --topic feedback
 
 echo "Setting retention"
 kafka-configs.sh --bootstrap-server localhost:2181  --entity-type topics --entity-name binary --alter --add-config retention.ms=1000
