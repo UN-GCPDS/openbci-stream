@@ -193,6 +193,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         # Default values
         self.sample_rate = 250
         self.boardmode = 'default'
+        self.closed = False
 
         # Daisy before Montage
         if daisy in [True, False]:
@@ -570,6 +571,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     @abstractmethod
     def close(self):
         """Stops data stream."""
+        self.closed = True
 
     # ----------------------------------------------------------------------
     @abstractmethod
