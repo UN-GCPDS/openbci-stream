@@ -286,7 +286,9 @@ class CytonRFDuino(CytonBase):
     # ----------------------------------------------------------------------
     def close(self):
         """Close the serial communication."""
+        self.stop_stream()
         self.device.close()
+        super().close()
 
     # ----------------------------------------------------------------------
     def _stream_data(self, size: Optional[int] = 2**8,
@@ -434,6 +436,8 @@ class CytonWiFi(CytonBase):
 
         self._create_tcp_server()
         time.sleep(5)  # secure delay
+        self._start_tcp_client()
+
         self._start_loop()
 
     # ----------------------------------------------------------------------
@@ -510,7 +514,7 @@ class CytonWiFi(CytonBase):
         starts stream."""
 
         super().start_stream()
-        self._start_tcp_client()
+        # self._start_tcp_client()
 
         response = requests.get(f"http://{self._ip_address}/stream/start")
         if response.status_code != 200:
@@ -527,7 +531,7 @@ class CytonWiFi(CytonBase):
         response = requests.get(f"http://{self._ip_address}/stream/stop")
         if response.status_code != 200:
             logging.warning(
-                f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/start")
+                f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/stop")
 
         self.binary_stream.close()
         asyncore.close_all()
@@ -634,6 +638,7 @@ class CytonWiFi(CytonBase):
         """Stops TCP server and data acquisition."""
         self.stop_stream()
         requests.delete(f"http://{self._ip_address}/tcp")
+        super().close()
 
     # ----------------------------------------------------------------------
     def _start_loop(self):
