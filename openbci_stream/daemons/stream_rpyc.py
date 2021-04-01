@@ -19,15 +19,31 @@ autokill_process(name='stream_rpyc')
 ########################################################################
 class StremamService(rpyc.Service):
     """Server with RPyC for control OpenBCI board remotely."""
+    last_service = None
 
     # ----------------------------------------------------------------------
     def exposed_CytonRFDuino(self, *args, **kwargs):
-        return CytonRFDuino(*args, **kwargs)
+        """"""
+        if StremamService.last_service:
+            if not StremamService.last_service.closed:
+                StremamService.last_service.is_recycled = True
+                return StremamService.last_service
+
+        StremamService.last_service = CytonRFDuino(*args, **kwargs)
+        StremamService.last_service.is_recycled = False
+        return StremamService.last_service
 
     # ----------------------------------------------------------------------
     def exposed_CytonWiFi(self, *args, **kwargs):
         """"""
-        return CytonWiFi(*args, **kwargs)
+        if StremamService.last_service:
+            if not StremamService.last_service.closed:
+                StremamService.last_service.is_recycled = True
+                return StremamService.last_service
+
+        StremamService.last_service = CytonWiFi(*args, **kwargs)
+        StremamService.last_service.is_recycled = False
+        return StremamService.last_service
 
 
 # ----------------------------------------------------------------------
