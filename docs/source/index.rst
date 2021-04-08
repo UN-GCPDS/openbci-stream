@@ -18,8 +18,7 @@ Navigation
    notebooks/07-data_storage_handler
    notebooks/A1-raw_cleaning
    notebooks/A2-electrodes_impedance
-   notebooks/A3-latency_measurement
-   notebooks/A4-server-based_acquisition
+   notebooks/A3-server-based_acquisition
 
 
 Indices and tables
