@@ -122,7 +122,11 @@ class HDF5Writer:
 
         Before to close, add some extra values into the header.
         """
-        header2 = {'shape': self.array_eeg.shape}
+        if self.array_eeg is None:
+            header2 = {'shape': 0}
+            logging.warning('EEG is empty')
+        else:
+            header2 = {'shape': self.array_eeg.shape}
         if self.host_ntp:
             client = ntplib.NTPClient()
             header2.update(
@@ -559,8 +563,8 @@ class HDF5Reader:
         for class_ in markers:
             starts = self.markers_relative[class_]
             classes.extend([class_] * len(starts))
-            data.extend([self.eeg[:, start + (tmin) * sampling_rate:start
-                                  + (tmin + duration) * sampling_rate] for start in starts])
+            data.extend([self.eeg[:, start + (tmin) * sampling_rate:start +
+                                  (tmin + duration) * sampling_rate] for start in starts])
 
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
