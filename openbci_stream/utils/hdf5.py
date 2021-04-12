@@ -21,7 +21,7 @@ import json
 import logging
 from datetime import datetime, date
 from functools import cached_property
-from typing import Dict, Any, Optional, Text, List, TypeVar, Union
+from typing import Dict, Any, Optional, Text, List, TypeVar, Union, Tuple
 import ntplib
 import mne
 import tables
@@ -31,6 +31,8 @@ from scipy.interpolate import interp1d
 
 # Custom type var
 timestamp_ = TypeVar('timesamp', float, np.float)
+
+mne.set_log_level('CRITICAL')
 
 
 # ----------------------------------------------------------------------
@@ -354,6 +356,19 @@ class HDF5Reader:
         self._open()
 
     # ----------------------------------------------------------------------
+    def __repr__(self):
+        """"""
+        info = "=" * 50
+        info += f"\n{self.filename}\n"
+        info += str(datetime.fromtimestamp(self.header['datetime']))
+        info += '\n' + "=" * 50 + '\n'
+        info += f'MARKERS: {list(self.markers.keys())}\n'
+        for k in self.header:
+            info += f"{k.upper()}: {self.header[k]}\n"
+        info += "=" * 50
+        return info
+
+    # ----------------------------------------------------------------------
     @cached_property
     def header(self) -> Dict[str, Any]:
         """The header of the hdf file."""
@@ -586,12 +601,16 @@ class HDF5Reader:
 
         for i, channel in enumerate(self.header['channels']):
             data = self.eeg[i]
+            if data.max() == data.min():
+                max_, min_ = 1, -1
+            else:
+                max_, min_ = data.max(), data.min()
             channel = {
                 'label': f"ch{i+1} - {self.header['channels'][channel]}",
                 'dimension': 'uV',
                 'sample_rate': sampling_rate,
-                'physical_max': data.max(),
-                'physical_min': data.min(),
+                'physical_max': max_,
+                'physical_min': min_,
                 'digital_max': 2 ** 12,
                 'digital_min': -2 ** 12,
                 'transducer': '',
@@ -601,12 +620,16 @@ class HDF5Reader:
             edf_data_list.append(data)
 
         for i, aux in enumerate(self.aux):
+            if aux.max() == aux.min():
+                max_, min_ = 1, -1
+            else:
+                max_, min_ = aux.max(), aux.min()
             channel = {
                 'label': f"aux{i+1}",
                 'dimension': '',
                 'sample_rate': sampling_rate,
-                'physical_max': aux.max(),
-                'physical_min': aux.min(),
+                'physical_max': max_,
+                'physical_min': min_,
                 'digital_max': 2 ** 12,
                 'digital_min': -2 ** 12,
                 'transducer': '',
@@ -615,19 +638,20 @@ class HDF5Reader:
             edf_channel_info.append(channel)
             edf_data_list.append(aux)
 
-        channel = {
-            'label': f"classes",
-            'dimension': '',
-            'sample_rate': sampling_rate,
-            'physical_max': max(self.classes_indexes.values()),
-            'physical_min': min(self.classes_indexes.values()),
-            'digital_max': 2 ** 12,
-            'digital_min': -2 ** 12,
-            'transducer': '',
-            'prefilter': '',
-        }
-        edf_channel_info.append(channel)
-        edf_data_list.append(self.classes)
+        if self.markers:
+            channel = {
+                'label': f"classes",
+                'dimension': '',
+                'sample_rate': sampling_rate,
+                'physical_max': max(self.classes_indexes.values()),
+                'physical_min': min(self.classes_indexes.values()),
+                'digital_max': 2 ** 12,
+                'digital_min': -2 ** 12,
+                'transducer': '',
+                'prefilter': '',
+            }
+            edf_channel_info.append(channel)
+            edf_data_list.append(self.classes)
 
         header = {
             'admincode': self.header.get('admincode', ''),
@@ -652,3 +676,33 @@ class HDF5Reader:
         for annotation in self.annotations:
             f.writeAnnotation(*annotation)
         f.close()
+
+    # ----------------------------------------------------------------------
+    def get_data(self, duration: int, tmin: Optional[int] = 0, markers: Union[None, List[str]] = None, **kwargs) -> Tuple[np.ndarray]:
+        """Create an `EpochsArray` object with the `MNE` library.
+
+        This method auto crop the data in regard to markers also will drop
+        channels that no correspond with the montage. For an example of use
+        refer to `Data storage handler - MNE objects<../notebooks/07-data_storage_handler.html#MNE-objects>`_
+
+        Parameters
+        ----------
+        duration
+            The duration of the trial.
+        tmin
+            The time to take previous to the marker.
+        markers
+            A filter of markers for crop the signal.
+        kwargs
+            Optional arguments passed to `EpochsArray <https://mne.tools/stable/generated/mne.EpochsArray.html>`_
+
+        Returns
+        -------
+        trials
+            Dataset with the shape (`trials`, `channels`, `time`)
+        classes
+            List of classes
+        """
+
+        epochs = self.get_epochs(duration, tmin, markers)
+        return epochs._data, epochs.events[:, 2]
