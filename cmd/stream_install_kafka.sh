@@ -11,12 +11,12 @@ function secure_file {
 
 echo "Installing Yay"
 cd
-sudo pacman -S --needed git base-devel
+sudo pacman -S git base-devel
 git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
 cd
-rm -r yay
+sudo rm -r yay
 
 echo "Installing Kafka"
 yay -S kafka
