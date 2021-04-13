@@ -614,7 +614,6 @@ class CytonWiFi(CytonBase):
                 f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
 
     # ----------------------------------------------------------------------
-
     def set_latency(self, latency: int) -> None:
         """"""
         try:
@@ -631,7 +630,6 @@ class CytonWiFi(CytonBase):
                 f"Error code: {response.status_code} {response.text}")
 
     # ----------------------------------------------------------------------
-
     def close(self) -> None:
         """Stops TCP server and data acquisition."""
         self.stop_stream()
