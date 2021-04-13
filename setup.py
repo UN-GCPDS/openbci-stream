@@ -8,9 +8,6 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 version_str = open(os.path.join(
    'openbci_stream', '_version.txt'), 'r').read().strip()
 
-with open('requirements.txt') as f:
-   requirements = f.read().splitlines()
-
 setup(
     name='openbci-stream',
     version=version_str,
@@ -38,6 +35,7 @@ setup(
                       'pyEDFlib>=0.1.20',
                       'nmap>=0.0.1',
                       'pyserial>=3.5',
+                      'systemd-service>=1.0',
                       ],
 
     scripts=[
