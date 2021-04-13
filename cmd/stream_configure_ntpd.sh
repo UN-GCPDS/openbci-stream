@@ -9,7 +9,7 @@ function secure_file {
     fi
 }
 
-pacman -S ntp
+pacman -S --needed ntp
 
 FILE=/etc/ntp.conf
 secure_file $FILE

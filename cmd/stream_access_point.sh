@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-pacman -S hostapd dnsmasq
+pacman -S --needed hostapd dnsmasq
 systemctl enable hostapd dnsmasq dhcpcd
 systemctl start hostapd dnsmasq dhcpcd
 
