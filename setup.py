@@ -24,7 +24,21 @@ setup(
 
     download_url='https://github.com/UN-GCPDS/openbci_stream',
 
-    install_requires=requirements,
+    install_requires=['mne>=0.22.1',
+                      'rpyc>=5.0.1',
+                      'requests>=2.25.1',
+                      'numpy>=1.20.1',
+                      'scipy>=1.6.2',
+                      'ntplib>=0.3.4',
+                      'kafka_python>=2.0.2',
+                      'tables>=3.6.1',
+                      'rawutil>=2.7.0',
+                      'colorama>=0.4.4',
+                      'netifaces>=0.10.9',
+                      'pyEDFlib>=0.1.20',
+                      'nmap>=0.0.1',
+                      'pyserial>=3.5',
+                      ],
 
     scripts=[
        "cmd/openbci_cli",
