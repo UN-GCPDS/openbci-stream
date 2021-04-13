@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 pacman -S python python-pip gcc cython hdf5
+pacman -S python-scipy
 pip install openbci-stream
 stream_install_kafka.sh
 stream_configure_kafka.sh
