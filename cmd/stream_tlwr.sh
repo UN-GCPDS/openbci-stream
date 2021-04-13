@@ -1,13 +1,12 @@
 #!/usr/bin/bash
 
-pacman -S python python-pip gcc cython hdf5
-pacman -S python-scipy
-pip install openbci-stream
+sudo pacman -S python python-pip gcc cython hdf5 python-scipy python-wheel
+sudo pip install openbci-stream
 stream_install_kafka.sh
-stream_configure_kafka.sh
-stream_access_point.sh
-stream_configure_ntpd.sh
-stream_eeg systemd
-stream_rpyc systemd
-systemctl enable stream_eeg stream_rpyc
-systemctl start stream_eeg stream_rpyc
+sudo stream_configure_kafka.sh
+sudo stream_access_point.sh
+sudo stream_configure_ntpd.sh
+sudo stream_eeg systemd
+sudo stream_rpyc systemd
+sudo systemctl enable stream_eeg stream_rpyc
+sudo systemctl start stream_eeg stream_rpyc
