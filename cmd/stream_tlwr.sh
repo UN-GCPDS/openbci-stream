@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 sudo pacman -S --needed python python-pip gcc cython hdf5
-sudo pip install openbci-stream
+sudo pip install openbci-stream systemd_service
 stream_install_kafka.sh
 sudo stream_configure_kafka.sh
 sudo stream_configure_ntpd.sh
