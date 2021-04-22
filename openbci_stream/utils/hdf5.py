@@ -25,10 +25,13 @@ from typing import Dict, Any, Optional, Text, List, TypeVar, Union, Tuple
 import ntplib
 import mne
 import tables
-import pyedflib
 import numpy as np
 from scipy.interpolate import interp1d
 
+try:
+    import pyedflib
+except:
+    logging.warning("'pyedflib' is needed for export to EDF")
 # Custom type var
 timestamp_ = TypeVar('timesamp', float, np.float)
 
@@ -347,12 +350,16 @@ class HDF5Reader:
     ----------
     filename
         Path with the location of the hdf file.
+    offset_correction
+       The header will store the offset (based on ntp) at start and end of
+       acquisition, this values can be used to perform an offset correction.
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str, offset_correction: bool = True) -> None:
         """"""
         self.filename = filename
+        self.offset_correction = offset_correction
         self._open()
 
     # ----------------------------------------------------------------------
@@ -423,7 +430,7 @@ class HDF5Reader:
         markers = {}
         for mkr in self.f.root.markers:
             t, marker = json.loads(mkr)
-            markers.setdefault(marker, []).append(t)
+            markers.setdefault(marker, []).append(t - self.offset)
 
         return markers
 
@@ -443,7 +450,7 @@ class HDF5Reader:
     @cached_property
     def timestamp(self) -> List[timestamp_]:
         """A list of timestamps for EEG data."""
-        return self._timestamp(self.eeg.shape[1])
+        return self._timestamp(self.eeg.shape[1]) - self.offset
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -483,6 +490,7 @@ class HDF5Reader:
 
         if timestamp[timestamp == 0].size > 0:
             timestamp = interpolate_datetime(timestamp, length)
+
         return timestamp
 
     # ----------------------------------------------------------------------
@@ -578,8 +586,8 @@ class HDF5Reader:
         for class_ in markers:
             starts = self.markers_relative[class_]
             classes.extend([class_] * len(starts))
-            data.extend([self.eeg[:, start + (tmin) * sampling_rate:start +
-                                  (tmin + duration) * sampling_rate] for start in starts])
+            data.extend([self.eeg[:, int(start + (tmin) * sampling_rate):int(start +
+                                                                             (tmin + duration) * sampling_rate)] for start in starts])
 
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
@@ -706,3 +714,15 @@ class HDF5Reader:
 
         epochs = self.get_epochs(duration, tmin, markers)
         return epochs._data, epochs.events[:, 2]
+
+    # ----------------------------------------------------------------------
+    @cached_property
+    def offset(self) -> float:
+        """Calculate the timestamps offset in seconds."""
+        if self.offset_correction and 'start-offset' in self.header and 'end-offset' in self.header:
+            start, end = self.header['start-offset'], self.header['end-offset']
+            return (start + (start - end) / self.header['shape'][1]) / 1000
+        else:
+            if self.offset_correction:
+                logging.warning('No offsets values to perform correction')
+            return 0
