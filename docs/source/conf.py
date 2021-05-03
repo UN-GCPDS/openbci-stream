@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('exts'))
 # -- Project information -----------------------------------------------------
 
 project = 'OpenBCI-Stream'
-copyright = '2019-2020, Yeison Cardona'
+copyright = '2019-2021, Yeison Cardona'
 author = 'Yeison Cardona'
 
 # The short X.Y version
@@ -49,6 +49,8 @@ extensions = [
 
     'nbsphinx',
     'sphinx.ext.mathjax',
+
+    'sphinxcontrib.bibtex',
 ]
 
 naoleon_google_docstring = False
@@ -327,3 +329,6 @@ Indices and tables
 * :ref:`search`
 
     """)
+
+
+bibtex_bibfiles = ['refs.bib']

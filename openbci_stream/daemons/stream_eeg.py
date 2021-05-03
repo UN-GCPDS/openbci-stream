@@ -14,9 +14,9 @@ For examples and descriptions refers to documentation:
 import sys
 import pickle
 import struct
+from functools import cached_property
 import numpy as np
-from queue import Queue
-from threading import Thread
+from multiprocessing import Pool
 from datetime import datetime
 import rawutil
 import logging
@@ -31,8 +31,9 @@ DEBUG = ('--debug' in sys.argv)
 
 KafkaStream = TypeVar('kafka-stream')
 
-
 ########################################################################
+
+
 class BinaryToEEG:
     """Kafka transformer with parallel implementation for processing binary raw
     data into EEG microvolts. This script requires the Kafka daemon running and
@@ -40,6 +41,7 @@ class BinaryToEEG:
     """
 
     BIN_HEADER = 0xa0
+    LAST_AUX_SHAPE = 0
 
     # ----------------------------------------------------------------------
     def __init__(self):
@@ -56,17 +58,17 @@ class BinaryToEEG:
                                           value_serializer=pickle.dumps,
                                           )
 
-        self.buffer = Queue(maxsize=33)
+        # self.buffer = Queue(maxsize=33)
 
         self._last_marker = 0
         self.counter = 0
 
         self.remnant = b''
         self.offset = None, None
-        self._last_aux_shape = 0
+        # self._last_aux_shape = 0
 
     # ----------------------------------------------------------------------
-    @property
+    @cached_property
     def scale_factor_eeg(self) -> float:
         """Vector with the correct factors for scale eeg data samples."""
         gain = 24
@@ -93,24 +95,26 @@ class BinaryToEEG:
         record
             Kafka stream with binary data.
         """
-
         buffer = record.value
         context = buffer['context']
-        # context['binary_created'] = record.timestamp / 1000
-        context['binary_created'] = context['created']
+        context['timestamp.binary.consume'] = datetime.now().timestamp()
 
+        # Deserialice data
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
         if not data.shape[0]:
             if DEBUG:
                 logging.warning('No data after alignement')
             return
+        eeg_data, aux = self.deserialize(data, context)
 
-        # Thread for unpack data
-        self.b = Thread(target=self.deserialize,
-                        args=(data.copy(), context.copy()))
-        self.b.start()
+        # Stream
+        context['samples'] = eeg_data.shape[1]
+        context['timestamp.eeg'] = datetime.now().timestamp()
+
+        self.stream([eeg_data, aux], context)
 
     # ----------------------------------------------------------------------
+
     def align_data(self, binary: bytes) -> Tuple[np.ndarray, bytes]:
         """Align data following the headers and footers.
 
@@ -165,15 +169,15 @@ class BinaryToEEG:
             eeg_data, data[:, 1], context)
 
         # Auxiliar
-        # stop_byte = data[0][-1]
         stop_byte = int((np.median(data[:, -1])))
-
         aux = self.deserialize_aux(stop_byte, data[:, 26:32], context)
-        self._last_aux_shape = aux.shape
+        self.LAST_AUX_SHAPE = aux.shape
 
         # Stream
         channels = list(context['montage'].keys())
-        self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
+
+        return eeg_data.T[channels], aux.T
+        # self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
 
     # ----------------------------------------------------------------------
     def deserialize_eeg_wifi(self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
@@ -201,9 +205,9 @@ class BinaryToEEG:
             if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
 
-        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
-        eeg_data = eeg_data * self.scale_factor_eeg
+        # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0] for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array([rawutil.unpack('>u', bytes(ch))[
+                            0] for ch in eeg.reshape(-1, 3)]).reshape(-1, 8) * self.scale_factor_eeg
 
         if context['daisy']:
 
@@ -297,7 +301,8 @@ class BinaryToEEG:
         return eeg
 
     # ----------------------------------------------------------------------
-    def deserialize_aux(self, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:
+    @classmethod
+    def deserialize_aux(cls, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:
         """Determine the content of `AUX` bytes and format it.
 
         Auxialiar data could contain different kind of information: accelometer,
@@ -380,10 +385,10 @@ class BinaryToEEG:
         elif stop_byte == 0xc6:
             pass
 
-        return np.zeros(self._last_aux_shape)
+        return np.zeros(cls.LAST_AUX_SHAPE)
 
     # ----------------------------------------------------------------------
-    def stream(self, data, samples, context):
+    def stream(self, data, context):
         """Kafka produser.
 
         Stream data to network.
@@ -396,13 +401,9 @@ class BinaryToEEG:
             The number of samples in this package.
 
         """
-        context.update({'samples': samples})
 
         data_ = {'context': context,
                  'data': data,
-                 # 'binary_created': self.created,
-                 # 'created': datetime.now().timestamp(),
-                 # 'samples': samples,
                  }
 
         self.producer_eeg.send('eeg', data_)

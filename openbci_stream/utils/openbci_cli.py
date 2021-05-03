@@ -170,17 +170,19 @@ def main():
                           # 'ch_names': 'Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2'.split(','),
                           }
                 writer.add_header(header)
-                print(f"Writing data in {Fore.LIGHTYELLOW_EX}{args.output}{Fore.RESET}.")
+                print(
+                    f"Writing data in {Fore.LIGHTYELLOW_EX}{args.output}{Fore.RESET}.")
 
             print(f"{Fore.LIGHTYELLOW_EX}Ctrl+C{Fore.RESET} for stop it.")
-            for message in stream:
+            for i, message in enumerate(stream):
 
                 if message.topic == 'eeg':
 
                     eeg, aux = message.value['data']
                     created = datetime.fromtimestamp(
-                        message.value['context']['binary_created'])
+                        message.value['context']['timestamp.binary'])
                     since = (datetime.now() - created).total_seconds()
+
                     count = message.value['context']['samples']
                     channels = eeg.shape[0]
 

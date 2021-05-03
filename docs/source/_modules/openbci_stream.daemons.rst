@@ -13,4 +13,7 @@ Submodules
    :maxdepth: 4
 
    openbci_stream.daemons.stream_eeg
+   openbci_stream.daemons.stream_eeg_sub
+   openbci_stream.daemons.stream_fake_binary
    openbci_stream.daemons.stream_rpyc
+   openbci_stream.daemons.test_performance
