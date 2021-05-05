@@ -88,7 +88,6 @@ Examples
     # Acquisition with blocking call
     
     from openbci_stream.acquisition import Cyton
-    
     openbci = Cyton('serial', endpoint='/dev/ttyUSB0', capture_stream=True)
     
     # blocking call
@@ -103,7 +102,6 @@ Examples
     # Acquisition with asynchronous call
     
     from openbci_stream.acquisition import Cyton
-    
     openbci = Cyton('wifi', endpoint='192.68.1.113', capture_stream=True)
     openbci.stream(15) # collect data for 15 seconds
     
@@ -117,7 +115,6 @@ Examples
     # Remote acquisition
     
     from openbci_stream.acquisition import Cyton
-    
     openbci = Cyton('serial', endpoint='/dev/ttyUSB0', host='192.168.1.1', capture_stream=True)
     
     # blocking call
@@ -128,7 +125,6 @@ Examples
     # Consumer for active streamming
     
     from openbci_stream.acquisition import OpenBCIConsumer
-    
     with OpenBCIConsumer() as stream:
         for i, message in enumerate(stream):
             if message.topic == 'eeg':
@@ -141,7 +137,6 @@ Examples
     # Create stream then consume data
     
     from openbci_stream.acquisition import OpenBCIConsumer
-    
     with OpenBCIConsumer(mode='serial', endpoint='/dev/ttyUSB0', streaming_package_size=250) as (stream, openbci):
         t0 = time.time()
         for i, message in enumerate(stream):

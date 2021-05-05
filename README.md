@@ -36,7 +36,6 @@ The main functionality of the drivers live on to serve real-time and distributed
 # Acquisition with blocking call
 
 from openbci_stream.acquisition import Cyton
-
 openbci = Cyton('serial', endpoint='/dev/ttyUSB0', capture_stream=True)
 
 # blocking call
@@ -52,7 +51,6 @@ openbci.stream(15)  # collect data for 15 seconds
 # Acquisition with asynchronous call
 
 from openbci_stream.acquisition import Cyton
-
 openbci = Cyton('wifi', endpoint='192.68.1.113', capture_stream=True)
 openbci.stream(15) # collect data for 15 seconds
 
@@ -67,7 +65,6 @@ openbci.stop_stream()
 # Remote acquisition
 
 from openbci_stream.acquisition import Cyton
-
 openbci = Cyton('serial', endpoint='/dev/ttyUSB0', host='192.168.1.1', capture_stream=True)
 
 # blocking call
@@ -79,7 +76,6 @@ openbci.stream(15)  # collect data for 15 seconds
 # Consumer for active streamming
 
 from openbci_stream.acquisition import OpenBCIConsumer
-
 with OpenBCIConsumer() as stream:
     for i, message in enumerate(stream):
         if message.topic == 'eeg':
@@ -93,7 +89,6 @@ with OpenBCIConsumer() as stream:
 # Create stream then consume data
 
 from openbci_stream.acquisition import OpenBCIConsumer
-
 with OpenBCIConsumer(mode='serial', endpoint='/dev/ttyUSB0', streaming_package_size=250) as (stream, openbci):
     t0 = time.time()
     for i, message in enumerate(stream):
