@@ -1,12 +1,8 @@
 import pickle
-import logging
-import rawutil
-import struct
-import numpy as np
 from datetime import datetime
-from typing import Dict, Any
-import time
 
+import rawutil
+import numpy as np
 from kafka import KafkaProducer
 
 producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
@@ -23,13 +19,12 @@ data['context'] = {'daisy': False,
                    'gain': [24, 24, 24, 24, 24, 24, 24, 24]
                    }
 
-
 data['context']['created'] = datetime.now().timestamp()
 
-def aux_(v): return list(struct.pack(
-    '>hhh', *(np.array([v / 3] * 3) * (16 / 0.002)).astype(int).tolist()))
+def aux_(values): return list(struct.pack(
+    '>hhh', *(np.array(values) * (16 / 0.002)).astype(int).tolist()))
 
-def eeg_(v): return list(rawutil.pack('>u', -v // 24)) * 8
+def eeg_(values): return [rawutil.pack('>u', v // 24) for v in values.tolist()]
 def t0(): return ((time.time() * 10) // 1)
 
 
@@ -40,13 +35,9 @@ def main():
     while True:
 
         if t0() >= ti + 1:
-
-            if (time.time() // 1) % 2:
-                aux = aux_(1)
-                eeg = eeg_(1)
-            else:
-                aux = aux_(-1)
-                eeg = eeg_(-1)
+            aux_value = np.random.random(3)
+            aux = aux_(aux_value / aux_value.sum())
+            eeg = eeg_(np.random.randint(100, size=8))
 
             data['context']['created'] = datetime.now().timestamp()
             data['data'] = [0xa0,  # header
