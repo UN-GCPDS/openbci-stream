@@ -1,0 +1,16 @@
+#!python
+
+import sys
+
+if sys.argv[-1] == "systemd":
+    from systemd_service import Service
+
+    daemon = Service("stream_rpyc", "stream_rpyc")
+    daemon.create_timer(on_boot_sec=10)
+
+else:
+    from openbci_stream.daemons.stream_rpyc import start_service
+
+    print("Run 'stream_rpyc systemd' as superuser for create the daemon.")
+    start_service()
+

@@ -1,0 +1,983 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data storage handler &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Appendix 1 - Raw data processing" href="A1-raw_cleaning.html" />
+    <link rel="prev" title="Command line interface" href="06-command_line_interface.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 0;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<style>
+    .nbinput .prompt,
+    .nboutput .prompt {
+        display: none;
+}
+</style><div class="section" id="Data-storage-handler">
+<h1>Data storage handler<a class="headerlink" href="#Data-storage-handler" title="Permalink to this headline">¶</a></h1>
+<p>This data handler use <a class="reference external" href="https://www.pytables.org/">PyTables</a> that is built on top of the HDF5 library, using the Python language and the NumPy package. It features an object-oriented interface that, combined with C extensions for the performance-critical parts of the code (generated using Cython), makes it a fast, yet extremely easy to use tool for interactively browse, process and search very large amounts of data. One important feature of <a class="reference external" href="https://www.pytables.org/">PyTables</a> is that it
+optimizes memory and disk resources so that data takes much less space (specially if on-flight compression is used) than other solutions such as relational or object oriented databases.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">tables</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;sampple_eeg.h5&#39;</span>
+<span class="n">CHANNELS</span> <span class="o">=</span> <span class="mi">16</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">openbci_stream.utils</span> <span class="kn">import</span> <span class="n">HDF5Writer</span><span class="p">,</span> <span class="n">HDF5Reader</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Writer">
+<h2>Writer<a class="headerlink" href="#Writer" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">writer</span> <span class="o">=</span> <span class="n">HDF5Writer</span><span class="p">(</span><span class="s1">&#39;output.h5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Add-header">
+<h3>Add header<a class="headerlink" href="#Add-header" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+          <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+         <span class="p">}</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Add-EEG-data">
+<h3>Add EEG data<a class="headerlink" href="#Add-EEG-data" title="Permalink to this headline">¶</a></h3>
+<p>The number of channels is defined with first data addition:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>  <span class="c1"># channels x data</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>The number of channels can not be changed after define the first package:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:OpenBCI-Stream:The number of channels 16 can not be changed!
+</pre></div></div>
+</div>
+<p>Is possible to add any amount of data:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>A <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> can be added to the data, in a separate command, in this case, <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> <em>could</em> be an array of the same length of data.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+<span class="n">timestamp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span><span class="o">*</span><span class="mi">2000</span><span class="p">)</span>
+
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">)</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Is possible to use the <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> in a single command.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+<span class="n">timestamp</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span> <span class="o">*</span> <span class="mi">2000</span>
+
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Extrapolated-timestamps">
+<h3>Extrapolated timestamps<a class="headerlink" href="#Extrapolated-timestamps" title="Permalink to this headline">¶</a></h3>
+<p>Usually, we never have the <code class="docutils literal notranslate"><span class="pre">datetimes</span></code> for each value in a package, instead, we have a single marker time for each package. This module was designed keeping mind these cases, so, is possible to set a single <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> and <code class="docutils literal notranslate"><span class="pre">HDF5Reader</span></code> will interpolate the missing <code class="docutils literal notranslate"><span class="pre">timestamps</span></code></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+<span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+
+<span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Add-markers">
+<h3>Add markers<a class="headerlink" href="#Add-markers" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">markers</span></code> can be added individually with their respective <code class="docutils literal notranslate"><span class="pre">timestamp</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+<span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;LEFT&#39;</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_marker</span><span class="p">(</span><span class="n">marker</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Or in a dictionary structure with the marker as <code class="docutils literal notranslate"><span class="pre">key</span></code> and events as a list of <code class="docutils literal notranslate"><span class="pre">timestamps</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">markers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;LEFT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1603150888.752062</span><span class="p">,</span> <span class="mf">1603150890.752062</span><span class="p">,</span> <span class="mf">1603150892.752062</span><span class="p">],</span>
+    <span class="s1">&#39;RIGHT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1603150889.752062</span><span class="p">,</span> <span class="mf">1603150891.752062</span><span class="p">,</span> <span class="mf">1603150893.752062</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">writer</span><span class="o">.</span><span class="n">add_markers</span><span class="p">(</span><span class="n">markers</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Add-annotations">
+<h3>Add annotations<a class="headerlink" href="#Add-annotations" title="Permalink to this headline">¶</a></h3>
+<p>The annotations are defined like in EDF format, with an <code class="docutils literal notranslate"><span class="pre">onset</span></code> and <code class="docutils literal notranslate"><span class="pre">duration</span></code> in seconds, and their corresponding <code class="docutils literal notranslate"><span class="pre">description</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;This is an annotation, in EDF style&#39;</span><span class="p">)</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Electrode verification&#39;</span><span class="p">)</span>
+<span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Patient blinking&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Do no forget to close the file</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Reader">
+<h2>Reader<a class="headerlink" href="#Reader" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">HDF5Reader</span><span class="p">(</span><span class="s1">&#39;output.h5&#39;</span><span class="p">)</span>
+<span class="n">reader</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+==================================================
+output.h5
+2021-04-10 20:17:21.274841
+==================================================
+MARKERS: [&#39;LEFT&#39;, &#39;RIGHT&#39;]
+SAMPLE_RATE: 1000
+DATETIME: 1618103841.274841
+SHAPE: [16, 7500]
+==================================================
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">eeg</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([[ 0.25868927, -0.66543329,  0.03229383, ...,  0.78450966,
+         0.574569  , -0.09854255],
+       [ 0.26966891, -0.09300477, -0.80611687, ..., -0.06674499,
+        -0.75905066,  0.69443338],
+       [-0.61651975, -0.98729215, -0.46595438, ..., -0.88060761,
+        -0.09198823, -0.81368015],
+       ...,
+       [ 0.15696397, -0.05382042, -0.47447657, ..., -0.93922117,
+        -1.97117586, -1.97233181],
+       [-0.12692569,  0.17508998,  0.73853735, ...,  0.44395487,
+         0.88664937,  0.16267987],
+       [-0.86684959, -0.07770241,  0.30604455, ...,  2.16666748,
+         1.46009641,  1.20614713]])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">markers</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;LEFT&#39;: [1618103847.123672,
+  1603150888.752062,
+  1603150890.752062,
+  1603150892.752062],
+ &#39;RIGHT&#39;: [1603150889.752062, 1603150891.752062, 1603150893.752062]}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">eeg_data</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/eeg_data (EArray(16, 7500)) &#39;EEG time series&#39;
+  atom := Float64Atom(shape=(), dflt=0.0)
+  maindim := 1
+  flavor := &#39;numpy&#39;
+  byteorder := &#39;little&#39;
+  chunkshape := (16, 512)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">timestamp</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/timestamp (EArray(6000,)) &#39;EEG timestamp&#39;
+  atom := Float64Atom(shape=(), dflt=0.0)
+  maindim := 0
+  flavor := &#39;numpy&#39;
+  byteorder := &#39;little&#39;
+  chunkshape := (8192,)
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">timestamp</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([1.61810385e+09, 1.61810385e+09, 1.61810385e+09, ...,
+       1.61810385e+09, 1.61810385e+09, 1.61810385e+09])
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">annotations</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[-1618103840.36316, 1, &#39;This is an annotation, in EDF style&#39;],
+ [-1618103800.36316, 15, &#39;Electrode verification&#39;],
+ [-1618103795.36316, 3, &#39;Patient blinking&#39;]]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Examples-using-the-with-control-flow-structure">
+<h2>Examples using the <code class="docutils literal notranslate"><span class="pre">with</span></code> control-flow structure<a class="headerlink" href="#Examples-using-the-with-control-flow-structure" title="Permalink to this headline">¶</a></h2>
+<p>This data format handlers can be used with the <code class="docutils literal notranslate"><span class="pre">with</span></code> structure:</p>
+<div class="section" id="id1">
+<h3>Writer<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>This example create a file with random data:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">openbci_stream.utils</span> <span class="kn">import</span> <span class="n">HDF5Writer</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+<span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+          <span class="s1">&#39;datetime&#39;</span><span class="p">:</span> <span class="n">now</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span>
+          <span class="s1">&#39;montage&#39;</span><span class="p">:</span> <span class="s1">&#39;standard_1020&#39;</span><span class="p">,</span>
+          <span class="s1">&#39;channels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span><span class="n">ch</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="s1">&#39;Fp1,Fp2,F7,Fz,F8,C3,Cz,C4,T5,P3,Pz,P4,T6,O1,Oz,O2&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))},</span>
+         <span class="p">}</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;sample-eeg.h5&#39;</span>
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">HDF5Writer</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
+
+    <span class="n">writer</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="n">aux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="p">(</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_eeg</span><span class="p">(</span><span class="n">eeg</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_aux</span><span class="p">(</span><span class="n">aux</span><span class="p">)</span>
+
+<span class="c1">#     events = np.linspace(1, 59*30, 15*30).astype(int)*1000</span>
+<span class="c1">#     np.random.shuffle(events)</span>
+    <span class="n">markers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">60</span><span class="o">*</span><span class="mi">5</span><span class="o">//</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+        <span class="n">markers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;RIGHT&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+        <span class="n">markers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;LEFT&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+        <span class="n">markers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;UP&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+        <span class="n">markers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;DOWN&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">add_markers</span><span class="p">(</span><span class="n">markers</span><span class="p">)</span>
+
+
+    <span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Start run&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Head moved&#39;</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">((</span><span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">190</span><span class="p">))</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Blink&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>Reader<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">openbci_stream.utils</span> <span class="kn">import</span> <span class="n">HDF5Reader</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;sample-eeg.h5&#39;</span>
+<span class="k">with</span> <span class="n">HDF5Reader</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">reader</span><span class="p">:</span>
+
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">]</span>
+    <span class="n">sample_rate</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">eeg</span><span class="p">[:,</span> <span class="p">:</span><span class="n">sample_rate</span><span class="p">]):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="p">(</span><span class="n">ch</span><span class="o">-</span><span class="n">ch</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">*</span><span class="mf">0.1</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+&lt;ipython-input-4-ab8bda269688&gt;:16: UserWarning: FixedFormatter should only be used together with FixedLocator
+  ax.set_yticklabels(channels)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_07-data_storage_handler_44_1.png" src="../_images/notebooks_07-data_storage_handler_44_1.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="MNE-objects">
+<h2>MNE objects<a class="headerlink" href="#MNE-objects" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">reader.get_epochs()</span></code> return an <a class="reference external" href="https://mne.tools/stable/generated/mne.EpochsArray.html">mne.EpochsArray</a> object:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">HDF5Reader</span><span class="p">(</span><span class="s1">&#39;sample-eeg.h5&#39;</span><span class="p">)</span>
+
+<span class="n">epochs</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_epochs</span><span class="p">(</span><span class="n">tmin</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;RIGHT&#39;</span><span class="p">,</span> <span class="s1">&#39;LEFT&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p><a class="reference external" href="https://mne.tools/stable/generated/mne.EpochsArray.html">mne.EpochsArray</a> needs an array of shape <code class="docutils literal notranslate"><span class="pre">(epochs,</span> <span class="pre">channels,</span> <span class="pre">time)</span></code>, we have channels and time, we only need to separate the epochs, here, an epoch is a trial, we will select trial by slicing around a <code class="docutils literal notranslate"><span class="pre">marker</span></code>. The argument <code class="docutils literal notranslate"><span class="pre">duration</span></code> in seconds set the <em>width</em> for the trials, and <code class="docutils literal notranslate"><span class="pre">tmin</span></code> set <em>how much</em> of signal before the marker will I analyze, finally, the argument <code class="docutils literal notranslate"><span class="pre">markers</span></code> set the labels to use, if empty, then will use
+all of them.</p>
+<p>This feature needs at least <code class="docutils literal notranslate"><span class="pre">montage</span></code>, <code class="docutils literal notranslate"><span class="pre">channels</span></code>, and <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code> configured in the header.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;RIGHT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_07-data_storage_handler_48_0.png" src="../_images/notebooks_07-data_storage_handler_48_0.png" />
+</div>
+</div>
+<p><em>This is only random data.</em></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;LEFT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">(</span><span class="n">times</span><span class="p">,)</span>
+<span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;RIGHT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">(</span><span class="n">times</span><span class="p">,);</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_07-data_storage_handler_50_0.png" src="../_images/notebooks_07-data_storage_handler_50_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_07-data_storage_handler_50_1.png" src="../_images/notebooks_07-data_storage_handler_50_1.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Offset-correction">
+<h2>Offset correction<a class="headerlink" href="#Offset-correction" title="Permalink to this headline">¶</a></h2>
+<p>The offset correction is performed through the <code class="docutils literal notranslate"><span class="pre">start-offset</span></code> and <code class="docutils literal notranslate"><span class="pre">end-offset</span></code> headers (created automatically), it corresponds to the respective offset at beginning and end on a real-time acquisition, this feature is enabled by default and can be changed with the argument <code class="docutils literal notranslate"><span class="pre">offset_correction</span></code> in the <code class="docutils literal notranslate"><span class="pre">HDF5Reader</span></code> class.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">HDF5Reader</span><span class="p">(</span><span class="s1">&#39;sample-eeg.h5&#39;</span><span class="p">,</span> <span class="n">offset_correction</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="RAW-ndarray-objects">
+<h2>RAW <code class="docutils literal notranslate"><span class="pre">ndarray</span></code> objects<a class="headerlink" href="#RAW-ndarray-objects" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">get_data()</span></code> return a standard array <code class="docutils literal notranslate"><span class="pre">(epochs,</span> <span class="pre">channels,</span> <span class="pre">time)</span></code> and their respective (<code class="docutils literal notranslate"><span class="pre">classes</span></code>), receives the same arguments that <code class="docutils literal notranslate"><span class="pre">get_epochs</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">with</span> <span class="n">HDF5Reader</span><span class="p">(</span><span class="s1">&#39;sample-eeg.h5&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">classes</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">tmin</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;RIGHT&#39;</span><span class="p">,</span> <span class="s1">&#39;LEFT&#39;</span><span class="p">])</span>
+
+<span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">classes</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+((36, 16, 6000), (36,))
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Export-to-EDF">
+<h2>Export to EDF<a class="headerlink" href="#Export-to-EDF" title="Permalink to this headline">¶</a></h2>
+<p>The European Data Format (EDF) is a standard file format designed for exchange and storage of medical time series, is possible to export to this format with the <code class="docutils literal notranslate"><span class="pre">to_edf</span></code> method. This file format needs special keys in the <code class="docutils literal notranslate"><span class="pre">header</span></code>:</p>
+<ul class="simple">
+<li><p><strong>admincode:</strong> str with the admincode.</p></li>
+<li><p><strong>birthdate:</strong> date object with the the birthdate of the patient.</p></li>
+<li><p><strong>equipment:</strong> str thats describes the measurement equpipment.</p></li>
+<li><p><strong>gender:</strong> int with the the gender, 1 is male, 0 is female.</p></li>
+<li><p><strong>patientcode:</strong> str with the patient code.</p></li>
+<li><p><strong>patientname:</strong> str with the patient name.</p></li>
+<li><p><strong>patient_additional:</strong> str with the additional patient information.</p></li>
+<li><p><strong>recording_additional:</strong> str wit the additional recording information.</p></li>
+<li><p><strong>technician:</strong> str with the technicians name.</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">HDF5Reader</span><span class="p">(</span><span class="s1">&#39;sample-eeg.h5&#39;</span><span class="p">)</span>
+<span class="n">reader</span><span class="o">.</span><span class="n">to_edf</span><span class="p">(</span><span class="s1">&#39;sample-eeg.edf&#39;</span><span class="p">)</span>
+<span class="n">reader</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Relative-time-markers">
+<h2>Relative time markers<a class="headerlink" href="#Relative-time-markers" title="Permalink to this headline">¶</a></h2>
+<p>In the previous examples, we are using the markers with a <code class="docutils literal notranslate"><span class="pre">timestamp</span></code>, this is an <strong>absolute</strong> reference, is an exact point in time, the reason of that is because this feature was designed for real-time streaming, in this kind of implementations the main reference is the system clock, this approach makes easy to implement a markers register in an isolated system.</p>
+<p>But, is possible to get relative time markers, based on the position in the data array using the attribute <code class="docutils literal notranslate"><span class="pre">reader.markers_relative</span></code></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data storage handler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Writer">Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Reader">Reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Examples-using-the-with-control-flow-structure">Examples using the <code class="docutils literal notranslate"><span class="pre">with</span></code> control-flow structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#MNE-objects">MNE objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Offset-correction">Offset correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#RAW-ndarray-objects">RAW <code class="docutils literal notranslate"><span class="pre">ndarray</span></code> objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Export-to-EDF">Export to EDF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Relative-time-markers">Relative time markers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/notebooks/07-data_storage_handler.ipynb"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,638 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Appendix 1 - Raw data processing &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Appendix 2 - Measuring Electrode Impedance" href="A2-electrodes_impedance.html" />
+    <link rel="prev" title="Data storage handler" href="07-data_storage_handler.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 0;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<style>
+    .nbinput .prompt,
+    .nboutput .prompt {
+        display: none;
+}
+</style><div class="section" id="Appendix-1---Raw-data-processing">
+<h1>Appendix 1 - Raw data processing<a class="headerlink" href="#Appendix-1---Raw-data-processing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="Data-cleaning">
+<h2>Data cleaning<a class="headerlink" href="#Data-cleaning" title="Permalink to this headline">¶</a></h2>
+<p>This appendix describes the process to validate RAW data according to the <a class="reference external" href="https://docs.openbci.com/docs/02Cyton/CytonDataFormat">official guide</a>, this procces must be implemented before to the deserialization.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">BIN_HEADER</span> <span class="o">=</span> <span class="mh">0xa0</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">consumer_binary</span> <span class="o">=</span> <span class="n">KafkaConsumer</span><span class="p">(</span><span class="n">bootstrap_servers</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;localhost:9092&#39;</span><span class="p">],</span>
+                                     <span class="n">value_deserializer</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span>
+                                     <span class="n">auto_offset_reset</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span>
+                                     <span class="p">)</span>
+<span class="n">consumer_binary</span><span class="o">.</span><span class="n">subscribe</span><span class="p">([</span><span class="s1">&#39;binary&#39;</span><span class="p">])</span>
+
+
+<span class="n">openbci</span> <span class="o">=</span> <span class="n">Cyton</span><span class="p">(</span><span class="s1">&#39;serial&#39;</span><span class="p">,</span> <span class="s1">&#39;/dev/ttyUSB1&#39;</span><span class="p">,</span> <span class="n">capture_stream</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">daisy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">openbci</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">cnt</span><span class="o">.</span><span class="n">DEFAULT_CHANNELS_SETTINGS</span><span class="p">)</span>
+<span class="n">openbci</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">cnt</span><span class="o">.</span><span class="n">TEST_2X_SLOW</span><span class="p">)</span>
+<span class="n">openbci</span><span class="o">.</span><span class="n">start_stream</span><span class="p">()</span>
+
+<span class="n">binary</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+<span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">consumer_binary</span><span class="p">:</span>
+    <span class="n">binary</span> <span class="o">+=</span> <span class="n">message</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">binary</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">250</span><span class="o">*</span><span class="mi">33</span><span class="o">*</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">openbci</span><span class="o">.</span><span class="n">stop_stream</span><span class="p">()</span>
+        <span class="k">break</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+WARNING:kafka.coordinator.consumer:group_id is None: disabling auto-commit.
+WARNING:kafka.coordinator.consumer:group_id is None: disabling auto-commit.
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[65]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">binary</span><span class="p">))</span>
+<span class="n">raw_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>The raw data is reshaped with <code class="docutils literal notranslate"><span class="pre">33</span> <span class="pre">bytes</span></code> width. We just need to align the array with the <code class="docutils literal notranslate"><span class="pre">BIN_HEADER</span></code> (top of image) each <code class="docutils literal notranslate"><span class="pre">33</span> <span class="pre">bytes</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[85]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Search for the the first index with a `BIN_HEADER`</span>
+<span class="n">start</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[::</span><span class="mi">33</span><span class="p">])</span> <span class="o">==</span> <span class="n">BIN_HEADER</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">33</span><span class="p">)]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Fix the offset to complete 33 bytes divisible array</span>
+<span class="n">end</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">%</span><span class="k">33</span>
+
+<span class="n">data_align</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="o">-</span><span class="n">end</span><span class="p">]</span>
+<span class="n">data_align</span> <span class="o">=</span> <span class="n">data_align</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33</span><span class="p">)</span>
+
+<span class="c1"># The offset could be used for the next binary data</span>
+<span class="n">remnant</span> <span class="o">=</span> <span class="n">binary</span><span class="p">[</span><span class="o">-</span><span class="n">end</span><span class="p">:]</span>
+
+<span class="n">show</span><span class="p">(</span><span class="n">data_align</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_A1-raw_cleaning_7_0.png" src="../_images/notebooks_A1-raw_cleaning_7_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Binary-deserialization">
+<h2>Binary deserialization<a class="headerlink" href="#Binary-deserialization" title="Permalink to this headline">¶</a></h2>
+<p>In this process we convert validated RAW data into EEG microvolts data packages, according to the <a class="reference external" href="https://docs.openbci.com/docs/02Cyton/CytonDataFormat">official guide</a>.</p>
+<div class="section" id="EEG-deserialization">
+<h3>EEG deserialization<a class="headerlink" href="#EEG-deserialization" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg_data</span> <span class="o">=</span> <span class="n">data_align</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span>
+<span class="n">eeg_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(2559, 24)
+</pre></div></div>
+</div>
+<p>This 24 elements of <code class="docutils literal notranslate"><span class="pre">8</span> <span class="pre">bits</span></code> each contain 8 elements of <code class="docutils literal notranslate"><span class="pre">24</span> <span class="pre">bits</span></code>, for example, for the first row:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">row</span> <span class="o">=</span> <span class="n">eeg_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">row</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">row</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+((24,),
+ array([  2, 138,  98,   2, 138, 121,   2, 137, 166,   2, 138,  81,   2,
+        138,  30,   2, 138, 213,   2, 138, 235,   2, 138, 145]))
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">row</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="c1"># 3 bytes</span>
+<span class="n">row</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">row</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+((8, 3),
+ array([[  2, 138,  98],
+        [  2, 138, 121],
+        [  2, 137, 166],
+        [  2, 138,  81],
+        [  2, 138,  30],
+        [  2, 138, 213],
+        [  2, 138, 235],
+        [  2, 138, 145]]))
+</pre></div></div>
+</div>
+<div class="section" id="Signed-24-bits-(3-bytes)-integer-to-Signed-32-bits-integer">
+<h4>Signed 24-bits (3 bytes) integer to Signed 32-bits integer<a class="headerlink" href="#Signed-24-bits-(3-bytes)-integer-to-Signed-32-bits-integer" title="Permalink to this headline">¶</a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">def</span> <span class="nf">assert_</span><span class="p">(</span><span class="n">stct</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">validate</span><span class="p">):</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">rawutil</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">stct</span><span class="p">,</span> <span class="n">data</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span>  <span class="n">value</span> <span class="o">==</span> <span class="n">validate</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;OK | </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">validate</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NO | </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1"> != </span><span class="si">{</span><span class="n">validate</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">format_</span> <span class="o">=</span> <span class="s1">&#39;&gt;u&#39;</span>
+
+<span class="n">assert_</span><span class="p">(</span><span class="n">format_</span><span class="p">,</span> <span class="p">[</span><span class="mh">0x7F</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">],</span> <span class="mi">8388607</span><span class="p">)</span>  <span class="c1"># max</span>
+<span class="n">assert_</span><span class="p">(</span><span class="n">format_</span><span class="p">,</span> <span class="p">[</span><span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>       <span class="c1"># mid</span>
+<span class="n">assert_</span><span class="p">(</span><span class="n">format_</span><span class="p">,</span> <span class="p">[</span><span class="mh">0x80</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">],</span> <span class="o">-</span><span class="mi">8388607</span><span class="p">)</span> <span class="c1"># min</span>
+<span class="n">assert_</span><span class="p">(</span><span class="n">format_</span><span class="p">,</span> <span class="p">[</span><span class="mh">0x5D</span><span class="p">,</span> <span class="mh">0xCB</span><span class="p">,</span> <span class="mh">0xED</span><span class="p">],</span> <span class="mi">6147053</span><span class="p">)</span>  <span class="c1"># other</span>
+<span class="n">assert_</span><span class="p">(</span><span class="n">format_</span><span class="p">,</span> <span class="p">[</span><span class="mh">0xA2</span><span class="p">,</span> <span class="mh">0x34</span><span class="p">,</span> <span class="mh">0x13</span><span class="p">],</span> <span class="o">-</span><span class="mi">6147053</span><span class="p">)</span> <span class="c1"># other inverted</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+OK | 8388607 = 8388607
+OK | -1 = -1
+OK | -8388607 = -8388607
+OK | 6147053 = 6147053
+OK | -6147053 = -6147053
+</pre></div></div>
+</div>
+<p>With the correct unpack method, we can unpack the complete array by iteration:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">rawutil</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&gt;u&#39;</span><span class="p">,</span><span class="nb">bytes</span><span class="p">(</span><span class="n">ch</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">eeg_data</span><span class="p">])</span>
+<span class="n">eeg</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eeg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[50]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+((2559, 8),
+ array([166498, 166521, 166310, 166481, 166430, 166613, 166635, 166545]))
+</pre></div></div>
+</div>
+</div>
+</div>
+<div class="section" id="Signed-32-bits-to-Volts">
+<h3>Signed 32-bits to Volts<a class="headerlink" href="#Signed-32-bits-to-Volts" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">ADS1299</span></code> give us a <code class="docutils literal notranslate"><span class="pre">scale</span> <span class="pre">factor</span></code> to convert the <code class="docutils literal notranslate"><span class="pre">counts</span></code> to volts (or microvolts), it depends on <code class="docutils literal notranslate"><span class="pre">gain</span></code> and a reference voltage</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">gain</span> <span class="o">=</span> <span class="mi">24</span>
+<span class="n">vref</span> <span class="o">=</span> <span class="mf">4.5</span> <span class="c1"># in volts</span>
+
+<span class="n">scale_factor_for_v</span> <span class="o">=</span> <span class="n">vref</span> <span class="o">/</span> <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="p">((</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">23</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">scale_factor_for_uv</span> <span class="o">=</span> <span class="n">vref</span><span class="o">*</span><span class="mf">1e6</span> <span class="o">/</span> <span class="p">(</span><span class="n">gain</span> <span class="o">*</span> <span class="p">((</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">23</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+<span class="n">scale_factor_for_v</span><span class="p">,</span> <span class="n">scale_factor_for_uv</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(2.235174445530706e-08, 0.022351744455307063)
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">eeg_v</span> <span class="o">=</span> <span class="n">eeg</span> <span class="o">*</span> <span class="n">scale_factor_for_v</span>
+<span class="n">eeg_uv</span> <span class="o">=</span> <span class="n">eeg</span> <span class="o">*</span> <span class="n">scale_factor_for_uv</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[93]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+
+<span class="n">ch0</span> <span class="o">=</span> <span class="n">eeg_uv</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ch0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">250</span><span class="p">,</span> <span class="n">ch0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">ch0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;$\mu V$&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_A1-raw_cleaning_22_0.png" src="../_images/notebooks_A1-raw_cleaning_22_0.png" />
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Appendix 1 - Raw data processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Data-cleaning">Data cleaning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Binary-deserialization">Binary deserialization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/notebooks/A1-raw_cleaning.ipynb"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

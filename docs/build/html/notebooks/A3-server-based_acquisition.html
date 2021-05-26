@@ -1,0 +1,621 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Appendix 3 - Raspberry PI as server acquisition &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Appendix 4 - System latencies" href="A4-latencies.html" />
+    <link rel="prev" title="Appendix 2 - Measuring Electrode Impedance" href="A2-electrodes_impedance.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 0;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<style>
+    .nbinput .prompt,
+    .nboutput .prompt {
+        display: none;
+}
+</style><div class="section" id="Appendix-3---Raspberry-PI-as-server-acquisition">
+<h1>Appendix 3 - Raspberry PI as server acquisition<a class="headerlink" href="#Appendix-3---Raspberry-PI-as-server-acquisition" title="Permalink to this headline">¶</a></h1>
+<p>This appendix describes the process for implement an acquisition server based on Raspberry Pi, the main goal of using Raspberry is to get a dedicated system with homogeneous data streaming. We are assuming that the <em>WiFi shield</em> are been used here, so the Raspberry will be configured as an access point, in this way, whenever you want to perform a remote data acquisition this connection can be used too.</p>
+<div class="section" id="Step-1---Install-an-Arch-Linux-based-operating-system">
+<h2>Step 1 - Install an Arch Linux based operating system<a class="headerlink" href="#Step-1---Install-an-Arch-Linux-based-operating-system" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Arch-Linux-ARM">
+<h3>Arch Linux ARM<a class="headerlink" href="#Arch-Linux-ARM" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line"><a class="reference external" href="https://archlinuxarm.org/">Arch Linux ARM</a> is the best option and the <strong>recommended one</strong>, is not easy to set up, but certainly is more fun.</div>
+<div class="line">The process of installation is very simple, there is a <a class="reference external" href="https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-4">guide</a> on the official site.</div>
+</div>
+</div>
+<div class="section" id="Manjaro-ARM">
+<h3>Manjaro ARM<a class="headerlink" href="#Manjaro-ARM" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://manjaro.org/download/#raspberry-pi-4">Manjaro</a> could be the best option for new GNU/Linux users, we recomment the <a class="reference external" href="https://manjaro.org/downloads/arm/raspberry-pi-4/arm8-raspberry-pi-4-minimal/">minimal version</a>. The <a class="reference external" href="https://wiki.manjaro.org/index.php?title=Manjaro-ARM&amp;mobileaction=toggle_view_desktop#Installation">installation process</a> is very simple.</p>
+<p>A different version of Manjaro can be used, for example, with <a class="reference external" href="https://manjaro.org/download/#raspberry-pi-4-kde-plasma">KDE</a>, but you must disable Network Manager and the Firewall in order to enable the <strong>Access Point</strong>.</p>
+</div>
+</div>
+<div class="section" id="TL;WR">
+<h2>TL;WR<a class="headerlink" href="#TL;WR" title="Permalink to this headline">¶</a></h2>
+<p>Steps 2 to 6 can be done by a single command, that’s not fun, but:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ wget https://raw.githubusercontent.com/UN-GCPDS/openbci-stream/master/cmd/stream_tlwr.sh
+$ chmod a+x stream_tlwr.sh
+$ ./stream_tlwr.sh
+</pre></div>
+</div>
+</div>
+<p>And jump to <a class="reference external" href="#Step-7---Test-server">Step 7</a></p>
+</div>
+<div class="section" id="Step-2---Install-dependencies">
+<h2>Step 2 - Install dependencies<a class="headerlink" href="#Step-2---Install-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>The basic dependencies like <code class="docutils literal notranslate"><span class="pre">python-pip</span></code>, <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, <code class="docutils literal notranslate"><span class="pre">cython</span></code> and <code class="docutils literal notranslate"><span class="pre">hdf5</span></code> can be installed with:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ pacman -S python python-pip gcc cython hdf5
+</pre></div>
+</div>
+</div>
+<p>The main module <code class="docutils literal notranslate"><span class="pre">openbci-stream</span></code> can be installed with:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ pip install openbci-stream
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">openbci-stream</span></code> will install a set of scripts for easy environment configuration.</p>
+<p>The following command will download the <a class="reference external" href="https://github.com/UN-GCPDS/archlinux-PKGBUILD">PKGBUILD</a> for <a class="reference external" href="https://kafka.apache.org/">kafka</a> and <a class="reference external" href="https://zookeeper.apache.org/">zookeeper</a> and then install them:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ stream_install_kafka.sh
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<div class="line-block">
+<div class="line">Arch Linux ARM could be a bit fussy about install <code class="docutils literal notranslate"><span class="pre">scipy</span></code> from <code class="docutils literal notranslate"><span class="pre">pip</span></code>, the best option here is use the default package manager:</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">pacman</span> <span class="pre">-S</span> <span class="pre">python-scipy</span></code></div>
+</div>
+</div>
+</div>
+<div class="section" id="Step-3---Configure-Kafka">
+<h2>Step 3 - Configure Kafka<a class="headerlink" href="#Step-3---Configure-Kafka" title="Permalink to this headline">¶</a></h2>
+<p>The kafka configuration can be done simply by executing the script <code class="docutils literal notranslate"><span class="pre">stream_configure_kafka.sh</span></code> included on <code class="docutils literal notranslate"><span class="pre">openbci-stream</span></code> package:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ stream_configure_kafka.sh
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Step-4---Configure-an-access-point">
+<h2>Step 4 - Configure an access point<a class="headerlink" href="#Step-4---Configure-an-access-point" title="Permalink to this headline">¶</a></h2>
+<p>The main purpose of this guide is to configure the Raspberry as an access point, the next script will configure a WiFi network called <code class="docutils literal notranslate"><span class="pre">OpenBCI-Stream</span></code> with password <code class="docutils literal notranslate"><span class="pre">raspberrypi</span></code>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ stream_access_point.sh
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If you are connected via WiFi, this connection will be lost after restart the Raspberry, you may wish to connect using other methods (Ethernet, USB) in ways to continue the configuration.</p></li>
+<li><p>If you are running <strong>Manjaro</strong> with a DE, this task can be done from there.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="Step-5---Configure-time-server">
+<h2>Step 5 - Configure time server<a class="headerlink" href="#Step-5---Configure-time-server" title="Permalink to this headline">¶</a></h2>
+<p>This step is very important if you want to stream markers with high time precision, consist in configure the Raspberry as an <a class="reference external" href="https://wiki.archlinux.org/index.php/Network_Time_Protocol_daemon#NTP_server_mode">NTP</a> server.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ stream_configure_ntpd.sh
+</pre></div>
+</div>
+</div>
+<div class="line-block">
+<div class="line">The command above install dependencies, configure the server, and start the daemons.</div>
+<div class="line">Now in our client, assuming that we are using a GNU/Linux, we must add <code class="docutils literal notranslate"><span class="pre">server</span> <span class="pre">192.168.1.1</span> <span class="pre">iburst</span> <span class="pre">prefer</span></code> on the configuration file <code class="docutils literal notranslate"><span class="pre">/etc/ntp.conf</span></code> and restart <code class="docutils literal notranslate"><span class="pre">ntpd</span></code></div>
+</div>
+</div>
+<div class="section" id="Step-6---Start-acquisition-daemons">
+<h2>Step 6 - Start acquisition daemons<a class="headerlink" href="#Step-6---Start-acquisition-daemons" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ stream_eeg systemd
+$ stream_rpyc systemd
+</pre></div>
+</div>
+</div>
+<p>The commands above will create the respective services for acquisition streaming and distributed access. And then, for initialize them:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ systemctl enable stream_eeg stream_rpyc
+$ systemctl start stream_eeg stream_rpyc
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Step-7---Test-server">
+<h2>Step 7 - Test server<a class="headerlink" href="#Step-7---Test-server" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>From this step forward the commands are not executed on Raspberry, but on your main computer.</p>
+</div>
+<p>For a complete test, we will need an OpenBCI board connected, in any mode, Serial or WiFi (so be sure about configuring serial port permissions).</p>
+<div class="section" id="WiFi-Shield">
+<h3>WiFi Shield<a class="headerlink" href="#WiFi-Shield" title="Permalink to this headline">¶</a></h3>
+<div class="line-block">
+<div class="line">For a WiFi shield, we must know the correct IP, usually this IP not change over time, so if we found it the first time is very likely that we can use the same in other opportunities.</div>
+<div class="line">You can use <a class="reference external" href="https://wiki.archlinux.org/index.php/nmap#Ping_scan">nmap</a> to scan devices:</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ ssh alarm@192.168.1.1
+$ nmap -sn 192.168.1.2/24
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Test-boards">
+<h3>Test boards<a class="headerlink" href="#Test-boards" title="Permalink to this headline">¶</a></h3>
+<p>At this point we have <code class="docutils literal notranslate"><span class="pre">OpenBCI-Stream</span></code> installed on Raspberry, now we need to install <code class="docutils literal notranslate"><span class="pre">OpenBCI-Stream</span></code> on the main computer too, also <a class="reference internal" href="02-kafka_configuration.html"><span class="doc">Kafka must be installed and running</span></a>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span>$ openbci_cli wifi --ip 192.168.1.113 --host 192.168.1.1 -c SAMPLE_RATE_250SPS
+</pre></div>
+</div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">192.168.1.113</span></code> is the IP assigned from Raspberry to the WiFi module and <code class="docutils literal notranslate"><span class="pre">192.168.1.1</span></code> is the Raspberry IP itself. If everything is ok, a data stream will be printed on the terminal.</p>
+</div>
+<div class="section" id="Test-NTP-server">
+<h3>Test NTP server<a class="headerlink" href="#Test-NTP-server" title="Permalink to this headline">¶</a></h3>
+<p>We can test and synchronize with the server with this command:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">ntpdate</span> <span class="o">-</span><span class="n">d</span> <span class="mf">192.168</span><span class="o">.</span><span class="mf">1.1</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+26 Oct 17:38:28 ntpdate[32205]: ntpdate 4.2.8p15@1.3728-o Wed Jul  1 17:02:17 UTC 2020 (1)
+Looking for host 192.168.1.1 and service ntp
+192.168.1.1 reversed to _gateway
+host found : _gateway
+transmit(192.168.1.1)
+receive(192.168.1.1)
+transmit(192.168.1.1)
+receive(192.168.1.1)
+transmit(192.168.1.1)
+receive(192.168.1.1)
+transmit(192.168.1.1)
+receive(192.168.1.1)
+
+server 192.168.1.1, port 123
+stratum 4, precision -20, leap 00, trust 000
+refid [162.159.200.1], root delay 0.139526, root dispersion 0.078171
+reference time:      e341cce9.4ef3aa7d  Mon, Oct 26 2020 17:32:09.308
+originate timestamp: e341ce6b.10600a1b  Mon, Oct 26 2020 17:38:35.063
+transmit timestamp:  e341ce6b.109e15f3  Mon, Oct 26 2020 17:38:35.064
+filter delay:  0.48293    0.06233    0.04648    0.06221
+               ----       ----       ----       ----
+filter offset: +0.188384  -0.019893  -0.027461  -0.019337
+               ----       ----       ----       ----
+delay 0.04648, dispersion 0.03293, offset -0.027461
+
+26 Oct 17:38:35 ntpdate[32205]: adjust time server 192.168.1.1 offset -0.027461 sec
+</pre></div></div>
+</div>
+<p>In case of obtaining this output <code class="docutils literal notranslate"><span class="pre">no</span> <span class="pre">server</span> <span class="pre">suitable</span> <span class="pre">for</span> <span class="pre">synchronization</span> <span class="pre">found</span></code>, is due that the server (Raspberry) <a class="reference external" href="http://www.markelov.org/wiki/index.php?title=NTP._Server_dropped:_strata_too_high">has not synchronized itself with other servers</a>, just wait and try again.</p>
+<p>Is possible to check wich server is used for syncronization with the follow command, the syncronization not ocurss instantanely, in some cases is necesario wait up to 10 minutes.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="o">!</span>ntpq -pn
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*192.168.1.1     162.159.200.1    4 u   14   64    1    2.017  -33.339   1.614
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#Troubleshooting" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>No streaming data:</strong> Make sure that the WiFi module was still connected and the Serial devices have read and write permissions.</p></li>
+<li><p><strong>Kafka without connection:</strong> Kafka must be running on every single machine that wants to connect to the stream, there is no special configuration, the default is enough.</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Appendix 3 - Raspberry PI as server acquisition</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Step-1---Install-an-Arch-Linux-based-operating-system">Step 1 - Install an Arch Linux based operating system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#TL;WR">TL;WR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-2---Install-dependencies">Step 2 - Install dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-3---Configure-Kafka">Step 3 - Configure Kafka</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-4---Configure-an-access-point">Step 4 - Configure an access point</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-5---Configure-time-server">Step 5 - Configure time server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-6---Start-acquisition-daemons">Step 6 - Start acquisition daemons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Step-7---Test-server">Step 7 - Test server</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/notebooks/A3-server-based_acquisition.ipynb"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

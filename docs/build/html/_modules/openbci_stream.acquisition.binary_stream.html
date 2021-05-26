@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Binary stream &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-openbci_stream.acquisition.binary_stream"></span><div class="section" id="binary-stream">
+<h1>Binary stream<a class="headerlink" href="#binary-stream" title="Permalink to this headline">¶</a></h1>
+<p>This module must be run in the same machine that OpenBCI hardware was attached.</p>
+<dl class="py class">
+<dt id="openbci_stream.acquisition.binary_stream.BinaryStream">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.acquisition.binary_stream.</span></code><code class="sig-name descname"><span class="pre">BinaryStream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">streaming_package_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/binary_stream.html#BinaryStream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.binary_stream.BinaryStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kafka producer for equal size packages streaming.</p>
+<p>The dictionary streamed contain two objects: <cite>data</cite> and <cite>context</cite>.</p>
+<p><strong>data:</strong> Bytes with binary raw data.</p>
+<p><strong>context:</strong> A dictionary with the following keys:</p>
+<ul class="simple">
+<li><p><strong>created:</strong>  The <cite>timestamp</cite> for the exact moment when binary data was read.</p></li>
+<li><p><strong>daisy:</strong> <cite>True</cite> if Daisy board is attached, otherwise <cite>False</cite>.</p></li>
+<li><p><strong>boardmode:</strong> Can be <cite>default</cite>, <cite>digital</cite>, ‘’analog’, ‘debug’ or <cite>marker</cite>.</p></li>
+<li><p><strong>montage:</strong> A list means consecutive channels e.g. <cite>[‘Fp1’, ‘Fp2’, ‘F3’, ‘Fz’, ‘F4’]</cite> and a dictionary means specific channels  <cite>{1: ‘Fp1’, 2: ‘Fp2’, 3: ‘F3’, 4: ‘Fz’, 5: ‘F4’}</cite>.</p></li>
+<li><p><strong>connection:</strong> Can be <cite>serial</cite> or <cite>wifi</cite>.</p></li>
+<li><p><strong>gain:</strong> Array with gains.</p></li>
+</ul>
+<p>e.g</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="mf">1604196938.727064</span><span class="p">,</span>
+<span class="go">               &#39;daisy&#39;: False,</span>
+<span class="go">               &#39;boardmode&#39;: &#39;default&#39;,</span>
+<span class="go">               &#39;montage&#39;: [&#39;Fp1&#39;, &#39;Fp2&#39;, &#39;F3&#39;, &#39;Fz&#39;, &#39;F4&#39;],</span>
+<span class="go">               &#39;connection&#39;: &#39;wifi&#39;,</span>
+<span class="go">               &#39;gain&#39;: [24, 24, 24, 24, 24, 24, 24, 24]</span>
+<span class="go">               }</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="openbci_stream.acquisition.binary_stream.BinaryStream.__init__">
+<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">streaming_package_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/binary_stream.html#BinaryStream.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.binary_stream.BinaryStream.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>streaming_package_size</strong> – The package size for streaming packages.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.binary_stream.BinaryStream.close">
+<code class="sig-name descname"><span class="pre">close</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/binary_stream.html#BinaryStream.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.binary_stream.BinaryStream.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminate the produser.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.binary_stream.BinaryStream.stream">
+<code class="sig-name descname"><span class="pre">stream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/binary_stream.html#BinaryStream.stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.binary_stream.BinaryStream.stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>This stream attempts to create packages of the same size.</p>
+<p>Over WiFi and Daisy, the sampling frequency is doubled in favor to get
+all 16 channels, so the size of the packages is also doubled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> – Dictionary with context and raw binary data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/openbci_stream.acquisition.binary_stream.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

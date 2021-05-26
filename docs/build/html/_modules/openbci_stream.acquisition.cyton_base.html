@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyton Base &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-openbci_stream.acquisition.cyton_base"></span><div class="section" id="cyton-base">
+<h1>Cyton Base<a class="headerlink" href="#cyton-base" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.acquisition.cyton_base.</span></code><code class="sig-name descname"><span class="pre">CytonBase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daisy</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">auto</span><span class="p"><span class="pre">,</span> </span><span class="pre">True</span><span class="p"><span class="pre">,</span> </span><span class="pre">False</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">montage</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">streaming_package_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capture_stream</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Cyton data format and SDK define all interactions and capabilities of
+the board, the full instructions can be found in the official documentation.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://docs.openbci.com/Hardware/03-Cyton_Data_Format">https://docs.openbci.com/Hardware/03-Cyton_Data_Format</a></p></li>
+<li><p><a class="reference external" href="https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK">https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK</a></p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>daisy</dt><dd><p>Daisy board can be detected on runtime or declare it specifically.</p>
+</dd>
+<dt>montage</dt><dd><p>A list means consecutive channels e.g. <cite>[‘Fp1’, ‘Fp2’, ‘F3’, ‘Fz’,
+‘F4’]</cite> and a dictionary means specific channels <cite>{1: ‘Fp1’, 2: ‘Fp2’,
+3: ‘F3’, 4: ‘Fz’, 5: ‘F4’}</cite>.</p>
+</dd>
+<dt>streaming_package_size</dt><dd><p>The streamer will try to send packages of this size, this is NOT the
+sampling rate for data acquisition.</p>
+</dd>
+<dt>capture_stream</dt><dd><p>Indicates if the data from the stream will be captured in asynchronous
+mode.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.__getattribute__">
+<code class="sig-name descname"><span class="pre">__getattribute__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Any</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.__getattribute__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.__getattribute__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Some attributes must be acceded from RPyC.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.activate_channel">
+<code class="sig-name descname"><span class="pre">activate_channel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.activate_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.activate_channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate the channels specified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>channels</strong> – 1-based indexing channels.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.aux_buffer">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">aux_buffer</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.aux_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the deserialized data buffer for auxiliar data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.aux_time_series">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">aux_time_series</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.aux_time_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return auxiliar data acquired in shape (<cite>AUX, time</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.capture_stream">
+<code class="sig-name descname"><span class="pre">capture_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.capture_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.capture_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a process for connecting to the stream and capture data from it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.channel_settings">
+<code class="sig-name descname"><span class="pre">channel_settings</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">power_down</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'6'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srb2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">srb1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'0'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.channel_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.channel_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Channel Settings commands.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channels</strong> – 1-based indexing channels list that will share the configuration
+specified.</p></li>
+<li><p><strong>power_down</strong> – <cite>POWER_DOWN_ON</cite> (default), <cite>POWER_DOWN_OFF</cite>.</p></li>
+<li><p><strong>gainoptional</strong> – <cite>GAIN_24</cite> (default), <cite>GAIN_12</cite>, <cite>GAIN_8</cite>, <cite>GAIN_6</cite>, <cite>GAIN_4</cite>,
+<cite>GAIN_2</cite>, <cite>GAIN_1</cite>.</p></li>
+<li><p><strong>input_type</strong> – Select the ADC channel input source: <cite>ADSINPUT_NORMAL</cite> (default),
+<cite>ADSINPUT_SHORTED</cite>, <cite>ADSINPUT_BIAS_MEAS</cite>, <cite>ADSINPUT_MVDD</cite>,
+<cite>ADSINPUT_TEMP</cite>, <cite>ADSINPUT_TESTSIG</cite>, <cite>ADSINPUT_BIAS_DRP</cite>,
+<cite>ADSINPUT_BIAS_DRN</cite>,</p></li>
+<li><p><strong>bias</strong> – Select to include the channel input in BIAS generation:
+<cite>BIAS_INCLUDE</cite> (default), <cite>BIAS_REMOVE</cite>.</p></li>
+<li><p><strong>srb2</strong> – Select to connect this channel’s P input to the SRB2 pin. This
+closes a switch between P input and SRB2 for the given channel, and
+allows the P input also remain connected to the ADC: <cite>SRB2_CONNECT</cite>
+(default), <cite>SRB2_DISCONNECT</cite>.</p></li>
+<li><p><strong>srb1</strong> – Select to connect all channels’ N inputs to SRB1. This effects all
+pins, and disconnects all N inputs from the ADC: <cite>SRB1_DISCONNECT</cite>
+(default), <cite>SRB1_CONNECT</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><em>On success</em> –</p>
+<ul class="simple">
+<li><p>If streaming, no confirmation of success. Note: WiFi Shields will always get a response, even if streaming.</p></li>
+<li><p>If not streaming, returns Success: Channel set for 3$$$, where 3 is the channel that was requested to be set.</p></li>
+</ul>
+</li>
+<li><p><em>On failure</em> –</p>
+<ul>
+<li><p>If not streaming, NOTE: WiFi shield always sends the following responses without $$$</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Not enough characters received, Failure: too few chars$$$ (example user sends x102000X)</p></li>
+<li><p>9th character is not the upper case <cite>X</cite>, Failure: 9th char not X$$$ (example user sends x1020000V)</p></li>
+<li><p>Too many characters or some other issue, Failure: Err: too many chars$$$</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>If not all commands are not received within 1 second, Timeout processing multi byte message - please send all commands at once as of v2$$$</p></li>
+</ul>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.close">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">close</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stops data stream.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.command">
+<code class="sig-name descname"><span class="pre">command</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">str</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a command to device.</p>
+<p>Before send the commmand the input buffer is cleared, and after that
+waits 300 ms for a response. Is possible to send a raw bytes, a
+<cite>CytonConstants</cite> attribute or the constant name e.g.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">comand</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;~4&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">command</span><span class="p">(</span><span class="n">CytonConstants</span><span class="o">.</span><span class="n">SAMPLE_RATE_1KSPS</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;SAMPLE_RATE_1KSPS&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>c</strong> – Command to send.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>If the command generate a response this will be returned.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.daisy_attached">
+<code class="sig-name descname"><span class="pre">daisy_attached</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">bool</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.daisy_attached"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.daisy_attached" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a Daisy module is attached.</p>
+<p>This command will activate the Daisy module is this is available.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Daisy module activated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.deactivate_channel">
+<code class="sig-name descname"><span class="pre">deactivate_channel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.deactivate_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.deactivate_channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deactivate the channels specified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>channels</strong> – 1-based indexing channels.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.eeg_buffer">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">eeg_buffer</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.eeg_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the deserialized data buffer for EEG.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.eeg_time_series">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">eeg_time_series</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.eeg_time_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return data acquired in shape (<cite>channels, time</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.leadoff_impedance">
+<code class="sig-name descname"><span class="pre">leadoff_impedance</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pchan</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nchan</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">b'1'</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.leadoff_impedance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.leadoff_impedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>LeadOff Impedance Commands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channels</strong> – 1-based indexing channels list that will share the configuration
+specified.</p></li>
+<li><p><strong>pchan</strong> – <cite>TEST_SIGNAL_NOT_APPLIED</cite> (default), <cite>TEST_SIGNAL_APPLIED</cite>.</p></li>
+<li><p><strong>nchan</strong> – <cite>TEST_SIGNAL_APPLIED</cite> (default), <cite>TEST_SIGNAL_NOT_APPLIED</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><em>On success</em> –</p>
+<ul class="simple">
+<li><p>If streaming, no confirmation of success. Note: WiFi Shields will always get a response, even if streaming.</p></li>
+<li><p>If not streaming, returns Success: Lead off set for 4$$$, where 4 is the channel that was requested to be set.</p></li>
+</ul>
+</li>
+<li><p><em>On failure</em> –</p>
+<ul>
+<li><p>If not streaming, NOTE: WiFi shield always sends the following responses without $$$</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Not enough characters received, Failure: too few chars$$$ (example user sends z102000Z)</p></li>
+<li><p>5th character is not the upper case ‘Z’, Failure: 5th char not Z$$$ (example user sends z1020000X)</p></li>
+<li><p>Too many characters or some other issue, Failure: Err: too many chars$$$</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>If not all commands are not received within 1 second, Timeout processing multi byte message - please send all commands at once as of v2$$$</p></li>
+</ul>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.listen_stream_markers">
+<code class="sig-name descname"><span class="pre">listen_stream_markers</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topics</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">['markers']</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.listen_stream_markers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.listen_stream_markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Redirect markers form Kafka stream to board, this feature needs
+<cite>markers</cite> boardmode configured.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.markers">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">markers</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dictionary with markes as keys and a list of timestamps as
+values e.g</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">{</span><span class="s1">&#39;LEFT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1603150888.752062</span><span class="p">,</span> <span class="mf">1603150890.752062</span><span class="p">,</span> <span class="mf">1603150892.752062</span><span class="p">],</span>
+<span class="go">     &#39;RIGHT&#39;: [1603150889.752062, 1603150891.752062, 1603150893.752062],}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.markers_buffer">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">markers_buffer</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.markers_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the deserialized data buffer for markers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.montage">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">montage</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.montage" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current montage configured on initialization.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.read">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">read</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read binary data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.reset_buffers">
+<code class="sig-name descname"><span class="pre">reset_buffers</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.reset_buffers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.reset_buffers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discard buffers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.reset_input_buffer">
+<code class="sig-name descname"><span class="pre">reset_input_buffer</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.reset_input_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.reset_input_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flush input data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.save">
+<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">montage_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a hdf file with acquiered data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> – Path with the destination of the hdf file.</p></li>
+<li><p><strong>montage_name</strong> – Montage name for MNE e.g ‘standard_1020’.</p></li>
+<li><p><strong>sample_rate</strong> – The sampling rate for acquired data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.send_marker">
+<code class="sig-name descname"><span class="pre">send_marker</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">bytes</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">burst</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.send_marker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.send_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send marker to device.</p>
+<p>The marker sended will be added to the <cite>AUX</cite> bytes in the next data
+input.</p>
+<p>The OpenBCI markers does not work as well as expected, so this module
+implement an strategy for make it works. A burst markers are sended but
+just one are readed, this add a limitation: No more that one marker each
+300 ms are permitted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>marker</strong> – A single value with the desired marker. Only can be a capitalized
+letter, or an integer between 65 and 90. These limitations are
+imposed by this library and not by the SDK</p></li>
+<li><p><strong>burst</strong> – How many times the marker will be send.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.start_stream">
+<code class="sig-name descname"><span class="pre">start_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.start_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.start_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the binary stream channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.stop_stream">
+<code class="sig-name descname"><span class="pre">stop_stream</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.stop_stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.stop_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the acquisition daemon if exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.stream">
+<code class="sig-name descname"><span class="pre">stream</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.stream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a synchronous process for start stream data.</p>
+<p>This call will hangs until durations be completed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>duration</strong> – Seconds for data collection.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.timestamp_buffer">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">timestamp_buffer</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.timestamp_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the deserialized data buffer for timestamps.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.timestamp_time_series">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">timestamp_time_series</span></code><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.timestamp_time_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return timestamps acquired.</p>
+<p>Since there is only one timestamp for package, the others values are
+interpolated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.cyton_base.CytonBase.write">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">write</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonBase.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonBase.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write bytes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="openbci_stream.acquisition.cyton_base.CytonConstants">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.acquisition.cyton_base.</span></code><code class="sig-name descname"><span class="pre">CytonConstants</span></code><a class="reference internal" href="openbci_stream/acquisition/cyton_base.html#CytonConstants"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.cyton_base.CytonConstants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default constants defined in the <a class="reference external" href="https://docs.openbci.com/docs/02Cyton/CytonSDK">Cyton SDK</a></p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/openbci_stream.acquisition.cyton_base.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

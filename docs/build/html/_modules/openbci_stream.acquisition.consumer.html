@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenBCI Consumer &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-openbci_stream.acquisition.consumer"></span><div class="section" id="openbci-consumer">
+<h1>OpenBCI Consumer<a class="headerlink" href="#openbci-consumer" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="openbci_stream.acquisition.consumer.OpenBCIConsumer">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.acquisition.consumer.</span></code><code class="sig-name descname"><span class="pre">OpenBCIConsumer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">serial</span><span class="p"><span class="pre">,</span> </span><span class="pre">wifi</span><span class="p"><span class="pre">,</span> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daisy</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="pre">auto</span><span class="p"><span class="pre">,</span> </span><span class="pre">True</span><span class="p"><span class="pre">,</span> </span><span class="pre">False</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">montage</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">streaming_package_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">250</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topics</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">['eeg',</span> <span class="pre">'marker',</span> <span class="pre">'annotation']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_start</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/acquisition/consumer.html#OpenBCIConsumer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.consumer.OpenBCIConsumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kafka consumer for read data streamed.
+This class can start the acquisition if the respective parameter are
+specified. For just connect with an existing stream only needs the <strong>host</strong>,
+argument, the others one are used for start one.</p>
+<p>Connect with an existing stream:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">whith</span> <span class="n">OpenBCIConsumer</span><span class="p">()</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+<span class="go">        for message in stream:</span>
+<span class="go">            ...</span>
+</pre></div>
+</div>
+<p>Starts serial acquisition, create a stream and it connects with it:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">whith</span> <span class="n">OpenBCIConsumer</span><span class="p">(</span><span class="s1">&#39;serial&#39;</span><span class="p">,</span> <span class="s1">&#39;/dev/ttyUSB0&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+<span class="go">        for message in stream:</span>
+<span class="go">            ...</span>
+</pre></div>
+</div>
+<p>Connect with a remote existing stream:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">whith</span> <span class="n">OpenBCIConsumer</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;192.168.1.113&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+<span class="go">        for message in stream:</span>
+<span class="go">            ...</span>
+</pre></div>
+</div>
+<p>For examples and descriptions refers to documentation:
+<a class="reference external" href="../notebooks/03-data_acquisition.html#Controlled-execution-with-OpenBCIConsumer()-class">Controlled execution with OpenBCIConsumer()</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – If specified, will try to start streaming with this connection mode.</p></li>
+<li><p><strong>endpoint</strong> – Serial port for RFduino or IP address for WiFi module.</p></li>
+<li><p><strong>daisy</strong> – Daisy board can be detected on runtime or declare it specifically.</p></li>
+<li><p><strong>montage</strong> – A list means consecutive channels e.g. <cite>[‘Fp1’, ‘Fp2’, ‘F3’, ‘Fz’,
+‘F4’]</cite> and a dictionary means specific channels <cite>{1: ‘Fp1’, 2: ‘Fp2’,
+3: ‘F3’, 4: ‘Fz’, 5: ‘F4’}</cite>.</p></li>
+<li><p><strong>streaming_package_size</strong> – The streamer will try to send packages of this size, this is NOT the
+sampling rate for data acquisition.</p></li>
+<li><p><strong>host</strong> – IP address for the server that has the OpenBCI board attached, by
+default its assume that is the same machine where is it executing, this
+is the <cite>localhost</cite>.</p></li>
+<li><p><strong>topics</strong> – List of topics to listen.</p></li>
+<li><p><strong>auto_start</strong> – If <cite>mode</cite> and <cite>endpoint</cite> are passed, then start the stream automatically.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="openbci_stream.acquisition.consumer.OpenBCIConsumer.__enter__">
+<code class="sig-name descname"><span class="pre">__enter__</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">kafka.KafkaConsumer</span><span class="p"><span class="pre">,</span> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.Cyton" title="openbci_stream.acquisition.cyton.Cyton"><span class="pre">openbci_stream.acquisition.cyton.Cyton</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="openbci_stream/acquisition/consumer.html#OpenBCIConsumer.__enter__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.consumer.OpenBCIConsumer.__enter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start stream and create consumer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.acquisition.consumer.OpenBCIConsumer.__exit__">
+<code class="sig-name descname"><span class="pre">__exit__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc_val</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exc_tb</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/acquisition/consumer.html#OpenBCIConsumer.__exit__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.acquisition.consumer.OpenBCIConsumer.__exit__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop stream and close consumer.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/openbci_stream.acquisition.consumer.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

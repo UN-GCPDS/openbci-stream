@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Binary to EEG &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-openbci_stream.daemons.stream_eeg_sub"></span><div class="section" id="binary-to-eeg">
+<h1>Binary to EEG<a class="headerlink" href="#binary-to-eeg" title="Permalink to this headline">¶</a></h1>
+<p>A transformer for Kafka that reads binary data and stream EEG data.</p>
+<p>Binary -&gt; Kafka-Transformer -&gt; EEG</p>
+<p>For examples and descriptions refers to documentation:
+<a class="reference external" href="../A1-raw_cleaning.ipynb">Data storage handler</a></p>
+<dl class="py class">
+<dt id="openbci_stream.daemons.stream_eeg_sub.BinaryToEEG">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.daemons.stream_eeg_sub.</span></code><code class="sig-name descname"><span class="pre">BinaryToEEG</span></code><a class="reference internal" href="openbci_stream/daemons/stream_eeg_sub.html#BinaryToEEG"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.daemons.stream_eeg_sub.BinaryToEEG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kafka transformer with parallel implementation for processing binary raw
+data into EEG microvolts. This script requires the Kafka daemon running and
+enables an auto-kill process</p>
+<dl class="py method">
+<dt id="openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.align_data">
+<code class="sig-name descname"><span class="pre">align_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">binary</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bytes</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span> </span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="openbci_stream/daemons/stream_eeg_sub.html#BinaryToEEG.align_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.align_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Align data following the headers and footers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>binary</strong> – Data raw from OpenBCI board.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>data_aligned</em> – Numpy array of shape (<cite>33, LENGTH</cite>) with headers and footer aligned.</p></li>
+<li><p><em>remnant</em> – This bytes could be used for complete next binary input.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.consume">
+<code class="sig-name descname"><span class="pre">consume</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/daemons/stream_eeg_sub.html#BinaryToEEG.consume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.consume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Infinite loop for read Kafka stream.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.process">
+<code class="sig-name descname"><span class="pre">process</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">kafka</span> <span class="pre">-</span> <span class="pre">stream</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/daemons/stream_eeg_sub.html#BinaryToEEG.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.daemons.stream_eeg_sub.BinaryToEEG.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the binary package for a successful unpack and stream.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>record</strong> – Kafka stream with binary data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/openbci_stream.daemons.stream_eeg_sub.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

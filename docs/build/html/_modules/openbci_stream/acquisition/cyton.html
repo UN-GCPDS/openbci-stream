@@ -1,0 +1,798 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>openbci_stream.acquisition.cyton &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for openbci_stream.acquisition.cyton</h1><div class="highlight"><pre>
+<span></span>&quot;&quot;&quot;
+=====
+Cyton
+=====
+
+The OpenBCI Cyton PCBs were designed with Design Spark, a free PCB capture
+program.
+
+
+Cyton Board Specs:
+
+* Power with 3-6V DC Battery ONLY
+* PIC32MX250F128B Micrcontroller with chipKIT UDB32-MX2-DIP bootloader
+* ADS1299 Analog Front End
+* LIS3DH 3 axis Accelerometer
+* RFduino BLE radio
+* Micro SD card slot
+* Voltage Regulation (3V3, +2.5V, -2.5V)
+* Board Dimensions 2.41 x 2.41 (octogon has 1 edges) [inches]
+* Mount holes are 1/16 ID, 0.8 x 2.166 on center [inches]
+
+
+Data Format
+===========
+
+Binary Format
+-------------
+
++-------------+----------------------------------------------------------------+
+| **Byte No** | **Description**                                                |
++-------------+----------------------------------------------------------------+
+| 1           | Start byte, always `0xA0`                                      |
++-------------+----------------------------------------------------------------+
+| 2           | Sample Number                                                  |
++-------------+----------------------------------------------------------------+
+| 3-26        | EEG Data, values are 24-bit signed, MSB first                  |
++-------------+----------------------------------------------------------------+
+| 27-32       | Aux Data                                                       |
++-------------+----------------------------------------------------------------+
+| 33          | Footer, `0xCX` where `X` is 0-F in hex                         |
++-------------+----------------------------------------------------------------+
+
+
+
+EEG Data for 8 channels
+-----------------------
+
+24-Bit Signed.
+
++-------------+----------------------------------------------------------------+
+| **Byte No** | **Description**                                                |
++-------------+----------------------------------------------------------------+
+| 3-5         | Data value for EEG channel 1                                   |
++-------------+----------------------------------------------------------------+
+| 6-8         | Data value for EEG channel 2                                   |
++-------------+----------------------------------------------------------------+
+| 9-11        | Data value for EEG channel 3                                   |
++-------------+----------------------------------------------------------------+
+| 12-14       | Data value for EEG channel 4                                   |
++-------------+----------------------------------------------------------------+
+| 15-17       | Data value for EEG channel 5                                   |
++-------------+----------------------------------------------------------------+
+| 18-20       | Data value for EEG channel 6                                   |
++-------------+----------------------------------------------------------------+
+| 21-23       | Data value for EEG channel 7                                   |
++-------------+----------------------------------------------------------------+
+| 24-26       | Data value for EEG channel 8                                   |
++-------------+----------------------------------------------------------------+
+
+
+EEG Data for 16 channels
+------------------------
+
+24-Bit Signed.
+
++----------------------------+--------------------------+--------------------------+
+| **Received**               | **Upsampled board data** | **Upsampled daisy data** |
++--------------+-------------+--------------------------+--------------------------+
+| sample(3)    |             | avg(sample(1),sample(3)) | sample(2)                |
++--------------+-------------+--------------------------+--------------------------+
+|              | sample(4)   | sample(3)                | avg(sample(2),sample(4)) |
++--------------+-------------+--------------------------+--------------------------+
+| sample(5)    |             | avg(sample(3),sample(5)) | sample(4)                |
++--------------+-------------+--------------------------+--------------------------+
+|              | sample(6)   | sample(5)                | avg(sample(4),sample(6)) |
++--------------+-------------+--------------------------+--------------------------+
+| sample(7)    |             | avg(sample(5),sample(7)) | sample(7)                |
++--------------+-------------+--------------------------+--------------------------+
+|              | sample(8)   | sample(7)                | avg(sample(6),sample(8)) |
++--------------+-------------+--------------------------+--------------------------+
+
+This transmission only applies to Cyton + Daisy and RFduino, if WiFi shield is
+used then all data is transmitted, and is not necessary to interpolate.
+
+
+Aux Data
+--------
+
+16-Bit Signed.
+
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| **Stop Byte (33)** | **Byte 27** | **Byte 28** | **Byte 29** | **Byte 30** | **Byte 31** | **Byte 32** |          **Name**             |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xc0               | AX1         | AX2         | AY1         | AY2         | AZ1         | AZ2         | Standard with accel           |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC1               | UDF         | UDF         | UDF         | UDF         | UDF         | UDF         | Standard with raw aux         |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC2               | UDF         | UDF         | UDF         | UDF         | UDF         | UDF         | User defined                  |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC3               | *AC*        | *AV*        | T3          | T2          | T1          | T0          | Time stamped set with accel   |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC4               | *AC*        | *AV*        | T3          | T2          | T1          | T0          | Time stamped with accel       |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC5               | UDF         | UDF         | T3          | T2          | T1          | T0          | Time stamped set with raw aux |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+| 0xC6               | UDF         | UDF         | T3          | T2          | T1          | T0          | Time stamped with raw aux     |
++--------------------+-------------+-------------+-------------+-------------+-------------+-------------+-------------------------------+
+
+
+Aux Data
+--------
+
+16-Bit Signed.
+
++-------------+-------------+
+| **Byte 27** | **Byte 28** |
++-------------+-------------+
+|  X          | AX1         |
++-------------+-------------+
+|  x          | AX0         |
++-------------+-------------+
+|  Y          | AY1         |
++-------------+-------------+
+|  y          | AY0         |
++-------------+-------------+
+|  Z          | AZ1         |
++-------------+-------------+
+|  z          | AZ0         |
++-------------+-------------+
+&quot;&quot;&quot;
+
+import os
+import sys
+import time
+import pickle
+import socket
+import logging
+import asyncore
+from threading import Thread
+from datetime import datetime
+from typing import Optional, Union, Literal, Dict, List, Any
+
+from .cyton_base import CytonBase
+from .tcp_server import WiFiShieldTCPServer
+
+import rpyc
+import serial
+import requests
+
+DEFAULT_LOCAL_IP = &quot;192.168.1.1&quot;
+
+MODE = Literal[&#39;serial&#39;, &#39;wifi&#39;, None]
+DAISY = Literal[&#39;auto&#39;, True, False]
+
+
+########################################################################
+<div class="viewcode-block" id="CytonRFDuino"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino">[docs]</a>class CytonRFDuino(CytonBase):
+    &quot;&quot;&quot;
+    RFduino is the default communication mode for Cyton, this set a
+    serial comunication through a USB dongle with a sample frequency of `250`
+    Hz, for 8 or 16 channels.
+
+    Parameters
+    ----------
+    port
+        Serial port.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `[&#39;Fp1&#39;, &#39;Fp2&#39;, &#39;F3&#39;, &#39;Fz&#39;,
+        &#39;F4&#39;]` and a dictionary means specific channels `{1: &#39;Fp1&#39;, 2: &#39;Fp2&#39;,
+        3: &#39;F3&#39;, 4: &#39;Fz&#39;, 5: &#39;F4&#39;}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
+    &quot;&quot;&quot;
+
+    # ----------------------------------------------------------------------
+    def __init__(self, port: Optional = None, host: Optional[str] = None,
+                 daisy: DAISY = &#39;auto&#39;,
+                 montage: Optional[Union[list, dict]] = None,
+                 streaming_package_size: int = 250,
+                 capture_stream: bool = False) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+
+        self.remote_host = None
+        self._markers = None
+
+        if host == &#39;localhost&#39;:
+            host = None
+
+        if host:
+            rpyc_service = rpyc.connect(host, 18861, config={
+                &#39;allow_public_attrs&#39;: True,
+                &#39;allow_pickle&#39;: True,
+            })
+            self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
+                port, False, False, pickle.dumps(montage), streaming_package_size)
+            return
+
+        if port is None:
+            port = self._get_serial_ports()
+            if port:
+                logging.info(f&quot;Port {port} found.&quot;)
+
+        if port is None:
+            logging.error(&quot;No device was auto detected.&quot;)
+            sys.exit()
+
+        self.device = serial.Serial(port, 115200, timeout=0.3,
+                                    write_timeout=0.01,
+                                    parity=serial.PARITY_NONE,
+                                    stopbits=serial.STOPBITS_ONE)
+
+        super().__init__(daisy, montage, streaming_package_size, capture_stream)
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino._get_serial_ports"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino._get_serial_ports">[docs]</a>    def _get_serial_ports(self) -&gt; Optional[str]:
+        &quot;&quot;&quot;Look for first available serial port.
+
+        Returns
+        -------
+        str
+            String with the port name or `None` if no ports were founded.
+        &quot;&quot;&quot;
+
+        if os.name == &#39;nt&#39;:
+            prefix = &#39;COM{}&#39;,
+        elif os.name == &#39;posix&#39;:
+            prefix = &#39;/dev/ttyACM{}&#39;, &#39;/dev/ttyUSB{}&#39;,
+
+        for pref in prefix:
+            for i in range(20):
+                port = pref.format(i)
+                try:
+                    d = serial.Serial(port, timeout=0.2)
+                    if d.write(self.START_STREAM):
+                        d.close()
+                        return port
+                except:
+                    continue</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.read"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.read">[docs]</a>    def read(self, size: int) -&gt; bytes:
+        &quot;&quot;&quot;Read size bytes from the serial port.
+
+        Parameters
+        ----------
+        size
+            Size of input buffer.
+
+        Returns
+        -------
+        read
+            Data read.
+        &quot;&quot;&quot;
+
+        try:
+            return self.device.read(size)
+        except:
+            # If there is no data yet, call again
+            return self.read(size)</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.write"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.write">[docs]</a>    def write(self, data: bytes) -&gt; None:
+        &quot;&quot;&quot;Write the given data over the serial port.&quot;&quot;&quot;
+        self.device.write(data)</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.close"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.close">[docs]</a>    def close(self):
+        &quot;&quot;&quot;Close the serial communication.&quot;&quot;&quot;
+        self.stop_stream()
+        self.device.close()
+        super().close()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino._stream_data"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino._stream_data">[docs]</a>    def _stream_data(self, size: Optional[int] = 2**8,
+                     kafka_context: Optional[Dict] = {}) -&gt; None:
+        &quot;&quot;&quot;Write binary raw into a kafka producer.
+
+        This method will feed the producer while the serial device has data to
+        be read.
+
+        Parameters
+        ----------
+        size
+            The buffer length to read.
+        kafka_context
+            Information from the acquisition side useful for deserializing and
+            that will be packaged back in the stream.
+        &quot;&quot;&quot;
+
+        while binary := self.read(size):
+            try:
+                kafka_context.update({&#39;created&#39;: datetime.now().timestamp()})
+                data = {&#39;context&#39;: kafka_context,
+                        &#39;data&#39;: binary,
+                        }
+                self.binary_stream.stream(data)
+            except serial.SerialException as e:
+                logging.error(e)</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.start_stream"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.start_stream">[docs]</a>    def start_stream(self) -&gt; None:
+        &quot;&quot;&quot;Initialize a Thread for reading data from the serial port and
+        streaming into a Kafka producer.
+        &quot;&quot;&quot;
+
+        kafka_context = {&#39;daisy&#39;: self.daisy,
+                         &#39;boardmode&#39;: self.boardmode,
+                         &#39;montage&#39;: self.montage,
+                         &#39;connection&#39;: &#39;serial&#39;,
+                         &#39;gain&#39;: self._get_gain(),
+                         }
+
+        self.command(self.START_STREAM)
+        super().start_stream()
+
+        # Thread for read data
+        if hasattr(self, &quot;thread_data_collect&quot;) and self.thread_data_collect.isAlive():
+            pass
+        else:
+            self.thread_data_collect = Thread(target=self._stream_data,
+                                              args=(2**8, kafka_context))
+            self.thread_data_collect.start()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.stop_stream"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.stop_stream">[docs]</a>    def stop_stream(self) -&gt; None:
+        &quot;&quot;&quot;Stop the data collection that runs asynchronously.&quot;&quot;&quot;
+        self.command(self.STOP_STREAM)
+        super().stop_stream()
+        self.binary_stream.close()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino.reset_input_buffer"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino.reset_input_buffer">[docs]</a>    def reset_input_buffer(self):
+        &quot;&quot;&quot;Clear input buffer, discarding all that is in the buffer.&quot;&quot;&quot;
+        self.device.reset_input_buffer()
+        self.device.flushInput()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonRFDuino._get_gain"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonRFDuino._get_gain">[docs]</a>    def _get_gain(self) -&gt; list:
+        &quot;&quot;&quot;Return the gains from ADS1299 register.
+
+        As defined in the `datasheet &lt;https://www.ti.com/lit/ds/symlink/ads1299.pdf?ts=1604333779995&amp;ref_url=https%253A%252F%252Fwww.google.com%252F&gt;`_
+        &quot;&quot;&quot;
+
+        default = 24
+        response = self.command(self.QUERY_REGISTER)
+        registers = {reg.split(&#39;,&#39;)[0]: reg.split(&#39;,&#39;)[1:]
+                     for reg in filter(None, response.decode().split(&#39;\n&#39;))}
+        gains = [self.AD1299_GAIN_REGISTER.get(&#39;&#39;.join(registers.get(
+            f&#39;CH{i}SET&#39;, &#39;&#39;)[3:6]).replace(&#39; &#39;, &#39;&#39;), default) for i in range(1, 9)]
+        return gains</div></div>
+
+
+########################################################################
+<div class="viewcode-block" id="CytonWiFi"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi">[docs]</a>class CytonWiFi(CytonBase):
+    &quot;&quot;&quot;
+    This module implement a TCP connection for the WiFi module with a sample
+    frequency from `250` Hz up to 16 kHz, for 8 or 16 channels (8 kHz for 16
+    channels).
+
+    Parameters
+    ----------
+    ip_address
+        IP addres for the WiFi shield.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `[&#39;Fp1&#39;, &#39;Fp2&#39;, &#39;F3&#39;, &#39;Fz&#39;,
+        &#39;F4&#39;]` and a dictionary means specific channels `{1: &#39;Fp1&#39;, 2: &#39;Fp2&#39;,
+        3: &#39;F3&#39;, 4: &#39;Fz&#39;, 5: &#39;F4&#39;}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
+    &quot;&quot;&quot;
+
+    # ----------------------------------------------------------------------
+    def __init__(self, ip_address: str, host: str = None, daisy: DAISY = &#39;auto&#39;,
+                 montage: Optional[Union[list, dict]] = None,
+                 streaming_package_size: int = 250,
+                 capture_stream: Optional[bool] = False) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+        self.remote_host = None
+
+        self._ip_address = ip_address
+        self._readed = None
+        self._local_ip_address = self._get_local_ip_address()
+
+        if host == &#39;localhost&#39;:
+            host = None
+
+        if host:
+            try:
+                rpyc_service = rpyc.connect(host, 18861, config={
+                    &#39;allow_public_attrs&#39;: True,
+                    &#39;allow_pickle&#39;: True,
+                })
+                self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
+                    self._ip_address,
+                    host=None,
+                    daisy=daisy,
+                    capture_stream=capture_stream,
+                    montage=pickle.dumps(montage),
+                    streaming_package_size=streaming_package_size)
+            except socket.gaierror:
+                logging.error(&quot;&#39;openbci_rpyc&#39; daemon are running?&quot;)
+
+            return
+
+        super().__init__(daisy, montage, streaming_package_size, capture_stream)
+
+        self._create_tcp_server()
+        time.sleep(5)  # secure delay
+        self._start_tcp_client()
+
+        self._start_loop()
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi._get_local_ip_address"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi._get_local_ip_address">[docs]</a>    def _get_local_ip_address(self) -&gt; str:
+        &quot;&quot;&quot;Get the current network IP assigned.&quot;&quot;&quot;
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect((&quot;8.8.8.8&quot;, 80))
+            local_ip_address = s.getsockname()[0]
+            s.close()
+            return local_ip_address
+
+        except:
+            logging.warning(&#39;Impossible to detect a network connection, the WiFi&#39;
+                            &#39;module and this machine must share the same network.&#39;)
+            logging.warning(f&#39;If you are using this machine as server (access point) &#39;
+                            f&#39;the address {DEFAULT_LOCAL_IP} will be used.&#39;)
+
+            return DEFAULT_LOCAL_IP</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.write"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.write">[docs]</a>    def write(self, data: Union[str, bytes]) -&gt; None:
+        &quot;&quot;&quot;Send command to board through HTTP protocole.
+
+        Parameters
+        ----------
+        data :
+            Commands to send, It should not be more than 31 characters long.
+        &quot;&quot;&quot;
+
+        if hasattr(data, &#39;decode&#39;):
+            data = data.decode()
+        elif isinstance(data, int):
+            data = chr(data)
+
+        try:
+            logging.info(f&quot;Sending command: &#39;{data}&#39;&quot;)
+            response = requests.post(
+                f&quot;http://{self._ip_address}/command&quot;, json={&#39;command&#39;: data})
+        except requests.exceptions.ConnectionError as msg:
+            if &#39;Connection aborted&#39; in str(msg):
+                time.sleep(0.3)
+                return self.write(data)
+        except Exception as msg:
+            logging.warning(f&quot;Error on sending command &#39;{data}&#39;:{msg}&quot;)
+            return
+
+        if response.status_code == 200:
+            self._readed = response.text
+        elif response.status_code == 502:
+            logging.info(f&quot;No confirmation from board, does not mean fail.&quot;)
+        else:
+            logging.warning(
+                f&quot;Error code: {response.status_code} {response.text}&quot;)
+            self._readed = None</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.read"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.read">[docs]</a>    def read(self, size=None) -&gt; bytes:
+        &quot;&quot;&quot;Read the response for some command.
+
+        Unlike serial mode, over WiFi there is not read and write individual
+        commands, the response is got in the same write command. This
+        implementation tries to emulate the the behavior of serial read/write
+        for compatibility reasons. Not all command return a response.
+        &quot;&quot;&quot;
+
+        time.sleep(0.2)  # critical dealy for wait a response.
+        return self._readed</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.start_stream"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.start_stream">[docs]</a>    def start_stream(self) -&gt; None:
+        &quot;&quot;&quot;Initialize a TCP client on the WiFi shield and sends the command to
+        starts stream.&quot;&quot;&quot;
+
+        super().start_stream()
+        # self._start_tcp_client()
+
+        response = requests.get(f&quot;http://{self._ip_address}/stream/start&quot;)
+        if response.status_code != 200:
+            logging.warning(
+                f&quot;Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start&quot;)</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.stop_stream"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.stop_stream">[docs]</a>    def stop_stream(self) -&gt; None:
+        &quot;&quot;&quot;Stop the data collection that runs asynchronously and sends the
+        command to stops stream.&quot;&quot;&quot;
+
+        super().stop_stream()
+
+        response = requests.get(f&quot;http://{self._ip_address}/stream/stop&quot;)
+        if response.status_code != 200:
+            logging.warning(
+                f&quot;Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/stop&quot;)
+
+        self.binary_stream.close()
+        asyncore.close_all()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.kafka_context"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.kafka_context">[docs]</a>    def kafka_context(self) -&gt; Dict[str, Any]:
+        &quot;&quot;&quot;Kafka contex generator.&quot;&quot;&quot;
+        return {
+            &#39;daisy&#39;: self.daisy,
+            &#39;boardmode&#39;: self.boardmode,
+            &#39;montage&#39;: self.montage,
+            &#39;connection&#39;: &#39;wifi&#39;,
+            &#39;gain&#39;: self._gain,
+        }</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi._create_tcp_server"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi._create_tcp_server">[docs]</a>    def _create_tcp_server(self) -&gt; None:
+        &quot;&quot;&quot;Create TCP server, this server will handle the streaming EEG data.&quot;&quot;&quot;
+
+        # kafka_context = {
+            # &#39;daisy&#39;: self.daisy,
+            # &#39;boardmode&#39;: self.boardmode,
+            # &#39;montage&#39;: self.montage,
+            # &#39;connection&#39;: &#39;wifi&#39;,
+        # }
+
+        self.local_wifi_server = WiFiShieldTCPServer(self._local_ip_address,
+                                                     lambda: getattr(
+                                                         self, &#39;binary_stream&#39;),
+                                                     self.kafka_context,
+                                                     )
+        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[
+            1]
+        logging.info(
+            f&quot;Open socket on {self._local_ip_address}:{self.local_wifi_server_port}&quot;)</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi._start_tcp_client"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi._start_tcp_client">[docs]</a>    def _start_tcp_client(self):
+        &quot;&quot;&quot;Connect the board to the TCP server. Sends configuration of the
+        previously server created to the board, so they can connected to.
+        &quot;&quot;&quot;
+
+        if self._ip_address is None:
+            raise ValueError(&#39;self._ip_address cannot be None&#39;)
+
+        logging.info(f&quot;Init WiFi connection with IP: {self._ip_address}&quot;)
+
+        self.requests_session = requests.Session()
+        response = requests.get(f&quot;http://{self._ip_address}/board&quot;)
+
+        if response.status_code == 200:
+            board_info = response.json()
+
+            if not board_info[&#39;board_connected&#39;]:
+                raise RuntimeError(&quot;No board connected to WiFi Shield.&quot;)
+            self._gain = board_info[&#39;gains&#39;]
+            self.local_wifi_server.set_gain(self._gain)
+
+        # res_tcp_post = requests.post(f&quot;http://{self._ip_address}/tcp&quot;,
+                                     # json={
+                                        # &#39;ip&#39;: self._local_ip_address,
+                                        # &#39;port&#39;: self.local_wifi_server_port,
+                                        # &#39;output&#39;: &#39;json&#39;,
+                                        # &#39;delimiter&#39;: True,
+                                        # &#39;latency&#39;: 1000,
+                                         # })
+        res_tcp_post = requests.post(f&quot;http://{self._ip_address}/tcp&quot;,
+                                     json={
+                                        &#39;ip&#39;: self._local_ip_address,
+                                        &#39;port&#39;: self.local_wifi_server_port,
+                                        &#39;output&#39;: &#39;raw&#39;,
+                                        &#39;latency&#39;: 1000,
+                                         })
+        if res_tcp_post.status_code == 200:
+            tcp_status = res_tcp_post.json()
+            if tcp_status[&#39;connected&#39;]:
+                logging.info(&quot;WiFi Shield to Python TCP Socket Established&quot;)
+            else:
+                raise RuntimeWarning(
+                    &quot;WiFi Shield is not able to connect to local server.&quot;)
+
+        else:
+            logging.warning(
+                f&quot;status_code {res_tcp_post.status_code}:{res_tcp_post.reason}&quot;)</div>
+
+    # ----------------------------------------------------------------------
+    def set_latency(self, latency: int) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+        try:
+            response = requests.post(
+                f&quot;http://{self._ip_address}/latency&quot;, json={&#39;latency&#39;: latency, })
+        except Exception as e:
+            logging.warning(f&quot;Error on setting latency &#39;{data}&#39;: {e}&quot;)
+            return
+
+        if response.status_code == 200:
+            return
+        else:
+            logging.warning(
+                f&quot;Error code: {response.status_code} {response.text}&quot;)
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi.close"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi.close">[docs]</a>    def close(self) -&gt; None:
+        &quot;&quot;&quot;Stops TCP server and data acquisition.&quot;&quot;&quot;
+        self.stop_stream()
+        requests.delete(f&quot;http://{self._ip_address}/tcp&quot;)
+        super().close()</div>
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="CytonWiFi._start_loop"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.CytonWiFi._start_loop">[docs]</a>    def _start_loop(self):
+        &quot;&quot;&quot;Start the TCP server on a thread asyncore loop.&quot;&quot;&quot;
+        self.th_loop = Thread(target=asyncore.loop, args=(), )
+        self.th_loop.start()</div></div>
+
+
+########################################################################
+<div class="viewcode-block" id="Cyton"><a class="viewcode-back" href="../../openbci_stream.acquisition.cyton.html#openbci_stream.acquisition.cyton.Cyton">[docs]</a>class Cyton:
+    &quot;&quot;&quot;
+    `Cyton` is a shortcut for `CytonRFDuino` or `CytonWiFi`:
+
+    &gt;&gt;&gt; Cyton(&#39;serial&#39;, ...)
+
+    is equals to:
+
+    &gt;&gt;&gt; CytonRFDuino(...)
+
+    and
+
+    &gt;&gt;&gt; Cyton(&#39;wifi&#39;, ...)
+
+    the same that do:
+
+    &gt;&gt;&gt; CytonWiFi(...)
+
+    Parameters
+    ----------
+    mode
+        `serial` or `wifi`
+    endpoint
+        Serial port for RFduino or IP address for WiFi module.
+    host
+        IP address for the server that has the OpenBCI board attached, by
+        default its assume that is the same machine where is it executing, this
+        is the `localhost`.
+    daisy
+        Daisy board can be detected on runtime or declare it specifically.
+    montage
+        A list means consecutive channels e.g. `[&#39;Fp1&#39;, &#39;Fp2&#39;, &#39;F3&#39;, &#39;Fz&#39;,
+        &#39;F4&#39;]` and a dictionary means specific channels `{1: &#39;Fp1&#39;, 2: &#39;Fp2&#39;,
+        3: &#39;F3&#39;, 4: &#39;Fz&#39;, 5: &#39;F4&#39;}`.
+    streaming_package_size
+        The streamer will try to send packages of this size, this is NOT the
+        sampling rate for data acquisition.
+    capture_stream
+        Indicates if the data from the stream will be captured in asynchronous
+        mode.
+    &quot;&quot;&quot;
+
+    # ----------------------------------------------------------------------
+    def __new__(self, mode: MODE, endpoint: str = None, host: str = None,
+                daisy: DAISY = &#39;auto&#39;,
+                montage: Optional[Union[list, dict]] = None,
+                streaming_package_size: int = 250,
+                capture_stream: Optional[bool] = False) -&gt; Union[CytonRFDuino, CytonWiFi]:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+
+        if mode == &#39;serial&#39;:
+            return CytonRFDuino(endpoint, host, daisy, montage,
+                                streaming_package_size, capture_stream)
+
+        elif mode == &#39;wifi&#39;:
+            return CytonWiFi(endpoint, host, daisy, montage,
+                             streaming_package_size, capture_stream)</div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

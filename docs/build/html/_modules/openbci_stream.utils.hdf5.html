@@ -1,0 +1,454 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data storage handler &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-openbci_stream.utils.hdf5"></span><div class="section" id="data-storage-handler">
+<h1>Data storage handler<a class="headerlink" href="#data-storage-handler" title="Permalink to this headline">¶</a></h1>
+<p>This data handler use [PyTables](<a class="reference external" href="https://www.pytables.org/">https://www.pytables.org/</a>) that is built on top
+of the HDF5 library, using the Python language and the NumPy package. It
+features an object-oriented interface that, combined with C extensions for the
+performance-critical parts of the code (generated using Cython), makes it a
+fast, yet extremely easy to use tool for interactively browse, process and
+search very large amounts of data. One important feature of
+[PyTables](<a class="reference external" href="https://www.pytables.org/">https://www.pytables.org/</a>) is that it optimizes memory and disk
+resources so that data takes much less space (specially if on-flight compression
+is used) than other solutions such as relational or object oriented databases.</p>
+<p>For examples and descriptions refers to documentation:
+<a class="reference external" href="../07-data_storage_handler.ipynb">Data storage handler</a></p>
+<dl class="py class">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.utils.hdf5.</span></code><code class="sig-name descname"><span class="pre">HDF5Reader</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_correction</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Reader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Objects created with <cite>HDF5Writer</cite> can be opened with <cite>HDF5Reader</cite>.</p>
+<p>This class support export to other formmats like
+<a class="reference external" href="https://mne.tools/stable/generated/mne.Epochs.html">MNE epochs</a>
+and <a class="reference external" href="https://www.edfplus.info/">EDF</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> – Path with the location of the hdf file.</p></li>
+<li><p><strong>offset_correction</strong> – The header will store the offset (based on ntp) at start and end of
+acquisition, this values can be used to perform an offset correction.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader._timestamp">
+<code class="sig-name descname"><span class="pre">_timestamp</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">timesamp</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Reader._timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader._timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate the timestamps in the case of zeros in it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.annotations">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">annotations</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of annotations.</p>
+<p>The <cite>HDF5Writer</cite> write the annotations with timestamps, but <cite>EDF</cite> needs
+the relative time from start in seconds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.aux">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">aux</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.aux" title="Permalink to this definition">¶</a></dt>
+<dd><p>The AUX data of the hdf file in the shape of (<cite>aux, time</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.aux_timestamp_">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">aux_timestamp_</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.aux_timestamp_" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of timestamps for AUX data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.classes">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">classes</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list with the same length of EEG with markers as numbers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.classes_indexes">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">classes_indexes</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.classes_indexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>The standard for classes and indexes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.eeg">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">eeg</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.eeg" title="Permalink to this definition">¶</a></dt>
+<dd><p>The EEG data of the hdf file in the shape of (<cite>channels, time</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.get_data">
+<code class="sig-name descname"><span class="pre">get_data</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Reader.get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an <cite>EpochsArray</cite> object with the <cite>MNE</cite> library.</p>
+<p>This method auto crop the data in regard to markers also will drop
+channels that no correspond with the montage. For an example of use
+refer to <a href="#id3"><span class="problematic" id="id4">`Data storage handler - MNE objects&lt;../notebooks/07-data_storage_handler.html#MNE-objects&gt;`_</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>duration</strong> – The duration of the trial.</p></li>
+<li><p><strong>tmin</strong> – The time to take previous to the marker.</p></li>
+<li><p><strong>markers</strong> – A filter of markers for crop the signal.</p></li>
+<li><p><strong>kwargs</strong> – Optional arguments passed to <a class="reference external" href="https://mne.tools/stable/generated/mne.EpochsArray.html">EpochsArray</a></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>trials</em> – Dataset with the shape (<cite>trials</cite>, <cite>channels</cite>, <cite>time</cite>)</p></li>
+<li><p><em>classes</em> – List of classes</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.get_epochs">
+<code class="sig-name descname"><span class="pre">get_epochs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmin</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">markers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">mne.EpochsArray</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Reader.get_epochs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.get_epochs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an <cite>EpochsArray</cite> object with the <cite>MNE</cite> library.</p>
+<p>This method auto crop the data in regard to markers also will drop
+channels that no correspond with the montage. For an example of use
+refer to <a href="#id5"><span class="problematic" id="id6">`Data storage handler - MNE objects&lt;../notebooks/07-data_storage_handler.html#MNE-objects&gt;`_</span></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>duration</strong> – The duration of the trial.</p></li>
+<li><p><strong>tmin</strong> – The time to take previous to the marker.</p></li>
+<li><p><strong>markers</strong> – A filter of markers for crop the signal.</p></li>
+<li><p><strong>kwargs</strong> – <p>Optional arguments passed to <a class="reference external" href="https://mne.tools/stable/generated/mne.EpochsArray.html">EpochsArray</a></p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An MNE Epochs object.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>epochs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.header">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">header</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.header" title="Permalink to this definition">¶</a></dt>
+<dd><p>The header of the hdf file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.markers">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">markers</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary with the markers and timestamps as values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.markers_relative">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">markers_relative</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.markers_relative" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary with the markers and milliseconds as values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.offset">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">offset</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the timestamps offset in seconds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.timestamp">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">timestamp</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of timestamps for EEG data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.timestamp_relative">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">timestamp_relative</span></code><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.timestamp_relative" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of timestamps in milliseconds.</p>
+<p>If <cite>fast</cite> the a simple relation between sample rate and data length is
+calculate instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Reader.to_edf">
+<code class="sig-name descname"><span class="pre">to_edf</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Reader.to_edf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Reader.to_edf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export to EDF file.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">openbci_stream.utils.hdf5.</span></code><code class="sig-name descname"><span class="pre">HDF5Writer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>This HDF5 data handler was pre-configured for the architecture of
+acquired EEG data.</p>
+<p>This module can be used like an instance e.g.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">writer</span> <span class="o">=</span> <span class="n">HDF5Writer</span><span class="p">(</span><span class="s1">&#39;file.h5&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">writer</span><span class="o">.</span><span class="n">add_marker</span><span class="p">(</span><span class="s1">&#39;LEFT&#39;</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>or can be used with the <cite>with</cite> control-flow structure e.g.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">HDF5Writer</span><span class="p">(</span><span class="s1">&#39;file.h5&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">write</span><span class="p">:</span>
+<span class="go">        writer.add_marker(&#39;LEFT&#39;, datetime.now().timestamp())</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filename</strong> – Path where the edf file will be created.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_annotation">
+<code class="sig-name descname"><span class="pre">add_annotation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">onset</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">timesamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add EDF annotations to the hdf5 file.</p>
+<p>These annotations will be exported with EDF file and follow the format
+defined by <a class="reference external" href="https://pyedflib.readthedocs.io/en/latest/ref/edfwriter.html#pyedflib.EdfWriter.writeAnnotation">pyedflib</a>.</p>
+<p>There is some difference between markers and annotations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Markers are writed as time series.</p></li>
+<li><p>Annotations are writed as a list of events.</p></li>
+<li><p>Markers are mainly for repetitions of the same event.</p></li>
+<li><p>Annotations can describe a complex event with a custom duration and
+long description, e.g artifacts.</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>onset</strong> – Timestamp for annotation.</p></li>
+<li><p><strong>duration</strong> – The duration of the event.</p></li>
+<li><p><strong>description</strong> – The description of the annotation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_aux">
+<code class="sig-name descname"><span class="pre">add_aux</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aux_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_aux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_aux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write AUX data into the hdf5 file.</p>
+<p>The shape of aux data cannot be changed after the first write.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>aux_data</strong> – OpenBCI aux data defined in <a class="reference internal" href="../notebooks/04-board_modes.html"><span class="doc">board modes</span></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_eeg">
+<code class="sig-name descname"><span class="pre">add_eeg</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eeg_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">timesamp</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_eeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_eeg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add EEG data to hdf5 file, optionally adds timestamps.</p>
+<p>The first time this method is called the number of channels of EEG is
+configured, and cannot be changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eeg_data</strong> – An array of shape (<cite>channels, time</cite>)</p></li>
+<li><p><strong>timestamp</strong> – A single timestamp corresponding to the last sample acquired.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_header">
+<code class="sig-name descname"><span class="pre">add_header</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the header for hdf5 file.</p>
+<p>A header is basically a dictionary with all kinds of useful information.
+There are required keys for some specific methods.</p>
+<dl class="simple">
+<dt>MNE objects requiere:</dt><dd><ul class="simple">
+<li><p><strong>montage:</strong> str with montage name, e.g. ‘standard_1020’.</p></li>
+<li><p><strong>channels:</strong> dict with keys as channel index and values as channel
+name, e.g <cite>{1: ‘FP1’, 2: ‘FP2’, 3: ‘F7’}</cite>.</p></li>
+<li><p><strong>sample_rate:</strong> int sample rate for acuiered signal, e.g <cite>1000</cite>.</p></li>
+</ul>
+</dd>
+<dt>EDF objects requiere (In addition to the above):</dt><dd><ul class="simple">
+<li><p><strong>admincode:</strong> str with the admincode.</p></li>
+<li><p><strong>birthdate:</strong> date object with the the birthdate of the patient.</p></li>
+<li><p><strong>equipment:</strong> str thats describes the measurement equpipment.</p></li>
+<li><p><strong>gender:</strong> int with the the gender, 1 is male, 0 is female.</p></li>
+<li><p><strong>patientcode:</strong> str with the patient code.</p></li>
+<li><p><strong>patientname:</strong> str with the patient name.</p></li>
+<li><p><strong>patient_additional:</strong> str with the additional patient information.</p></li>
+<li><p><strong>recording_additional:</strong> str wit the additional recording information.</p></li>
+<li><p><strong>technician:</strong> str with the technicians name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_marker">
+<code class="sig-name descname"><span class="pre">add_marker</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">timesamp</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_marker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_marker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a pair of marker-timestamp to the hdf5 file.</p>
+<p>There is some difference between markers and annotations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Markers are writed as time series.</p></li>
+<li><p>Annotations are writed as a list of events.</p></li>
+<li><p>Markers are mainly for repetitions of the same event.</p></li>
+<li><p>Annotations can describe a complex event with a custom duration and
+long description, e.g artifacts.</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_markers">
+<code class="sig-name descname"><span class="pre">add_markers</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markers</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">timesamp</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_markers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_markers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a set of markers to the hdf5 file.</p>
+<p>This method is used to write a set of markers at the same time, works
+with a dictionary object, with keys as marker and values as a list of
+timestamps</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">markes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;LEFT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1603898187.226709</span><span class="p">,</span>
+<span class="go">                       1603898197.226709,</span>
+<span class="go">                       1603898207.226709],</span>
+<span class="go">              &#39;RIGHT&#39;: [1603898192.226709,</span>
+<span class="go">                        1603898202.226709,</span>
+<span class="go">                        1603898212.226709]</span>
+<span class="go">              }</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add_markers</span><span class="p">(</span><span class="n">markers</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.add_timestamp">
+<code class="sig-name descname"><span class="pre">add_timestamp</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">timesamp</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.add_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.add_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a list of timestamps to the hdf5 file.</p>
+<p>The use of this method is not recommended, instead, it must be used
+<cite>add_eeg</cite> that includes a validation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="openbci_stream.utils.hdf5.HDF5Writer.close">
+<code class="sig-name descname"><span class="pre">close</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#HDF5Writer.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.HDF5Writer.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the file handler.</p>
+<p>Before to close, add some extra values into the header.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="openbci_stream.utils.hdf5.interpolate_datetime">
+<code class="sig-prename descclassname"><span class="pre">openbci_stream.utils.hdf5.</span></code><code class="sig-name descname"><span class="pre">interpolate_datetime</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">timesamp</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">timesamp</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="openbci_stream/utils/hdf5.html#interpolate_datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.interpolate_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate uncomplete timestamp list.</p>
+<p>The input timestamp list must be a list of timestamps separated by zeros,
+this script will complete the missing timestamps. This primary purpose is to
+complete the list generated from stream data when only it has a sample rate
+and acquired times.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timestamp</strong> – An array with timestamps and zeros.</p></li>
+<li><p><strong>length</strong> – The length of the final timestamp array, if not defined then will be the
+same size of the input timestamp.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An array with interpolated timestamps.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>timestamp</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="openbci_stream.utils.hdf5.np2json_serializer">
+<code class="sig-prename descclassname"><span class="pre">openbci_stream.utils.hdf5.</span></code><code class="sig-name descname"><span class="pre">np2json_serializer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="openbci_stream/utils/hdf5.html#np2json_serializer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#openbci_stream.utils.hdf5.np2json_serializer" title="Permalink to this definition">¶</a></dt>
+<dd><p>hdf5 handler needs Python classic data types.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/_modules/openbci_stream.utils.hdf5.rst"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

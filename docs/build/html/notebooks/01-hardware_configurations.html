@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hardware configurations &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Kafka configuration" href="02-kafka_configuration.html" />
+    <link rel="prev" title="Installation" href="00-installation.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <style>
+    .nbinput .prompt,
+    .nboutput .prompt {
+        display: none;
+}
+</style><div class="section" id="Hardware-configurations">
+<h1>Hardware configurations<a class="headerlink" href="#Hardware-configurations" title="Permalink to this headline">¶</a></h1>
+<p>In order to get all up to date, it is a requirement to have the firmwares fully updated, this issue is handled by Arduino IDE, a preconfigured files for set up the system can be installed with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hg clone ssh://hg@bitbucket.org/gcpds/arduino
+<span class="nb">cd</span> arduino
+sudo chmod a+x install.sh
+./install.sh
+</pre></div>
+</div>
+<p>This instructions will install the following libraries and boards:</p>
+<div class="section" id="Libraries">
+<h2>Libraries<a class="headerlink" href="#Libraries" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>OpenBCI 32bit Library 3.1.2</p></li>
+<li><p>OpenBCI 32bit SD 2.0.0</p></li>
+<li><p>OpenBCI Wifi Master 1.0.1</p></li>
+<li><p>OpenBCI Radios 2.0.4</p></li>
+</ul>
+</div>
+<div class="section" id="Boards">
+<h2>Boards<a class="headerlink" href="#Boards" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>RFDuino 2.3.3</p></li>
+<li><p>ChipKIT 2.0.6</p></li>
+</ul>
+<p>After this, <em>Arduino IDE</em> must be able to use boards like <code class="docutils literal notranslate"><span class="pre">OpenBCI</span> <span class="pre">32</span></code> and <code class="docutils literal notranslate"><span class="pre">RFduino</span></code>, new examples will be created too, the most important are <code class="docutils literal notranslate"><span class="pre">OpenBCI_Radios</span> <span class="pre">&gt;&gt;</span> <span class="pre">RadioHost32bit</span></code>, <code class="docutils literal notranslate"><span class="pre">OpenBCI_Radios</span> <span class="pre">&gt;&gt;</span> <span class="pre">RadioDevice32bit</span></code> and <code class="docutils literal notranslate"><span class="pre">OpenBCI_32bit_Library</span> <span class="pre">&gt;&gt;</span> <span class="pre">DefaultBoard</span></code>.</p>
+</div>
+<div class="section" id="Install-firmwares-(with-Arduino-IDE)">
+<h2>Install firmwares (with Arduino IDE)<a class="headerlink" href="#Install-firmwares-(with-Arduino-IDE)" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="OpenBCI-32bit-(Cyton)">
+<h3>OpenBCI 32bit (Cyton)<a class="headerlink" href="#OpenBCI-32bit-(Cyton)" title="Permalink to this headline">¶</a></h3>
+<p>This is the <code class="docutils literal notranslate"><span class="pre">ChipKIT</span></code> based board, can be programmed through RFduino, just like when we are using the board.</p>
+<img alt="../_images/32bit_top.jpg" src="../_images/32bit_top.jpg" />
+<ul class="simple">
+<li><p>Select the board <code class="docutils literal notranslate"><span class="pre">OpenBCI</span> <span class="pre">32</span></code></p></li>
+<li><p>Load <code class="docutils literal notranslate"><span class="pre">OpenBCI_32bit_Library</span> <span class="pre">&gt;&gt;</span> <span class="pre">DefaultBoard</span></code> from examples</p></li>
+<li><p>Put board in <em>bootloader mode</em> pressing <code class="docutils literal notranslate"><span class="pre">PRG</span></code> and <code class="docutils literal notranslate"><span class="pre">RST</span></code> button and releasing first <code class="docutils literal notranslate"><span class="pre">PRG</span></code> and then <code class="docutils literal notranslate"><span class="pre">RST</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Verify</span></code> and <code class="docutils literal notranslate"><span class="pre">Upload</span></code> with Arduino IDE.</p></li>
+</ul>
+</div>
+<div class="section" id="RFduino-Host">
+<h3>RFduino Host<a class="headerlink" href="#RFduino-Host" title="Permalink to this headline">¶</a></h3>
+<p>This is the board tha we connect through USB, is <strong>IMPORTANT</strong> set the switch to <code class="docutils literal notranslate"><span class="pre">RESET</span></code> position.</p>
+<img alt="../_images/32bit_dongle_top.jpg" src="../_images/32bit_dongle_top.jpg" />
+<ul class="simple">
+<li><p>Select the board <code class="docutils literal notranslate"><span class="pre">RFduino</span></code></p></li>
+<li><p>Load <code class="docutils literal notranslate"><span class="pre">OpenBCI_Radios</span> <span class="pre">&gt;&gt;</span> <span class="pre">RadioHost32bit</span></code> from examples</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Verify</span></code> and <code class="docutils literal notranslate"><span class="pre">Upload</span></code> with Arduino IDE.</p></li>
+</ul>
+</div>
+<div class="section" id="RFduino-Device">
+<h3>RFduino Device<a class="headerlink" href="#RFduino-Device" title="Permalink to this headline">¶</a></h3>
+<p>This board is beside <code class="docutils literal notranslate"><span class="pre">ChipKIT</span></code>, but no have an own serial connection, so is needed an external <code class="docutils literal notranslate"><span class="pre">FTDI</span> <span class="pre">device</span></code>, is very <strong>IMPORTANT</strong> to use a 3V device instead of 5V and power the Cyton board with this source and not with batteries.</p>
+<img alt="../_images/32bit_DeviceConnection.jpg" src="../_images/32bit_DeviceConnection.jpg" />
+<ul class="simple">
+<li><p>Select the board <code class="docutils literal notranslate"><span class="pre">RFduino</span></code></p></li>
+<li><p>Load <code class="docutils literal notranslate"><span class="pre">OpenBCI_Radios</span> <span class="pre">&gt;&gt;</span> <span class="pre">RadioDevice32bit</span></code> from examples</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Verify</span></code> and <code class="docutils literal notranslate"><span class="pre">Upload</span></code> with Arduino IDE.</p></li>
+</ul>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="References">
+<h2>References<a class="headerlink" href="#References" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.openbci.com/Hardware/05-Cyton_Board_Programming_Tutorial">Cyton Board Programming Tutorial</a></p></li>
+<li><p><a class="reference external" href="href='https://docs.openbci.com/Hardware/06-Cyton_Radios_Programming_Tutorial">Cyton Radios Programming Tutorial</a></p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="00-installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Hardware configurations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Libraries">Libraries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Boards">Boards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Install-firmwares-(with-Arduino-IDE)">Install firmwares (with Arduino IDE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#References">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/notebooks/01-hardware_configurations.ipynb"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

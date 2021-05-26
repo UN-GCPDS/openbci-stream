@@ -1,0 +1,4 @@
+#!python
+
+from openbci_stream.utils.openbci_cli import main
+main()

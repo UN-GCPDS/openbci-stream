@@ -1,0 +1,18 @@
+#!python
+
+import sys
+
+if sys.argv[-1] == "systemd":
+    from systemd_service import Service
+    
+    daemon = Service("stream_eeg", "stream_eeg")
+    daemon.create_timer(on_boot_sec=10)
+
+else:
+    from openbci_stream.daemons.stream_eeg import BinaryToEEG
+
+    print("Run 'stream_eeg systemd' as superuser for create the daemon.")
+    tranformer = BinaryToEEG()
+    tranformer.consume()
+
+

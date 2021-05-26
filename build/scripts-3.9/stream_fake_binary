@@ -1,0 +1,4 @@
+#!python
+
+from openbci_stream.daemons.stream_fake_binary import main
+main()

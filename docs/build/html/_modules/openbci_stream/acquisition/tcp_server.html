@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>openbci_stream.acquisition.tcp_server &#8212; OpenBCI-Stream  documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favico.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for openbci_stream.acquisition.tcp_server</h1><div class="highlight"><pre>
+<span></span>&quot;&quot;&quot;
+==========
+TCP server
+==========
+
+The module WiFi for OpenBCI receive the instructions to connect with a TCP
+server, before that happens, the server must be running and waiting for clients.
+
+&quot;&quot;&quot;
+
+import socket
+import logging
+import asyncore
+from datetime import datetime
+from typing import Dict, Any, Callable
+
+
+########################################################################
+<div class="viewcode-block" id="WiFiShieldTCPServer"><a class="viewcode-back" href="../../openbci_stream.acquisition.tcp_server.html#openbci_stream.acquisition.tcp_server.WiFiShieldTCPServer">[docs]</a>class WiFiShieldTCPServer(asyncore.dispatcher):
+    &quot;&quot;&quot;Create a TCP server that handles the connexión of the WiFi module.
+
+    Parameters
+    ----------
+    host
+        IP address of the machine that WiFi module will connect.
+    binary_stream
+        Function that return a kafka producer, this producer could not exist in
+        the very moment of creation of this class instance.
+    kafka_context
+        Funtion that return the information from the acquisition side useful for
+        deserializing and will be packaged back in the stream.
+    &quot;&quot;&quot;
+
+    # ----------------------------------------------------------------------
+    def __init__(self, host, binary_stream: Callable, kafka_context: Callable) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+        asyncore.dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        self.set_reuse_addr()
+        self.bind((host, 0))
+        self.listen(1)
+        # self.data = data_queue
+        self.kafka_context_ = kafka_context
+
+        self.binary_stream = binary_stream
+        self._gain = None
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="WiFiShieldTCPServer.handle_accept"><a class="viewcode-back" href="../../openbci_stream.acquisition.tcp_server.html#openbci_stream.acquisition.tcp_server.WiFiShieldTCPServer.handle_accept">[docs]</a>    def handle_accept(self) -&gt; None:
+        &quot;&quot;&quot;Redirect the client connection.&quot;&quot;&quot;
+        pair = self.accept()
+        if pair is not None:
+            sock, addr = pair
+            logging.info(f&#39;Incoming connection from {addr}&#39;)
+            self.handler = asyncore.dispatcher_with_send(sock)
+            self.handler.handle_read = self._handle_read
+            self.handler.handle_error = self._handle_error</div>
+
+    # ----------------------------------------------------------------------
+    def set_gain(self, gain) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;
+        self._gain = gain
+
+    # ----------------------------------------------------------------------
+    @property
+    def kafka_context(self):
+        &quot;&quot;&quot;&quot;&quot;&quot;
+        return self.kafka_context_()
+
+    # ----------------------------------------------------------------------
+<div class="viewcode-block" id="WiFiShieldTCPServer._handle_read"><a class="viewcode-back" href="../../openbci_stream.acquisition.tcp_server.html#openbci_stream.acquisition.tcp_server.WiFiShieldTCPServer._handle_read">[docs]</a>    def _handle_read(self) -&gt; None:
+        &quot;&quot;&quot;Write the input streaming into the binary stream.
+
+        There is a maximum of 3000 bytes that can read at once, so it is set to
+        2970, a 33 multiple. But this not means that read this amount of data
+        on all events, the module WiFi will send with their own consideration.
+        &quot;&quot;&quot;
+
+        kafka_context = self.kafka_context
+
+        # kafka_context.update({&#39;created&#39;: datetime.now().timestamp()})
+
+        if self._gain:
+            kafka_context.update({&#39;gain&#39;: self._gain})
+        else:
+            if kafka_context[&#39;daisy&#39;]:
+                kafka_context.update({&#39;gain&#39;: [24] * 16})
+            else:
+                kafka_context.update({&#39;gain&#39;: [24] * 8})
+
+        data = {&#39;context&#39;: kafka_context,
+                &#39;data&#39;: self.handler.recv(33 * 90),
+                }
+
+        self.binary_stream().stream(data)</div>
+
+    # ----------------------------------------------------------------------
+    def _handle_error(self) -&gt; None:
+        &quot;&quot;&quot;&quot;&quot;&quot;</div>
+        # I&#39;m feeling dirty for this &quot;solution&quot;
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/00-installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/01-hardware_configurations.html">Hardware configurations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/02-kafka_configuration.html">Kafka configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/03-data_acquisition.html">Data Acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/04-board_modes.html">Board modes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/05-stream_markers.html">Stream markers with Kafka</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/06-command_line_interface.html">Command line interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/07-data_storage_handler.html">Data storage handler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A1-raw_cleaning.html">Appendix 1 - Raw data processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A2-electrodes_impedance.html">Appendix 2 - Measuring Electrode Impedance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A3-server-based_acquisition.html">Appendix 3 - Raspberry PI as server acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/A4-latencies.html">Appendix 4 - System latencies</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019-2021, Yeison Cardona.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
