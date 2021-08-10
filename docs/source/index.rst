@@ -19,7 +19,7 @@ Navigation
    notebooks/A1-raw_cleaning
    notebooks/A2-electrodes_impedance
    notebooks/A3-server-based_acquisition
-   notebooks/A4-latencies
+   notebooks/A4-system_latencies
 
 
 Indices and tables
