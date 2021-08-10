@@ -175,9 +175,10 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     # (master_doc, 'OpenBCI.tex', 'OpenBCI Documentation', 'Laura Andrea La Rotta Hurtado', 'manual'),
+    # (master_doc, 'OpenBCI-Stream.tex',
+    # 'OpenBCI-Stream: Drivers para la adquisición se señales de neurofisiológicas con OpenBCI', 'Grupo de Control y Procesamiento Digital de Señales', 'manual'),
     (master_doc, 'OpenBCI-Stream.tex',
-     'OpenBCI-Stream: Drivers para la adquisición se señales de neurofisiológicas con OpenBCI', 'Grupo de Control y Procesamiento Digital de Señales', 'manual'),
-    # (master_doc, 'OpenBCI-Stream.tex', 'OpenBCI-Stream Documentation', 'Yeison Cardona', 'manual'),
+     'OpenBCI-Stream Documentation', 'Yeison Cardona', 'manual'),
 ]
 
 
