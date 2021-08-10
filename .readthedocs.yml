@@ -18,3 +18,7 @@ python:
   version: 3.8
   install:
     - requirements: docs/requirements.txt
+
+formats:
+  - epub
+  - pdf
