@@ -5,6 +5,7 @@
 > _National University of Colombia at Manizales_ | _Universidad Nacional de Colombia sede Manizales_
 
 ----
+
 # OpenBCI-Stream 
 High level Python module for EEG/EMG/ECG acquisition and distributed streaming for OpenBCI Cyton board.
 
