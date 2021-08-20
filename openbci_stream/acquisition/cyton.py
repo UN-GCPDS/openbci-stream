@@ -309,7 +309,7 @@ class CytonRFDuino(CytonBase):
 
         while binary := self.read(size):
             try:
-                kafka_context.update({'created': datetime.now().timestamp()})
+                # kafka_context.update({'created': datetime.now().timestamp()})
                 data = {'context': kafka_context,
                         'data': binary,
                         }

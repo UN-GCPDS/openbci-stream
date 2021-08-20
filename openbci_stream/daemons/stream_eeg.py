@@ -134,8 +134,8 @@ class BinaryToEEG:
         data = np.array(list(binary))
 
         # Search for the the first index with a `BIN_HEADER`
-        start = [np.median(np.roll(data, -i, axis=0)[::33])
-                 == self.BIN_HEADER for i in range(33)].index(True)
+        start = [np.median(np.roll(data, -i, axis=0)[::33]) ==
+                 self.BIN_HEADER for i in range(33)].index(True)
 
         if (start == 0) and (data.shape[0] % 33 == 0):
             data_aligned = data
@@ -205,15 +205,16 @@ class BinaryToEEG:
             if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
 
-        # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0] for ch in row.reshape(-1, 3).tolist()] for row in eeg])
-        eeg_data = np.array([rawutil.unpack('>u', bytes(ch))[
-                            0] for ch in eeg.reshape(-1, 3)]).reshape(-1, 8) * self.scale_factor_eeg
+        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
+                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
 
             # # If offset, the pair index condition must change
             if np.array(self.offset[0]).any():
-                eeg_data = np.concatenate([[self.offset[0]], eeg_data], axis=0)
+                eeg_data = np.concatenate(
+                    [[self.offset[0]], eeg_data], axis=0)
                 ids = np.concatenate([[self.offset[1]], ids], axis=0)
                 # pair = not pair
 
@@ -270,7 +271,8 @@ class BinaryToEEG:
 
             # If offset, the even index condition must change
             if np.array(self.offset[0]).any():
-                eeg_data = np.concatenate([[self.offset[0]], eeg_data], axis=0)
+                eeg_data = np.concatenate(
+                    [[self.offset[0]], eeg_data], axis=0)
                 ids = np.concatenate([[self.offset[1]], ids], axis=0)
                 even = not even
 

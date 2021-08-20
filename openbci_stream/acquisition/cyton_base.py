@@ -506,8 +506,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         if daisy:
             logging.info('Daisy detected.')
@@ -536,7 +536,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
                         timestamp = np.zeros(
                             message.value['context']['samples'])
-                        timestamp[-1] = message.value['context']['created']
+                        timestamp[-1] = message.value['context']['timestamp.binary']
                         self._data_timestamp.put(timestamp)
 
                     elif message.topic == 'marker':
@@ -777,10 +777,12 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             writer.add_aux(aux)
             writer.add_markers(self.markers)
 
-            logging.info(f'Writed a vector of shape ({eeg.shape}) for EEG data')
+            logging.info(
+                f'Writed a vector of shape ({eeg.shape}) for EEG data')
             logging.info(
                 f'Writed a vector of shape ({time.shape}) for time data')
-            logging.info(f'Writed a vector of shape ({aux.shape}) for aux data')
+            logging.info(
+                f'Writed a vector of shape ({aux.shape}) for aux data')
 
             if bool(self.markers):
                 logging.info(f'Writed {self.markers.keys()} markers')
