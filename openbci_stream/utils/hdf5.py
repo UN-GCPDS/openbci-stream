@@ -22,7 +22,7 @@ import logging
 from datetime import datetime, date
 from functools import cached_property
 from typing import Dict, Any, Optional, Text, List, TypeVar, Union, Tuple
-import ntplib
+# import ntplib
 import mne
 import tables
 import numpy as np
@@ -132,12 +132,13 @@ class HDF5Writer:
             logging.warning('EEG is empty')
         else:
             header2 = {'shape': self.array_eeg.shape}
-        if self.host_ntp:
-            client = ntplib.NTPClient()
-            header2.update(
-                {'end-offset': client.request(self.host_ntp).offset * 1000})
+        # if self.host_ntp:
+            # client = ntplib.NTPClient()
+            # header2.update(
+                # {'end-offset': client.request(self.host_ntp).offset * 1000})
 
-        self.array_hdr.append([json.dumps(header2, default=np2json_serializer)])
+        self.array_hdr.append(
+            [json.dumps(header2, default=np2json_serializer)])
         self.f.close()
 
     # ----------------------------------------------------------------------
@@ -173,13 +174,14 @@ class HDF5Writer:
           * **recording_additional:** str wit the additional recording information.
           * **technician:** str with the technicians name.
         """
-        if host:
-            client = ntplib.NTPClient()
-            header.update(
-                {'start-offset': client.request(host).offset * 1000, })
-        self.host_ntp = host
+        # if host:
+            # client = ntplib.NTPClient()
+            # header.update(
+                # {'start-offset': client.request(host).offset * 1000, })
+        # self.host_ntp = host
 
-        self.array_hdr.append([json.dumps(header, default=np2json_serializer)])
+        self.array_hdr.append(
+            [json.dumps(header, default=np2json_serializer)])
 
     # ----------------------------------------------------------------------
     def add_marker(self, marker: Any, timestamp: timestamp_) -> None:
@@ -303,9 +305,12 @@ class HDF5Writer:
             channels, _ = aux_data.shape
             atom_eeg = tables.Float64Atom()
             self.array_aux = self.f.create_earray(
-                self.f.root, 'aux_data', atom_eeg, shape=(channels, 0), title='EEG time series')
+                self.f.root, 'aux_data', atom_eeg, shape=(channels, 0), title='Auxiliar data')
 
-        self.array_aux.append(aux_data)
+        try:
+            self.array_aux.append(aux_data)
+        except Exception as e:
+            logging.warning(e)
 
     # ----------------------------------------------------------------------
     def __enter__(self) -> None:
@@ -583,11 +588,22 @@ class HDF5Reader:
 
         classes = []
         data = []
+        no_fit = 0
         for class_ in markers:
             starts = self.markers_relative[class_]
-            classes.extend([class_] * len(starts))
-            data.extend([self.eeg[:, int(start + (tmin) * sampling_rate):int(start +
-                                                                             (tmin + duration) * sampling_rate)] for start in starts])
+
+            for start in starts:
+                i0 = int(start + (tmin * sampling_rate))
+                i1 = int(start + (tmin + duration) * sampling_rate)
+
+                if i1 < self.eeg.shape[1]:
+                    data.append(self.eeg[:, i0:i1])
+                    classes.append(class_)
+                else:
+                    no_fit += 1
+        if no_fit:
+            logging.warning(
+                f'{no_fit} trials have markers but not EEG data associated.')
 
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
