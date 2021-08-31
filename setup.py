@@ -41,6 +41,7 @@ setup(
        "cmd/openbci_cli",
        "cmd/stream_rpyc",
        "cmd/stream_eeg",
+       "cmd/stream_bin2eeg",
        "cmd/stream_fake_binary",
        "cmd/stream_configure_kafka.sh",
        "cmd/stream_access_point.sh",
