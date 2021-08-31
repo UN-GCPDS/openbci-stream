@@ -70,6 +70,8 @@ echo "
 Description=Kafka publish-subscribe messaging system
 Requires=zookeeper@kafka.service
 After=network.target zookeeper@kafka.service
+StartLimitIntervalSec=500
+StartLimitBurst=5
 
 [Service]
 User=kafka
@@ -89,6 +91,8 @@ ExecStart=/usr/bin/java \
   -cp /usr/share/java/kafka/* \
   kafka.Kafka \
   /etc/kafka/server.properties
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
