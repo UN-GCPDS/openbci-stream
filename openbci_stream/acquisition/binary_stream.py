@@ -46,13 +46,14 @@ class BinaryStream:
     accumulated = b''
 
     # ----------------------------------------------------------------------
-    def __init__(self, streaming_package_size: int) -> None:
+    def __init__(self, streaming_package_size: int, board_id: str) -> None:
         """
         Parameters
         ----------
         streaming_package_size
             The package size for streaming packages.
         """
+        self.TOPIC = f'{self.TOPIC}{board_id}'
 
         logging.info(f'Creating {self.TOPIC} Produser')
         self.streaming_package_size = streaming_package_size

@@ -188,12 +188,13 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
     # ----------------------------------------------------------------------
     def __init__(self, daisy: DAISY, montage: Optional[Union[list, dict]],
-                 streaming_package_size: int, capture_stream: bool) -> None:
+                 streaming_package_size: int, capture_stream: bool, board_id: str = '') -> None:
         """"""
         # Default values
         self.sample_rate = 250
         self.boardmode = 'default'
         self.closed = False
+        self.board_id = board_id
 
         # Daisy before Montage
         if daisy in [True, False]:
@@ -393,10 +394,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         start = b'x'
         end = b'X'
         chain = b''
-        for ch in channels:
+
+        if isinstance(srb2, (bytes, str)):
+            srb2 = [srb2] * len(channels)
+
+        for ch, srb2_ in zip(channels, srb2):
             ch = chr(self.CHANNEL_SETTING[ch - 1]).encode()
 
-            c = b''.join([start, ch, power_down, gain, input_type, bias, srb2,
+            c = b''.join([start, ch, power_down, gain, input_type, bias, srb2_,
                           srb1, end])
             if len(chain + c) > 31:  # Over WiFi there is a limit of 31 chars
                 self.command(chain)
@@ -506,8 +511,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         if daisy:
             logging.info('Daisy detected.')
@@ -552,7 +557,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     # ----------------------------------------------------------------------
     def start_stream(self) -> None:
         """Create the binary stream channel."""
-        self.binary_stream = BinaryStream(self.streaming_package_size)
+        self.binary_stream = BinaryStream(
+            self.streaming_package_size, self.board_id)
 
         self.reset_buffers()
         self.reset_input_buffer()
