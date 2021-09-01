@@ -535,9 +535,9 @@ class HDF5Reader:
         Parameters
         ----------
         duration
-            The duration of the trial.
+            The duration of the trial, in seconds.
         tmin
-            The time to take previous to the marker.
+            The time to take previous to the marker, in seconds.
         markers
             A filter of markers for crop the signal.
         kwargs
