@@ -188,13 +188,14 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
 
     # ----------------------------------------------------------------------
     def __init__(self, daisy: DAISY, montage: Optional[Union[list, dict]],
-                 streaming_package_size: int, capture_stream: bool, board_id: str = '') -> None:
+                 streaming_package_size: int, capture_stream: bool, board_id: str = '', parallel_boards: int = 1) -> None:
         """"""
         # Default values
         self.sample_rate = 250
         self.boardmode = 'default'
         self.closed = False
         self.board_id = board_id
+        self.parallel_boards = parallel_boards
 
         # Daisy before Montage
         if daisy in [True, False]:
@@ -511,8 +512,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         if daisy:
             logging.info('Daisy detected.')

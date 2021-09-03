@@ -75,7 +75,8 @@ class OpenBCIConsumer:
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: Optional[int] = 250,
                  host: Optional[str] = 'localhost',
-                 topics: Optional[List[str]] = ['eeg', 'marker', 'annotation'],
+                 topics: Optional[List[str]] = [
+                     'eeg0', 'marker', 'annotation'],
                  auto_start: Optional[bool] = True) -> None:
         """"""
 

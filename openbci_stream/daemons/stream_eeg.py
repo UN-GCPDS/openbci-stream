@@ -24,16 +24,15 @@ import logging
 from kafka import KafkaConsumer, KafkaProducer
 from typing import TypeVar, List, Dict, Tuple, Any
 
-from openbci_stream.utils import autokill_process
-autokill_process(name='binary_2_eeg')
+# from openbci_stream.utils import autokill_process
+# autokill_process(name=f'binary_2_eeg{sys.argv[1]}')
 
 DEBUG = ('--debug' in sys.argv)
 
 KafkaStream = TypeVar('kafka-stream')
 
+
 ########################################################################
-
-
 class BinaryToEEG:
     """Kafka transformer with parallel implementation for processing binary raw
     data into EEG microvolts. This script requires the Kafka daemon running and
@@ -44,14 +43,15 @@ class BinaryToEEG:
     LAST_AUX_SHAPE = 0
 
     # ----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, board_id: str = '0'):
         """"""
+        self.board_id = board_id
 
         self.consumer_binary = KafkaConsumer(bootstrap_servers=['localhost:9092'],
                                              value_deserializer=pickle.loads,
                                              auto_offset_reset='latest',
                                              )
-        self.consumer_binary.subscribe(['binary'])
+        self.consumer_binary.subscribe([f'binary{self.board_id}'])
 
         self.producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
                                           compression_type='gzip',
@@ -174,7 +174,7 @@ class BinaryToEEG:
         self.LAST_AUX_SHAPE = aux.shape
 
         # Stream
-        channels = list(context['montage'].keys())
+        channels = np.array(list(context['montage'].keys())) - 1
 
         return eeg_data.T[channels], aux.T
         # self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
@@ -205,9 +205,9 @@ class BinaryToEEG:
             if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
 
-        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
-        eeg_data = eeg_data * self.scale_factor_eeg
+        # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0] for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array([rawutil.unpack('>u', bytes(ch))[
+                            0] for ch in eeg.reshape(-1, 3)]).reshape(-1, 8) * self.scale_factor_eeg
 
         if context['daisy']:
 
@@ -408,7 +408,7 @@ class BinaryToEEG:
                  'data': data,
                  }
 
-        self.producer_eeg.send('eeg', data_)
+        self.producer_eeg.send(f'eeg{self.board_id}', data_)
 
         if DEBUG:
             logging.info(f"streamed {samples} samples")

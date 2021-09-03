@@ -198,7 +198,9 @@ class CytonRFDuino(CytonBase):
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: int = 250,
                  capture_stream: bool = False,
-                 board_id: str = '0') -> None:
+                 board_id: str = '0',
+                 parallel_boards: int = 1,
+                 ) -> None:
         """"""
 
         self.remote_host = None
@@ -220,6 +222,7 @@ class CytonRFDuino(CytonBase):
                 montage=pickle.dumps(montage),
                 streaming_package_size=streaming_package_size,
                 board_id=board_id,
+                parallel_boards=parallel_boards,
             )
             return
 
@@ -237,7 +240,8 @@ class CytonRFDuino(CytonBase):
                                     parity=serial.PARITY_NONE,
                                     stopbits=serial.STOPBITS_ONE)
 
-        super().__init__(daisy, montage, streaming_package_size, capture_stream, board_id)
+        super().__init__(daisy, montage, streaming_package_size,
+                         capture_stream, board_id, parallel_boards)
 
     # ----------------------------------------------------------------------
     def _get_serial_ports(self) -> Optional[str]:
@@ -412,7 +416,8 @@ class CytonWiFi(CytonBase):
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: int = 250,
                  capture_stream: Optional[bool] = False,
-                 board_id: str = '0') -> None:
+                 board_id: str = '0',
+                 parallel_boards: int = 1, ) -> None:
         """"""
         self.remote_host = None
 
@@ -437,13 +442,15 @@ class CytonWiFi(CytonBase):
                     montage=pickle.dumps(montage),
                     streaming_package_size=streaming_package_size,
                     board_id=board_id,
+                    parallel_boards=parallel_boards,
                 )
             except socket.gaierror:
                 logging.error("'openbci_rpyc' daemon are running?")
 
             return
 
-        super().__init__(daisy, montage, streaming_package_size, capture_stream, board_id)
+        super().__init__(daisy, montage, streaming_package_size,
+                         capture_stream, board_id, parallel_boards)
 
         self._create_tcp_server()
         time.sleep(5)  # secure delay
@@ -556,6 +563,7 @@ class CytonWiFi(CytonBase):
             'montage': self.montage,
             'connection': 'wifi',
             'gain': self._gain,
+            'parallel_boards': self.parallel_boards,
         }
 
     # ----------------------------------------------------------------------
@@ -680,7 +688,7 @@ class CytonR:
                 'allow_public_attrs': True,
                 'allow_pickle': True,
             })
-            self.remote_host = getattr(rpyc_service.root, 'CytonR')(
+            self.remote_host = getattr(rpyc_service.root, 'Cyton')(
                 mode,
                 endpoint,
                 host=None,
@@ -746,7 +754,7 @@ class Cyton:
 
     # ----------------------------------------------------------------------
     def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
-                 daisy: DAISY = 'auto',
+                 daisy: DAISY = List[bool],
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: int = 250,
                  capture_stream: Optional[bool] = False,
@@ -754,17 +762,17 @@ class Cyton:
                  ) -> Union[CytonRFDuino, CytonWiFi]:
 
         self.openbci = []
-        self.chs = number_of_channels
         montage = pickle.loads(montage)
 
-        for board_id, end, mtg in zip(range(len(endpoint)), endpoint, self._split_montage(montage)):
+        for board_id, end, mtg in zip(range(len(endpoint)), endpoint, self.split_montage(montage, number_of_channels)):
             if mode == 'serial':
-                self.openbci.append(CytonRFDuino(end, host, daisy, mtg,
-                                                 streaming_package_size, capture_stream, board_id))
-
+                self.openbci.append(CytonRFDuino(end, host, daisy[board_id], mtg,
+                                                 streaming_package_size, capture_stream, board_id, len(
+                                                     number_of_channels)))
             elif mode == 'wifi':
-                self.openbci.append(CytonWiFi(end, host, daisy, mtg,
-                                              streaming_package_size, capture_stream, board_id))
+                self.openbci.append(CytonWiFi(end, host, daisy[board_id], mtg,
+                                              streaming_package_size, capture_stream, board_id, len(
+                                                  number_of_channels)))
 
     # ----------------------------------------------------------------------
     def __getattr__(self, attr):
@@ -780,30 +788,33 @@ class Cyton:
             return getattr(self.openbci[0], attr)
 
     # ----------------------------------------------------------------------
-    def _get_chs(self):
-        """"""
-        return [16 if mod.daisy else 8 for mod in self.openbci]
-
-    # ----------------------------------------------------------------------
-    def _split_montage(self, montage):
+    def split_montage(self, montage):
         """"""
         split = []
         montage = montage.copy()
+        if hasattr(self, 'args_chs'):
+            chs = self.args_chs
+        else:
+            chs = [16 if mod.daisy else 8 for mod in self.openbci]
 
         if isinstance(montage, dict):
             montage = list(montage.values())
 
-        for i in self.chs:
-            split.append({j: montage.pop(0) for j in range(1, i + 1)})
+        for i in chs:
+            split.append({(j + 1): montage.pop(0) for j in range(i)})
         return split
 
     # ----------------------------------------------------------------------
-    def _split_channels(self, channels):
+    def split_channels(self, channels):
         """"""
         split = []
         channels = list(channels.copy())
+        if hasattr(self, 'args_chs'):
+            chs = self.args_chs
+        else:
+            chs = [16 if mod.daisy else 8 for mod in self.openbci]
 
-        for i in self.chs:
+        for i in chs:
             split.append([channels.pop(0) for _ in range(i)])
 
         return split
@@ -811,13 +822,13 @@ class Cyton:
     # ----------------------------------------------------------------------
     def deactivate_channel(self, channels: List[int]) -> None:
         """"""
-        for mod, chs in zip(self.openbci, self._split_channels(channels)):
+        for mod, chs in zip(self.openbci, self.split_channels(channels)):
             mod.deactivate_channel(chs)
 
     # ----------------------------------------------------------------------
     def activate_channel(self, channels: List[int]) -> None:
         """"""
-        for mod, chs in zip(self.openbci, self._split_channels(channels)):
+        for mod, chs in zip(self.openbci, self.split_channels(channels)):
             mod.activate_channel(chs)
 
     # ----------------------------------------------------------------------
@@ -826,13 +837,13 @@ class Cyton:
         if isinstance(srb2, (bytes, str)):
             srb2 = [srb2] * len(channels)
 
-        for mod, chs, srb2_ in zip(self.openbci, self._split_channels(channels), self._split_channels(srb2)):
+        for mod, chs, srb2_ in zip(self.openbci, self.split_channels(channels), self.split_channels(srb2)):
             mod.channel_settings(chs, power_down, gain,
                                  input_type, bias, srb2_, srb1)
 
     # ----------------------------------------------------------------------
     def leadoff_impedance(self, channels, *args, **kwargs) -> None:
         """"""
-        for mod, chs in zip(self.openbci, self._split_channels(channels)):
+        for mod, chs in zip(self.openbci, self.split_channels(channels)):
             mod.leadoff_impedance(chs, *args, **kwargs)
 
