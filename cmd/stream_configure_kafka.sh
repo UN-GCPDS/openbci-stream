@@ -23,7 +23,16 @@ systemctl start kafka.service zookeeper@kafka.service
 
 echo "Creating partitions"
 kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic binary
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic binary0
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic binary1
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic binary2
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic binary3
 kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic eeg
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic aux
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic eeg0
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic eeg1
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic eeg2
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic eeg3
 kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic marker
 kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic annotation
 kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic command
@@ -31,7 +40,16 @@ kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 
 
 echo "Setting retention"
 kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name binary --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name binary0 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name binary1 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name binary2 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name binary3 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name aux --alter --add-config retention.ms=1000
 kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name eeg --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name eeg0 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name eeg1 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name eeg2 --alter --add-config retention.ms=1000
+kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name eeg3 --alter --add-config retention.ms=1000
 kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name marker --alter --add-config retention.ms=1000
 kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name annotation --alter --add-config retention.ms=1000
 kafka-configs.sh --bootstrap-server localhost:9092 --entity-type topics --entity-name command --alter --add-config retention.ms=1000
