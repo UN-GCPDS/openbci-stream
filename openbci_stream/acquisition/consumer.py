@@ -76,7 +76,7 @@ class OpenBCIConsumer:
                  streaming_package_size: Optional[int] = 250,
                  host: Optional[str] = 'localhost',
                  topics: Optional[List[str]] = [
-                     'eeg0', 'marker', 'annotation'],
+                     'eeg', 'aux', 'marker', 'annotation'],
                  auto_start: Optional[bool] = True) -> None:
         """"""
 

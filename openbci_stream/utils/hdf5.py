@@ -518,13 +518,18 @@ class HDF5Reader:
 
         timestamp = self.f.root.timestamp
 
-        target = timestamp[:, 0].max()
-        self.offsets_position = [
-            np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
-        t = timestamp[:, :-max(self.offsets_position)].mean(axis=0) * 1000
-        self.timestamp_offset = t[0]
-
-        return (t - self.timestamp_offset)
+        if timestamp.shape[0] > 1:
+            target = timestamp[:, 0].max()
+            self.offsets_position = [
+                np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
+            t = timestamp[:, :-max(self.offsets_position)
+                          ].mean(axis=0) * 1000
+            self.timestamp_offset = t[0]
+            return (t - self.timestamp_offset)
+        else:
+            self.timestamp_offset = timestamp[0]
+            self.offsets_position = [0]
+            return np.array(timestamp).reshape(1, -1)
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -533,13 +538,18 @@ class HDF5Reader:
 
         timestamp = self.f.root.aux_timestamp
 
-        target = timestamp[:, 0].max()
-        self.aux_offsets_position = [
-            np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
-        t = timestamp[:, :-max(self.aux_offsets_position)
-                      ].mean(axis=0) * 1000
-
-        return (t - t[0])
+        if timestamp.shape[0] > 1:
+            target = timestamp[:, 0].max()
+            self.aux_offsets_position = [
+                np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
+            t = timestamp[:, :-max(self.aux_offsets_position)
+                          ].mean(axis=0) * 1000
+            self.timestamp_offset = t[0]
+            return (t - self.timestamp_offset)
+        else:
+            self.timestamp_offset = timestamp[0]
+            self.aux_offsets_position = [0]
+            return np.array(timestamp).reshape(1, -1)
 
     # # ----------------------------------------------------------------------
     # @cached_property
@@ -570,6 +580,7 @@ class HDF5Reader:
             # # return np.array(np.round(m), dtype=int)
 
     # ----------------------------------------------------------------------
+
     @cached_property
     def classes(self):
         """A list with the same length of EEG with markers as numbers."""
@@ -841,7 +852,7 @@ class HDF5Reader:
             # return 0
 
     # ----------------------------------------------------------------------
-    def to_npy(self, filename, tmin, tmax):
+    def to_npy(self, filename, tmin=None, tmax=None):
         """"""
         filename = os.path.abspath(filename)
         tmp_dir = os.path.join(os.path.dirname(filename), 'tmp_dir_npy')
@@ -849,9 +860,14 @@ class HDF5Reader:
             shutil.rmtree(tmp_dir)
         os.mkdir(tmp_dir)
 
-        eeg, classes = self.get_data(tmin=tmin, tmax=tmax)
-        np.save(os.path.join(tmp_dir, 'eeg'), eeg)
-        np.save(os.path.join(tmp_dir, 'classes'), classes)
+        if (tmin is None) and (tmax is None):
+            np.save(os.path.join(tmp_dir, 'eeg'), self.eeg)
+            np.save(os.path.join(tmp_dir, 'timestamp'), self.timestamp)
+        else:
+            eeg, classes = self.get_data(tmin=tmin, tmax=tmax)
+            np.save(os.path.join(tmp_dir, 'eeg'), eeg)
+            np.save(os.path.join(tmp_dir, 'classes'), classes)
+
         np.save(os.path.join(tmp_dir, 'markers'), self.markers)
         np.save(os.path.join(tmp_dir, 'aux'), self.aux)
         np.save(os.path.join(tmp_dir, 'aux_timestamp'), self.aux_timestamp)
