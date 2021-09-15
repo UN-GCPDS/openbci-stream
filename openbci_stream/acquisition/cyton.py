@@ -340,6 +340,7 @@ class CytonRFDuino(CytonBase):
                          'montage': self.montage,
                          'connection': 'serial',
                          'gain': self._get_gain(),
+                         'parallel_boards': self.parallel_boards,
                          }
 
         self.command(self.START_STREAM)
@@ -492,6 +493,7 @@ class CytonWiFi(CytonBase):
         elif isinstance(data, int):
             data = chr(data)
 
+        response = None
         try:
             logging.info(f"Sending command: '{data}'")
             response = requests.post(
@@ -504,13 +506,14 @@ class CytonWiFi(CytonBase):
             logging.warning(f"Error on sending command '{data}':{msg}")
             return
 
-        if response.status_code == 200:
+        if response and response.status_code == 200:
             self._readed = response.text
-        elif response.status_code == 502:
+        elif response and response.status_code == 502:
             logging.info(f"No confirmation from board, does not mean fail.")
         else:
-            logging.warning(
-                f"Error code: {response.status_code} {response.text}")
+            if response:
+                logging.warning(
+                    f"Error code: {response.status_code} {response.text}")
             self._readed = None
 
     # ----------------------------------------------------------------------
@@ -639,6 +642,7 @@ class CytonWiFi(CytonBase):
     # ----------------------------------------------------------------------
     def set_latency(self, latency: int) -> None:
         """"""
+        response = None
         try:
             response = requests.post(
                 f"http://{self._ip_address}/latency", json={'latency': latency, })
@@ -646,11 +650,12 @@ class CytonWiFi(CytonBase):
             logging.warning(f"Error on setting latency '{data}': {e}")
             return
 
-        if response.status_code == 200:
-            return
-        else:
-            logging.warning(
-                f"Error code: {response.status_code} {response.text}")
+        if response:
+            if response.status_code == 200:
+                return
+            else:
+                logging.warning(
+                    f"Error code: {response.status_code} {response.text}")
 
     # ----------------------------------------------------------------------
     def close(self) -> None:
@@ -762,9 +767,14 @@ class Cyton:
                  ) -> Union[CytonRFDuino, CytonWiFi]:
 
         self.openbci = []
-        montage = pickle.loads(montage)
 
-        for board_id, end, mtg in zip(range(len(endpoint)), endpoint, self.split_montage(montage, number_of_channels)):
+        if montage:
+            montage = pickle.loads(montage)
+            montage = self.split_montage(montage, number_of_channels)
+        else:
+            montage = [montage] * len(endpoint)
+
+        for board_id, end, mtg in zip(range(len(endpoint)), endpoint, montage):
             if mode == 'serial':
                 self.openbci.append(CytonRFDuino(end, host, daisy[board_id], mtg,
                                                  streaming_package_size, capture_stream, board_id, len(
@@ -777,7 +787,7 @@ class Cyton:
     # ----------------------------------------------------------------------
     def __getattr__(self, attr):
         """"""
-        if isinstance(type(getattr(self.openbci[0], attr)), types.MethodType):
+        if isinstance(getattr(self.openbci[0], attr), (types.MethodType, types.FunctionType)):
             # The mthods will be aplied to all boards
             def wrap(*args, **kwargs):
                 return [getattr(mod, attr)(*args, **kwargs) for mod in self.openbci]
@@ -788,14 +798,10 @@ class Cyton:
             return getattr(self.openbci[0], attr)
 
     # ----------------------------------------------------------------------
-    def split_montage(self, montage):
+    def split_montage(self, montage, chs):
         """"""
         split = []
         montage = montage.copy()
-        if hasattr(self, 'args_chs'):
-            chs = self.args_chs
-        else:
-            chs = [16 if mod.daisy else 8 for mod in self.openbci]
 
         if isinstance(montage, dict):
             montage = list(montage.values())
@@ -808,15 +814,18 @@ class Cyton:
     def split_channels(self, channels):
         """"""
         split = []
-        channels = list(channels.copy())
-        if hasattr(self, 'args_chs'):
-            chs = self.args_chs
-        else:
-            chs = [16 if mod.daisy else 8 for mod in self.openbci]
+        channels = list(channels).copy()
+        for i in [16 if mod.daisy else 8 for mod in self.openbci]:
+            split.append([i + 1 for i in range(i)])
+            # split.append([channels.pop(0) for i in range(i)])
+        return split
 
-        for i in chs:
-            split.append([channels.pop(0) for _ in range(i)])
-
+    # ----------------------------------------------------------------------
+    def just_split(self, data):
+        """"""
+        split = []
+        for i in [16 if mod.daisy else 8 for mod in self.openbci]:
+            split.append([data.pop(0) for i in range(i)])
         return split
 
     # ----------------------------------------------------------------------
@@ -837,7 +846,7 @@ class Cyton:
         if isinstance(srb2, (bytes, str)):
             srb2 = [srb2] * len(channels)
 
-        for mod, chs, srb2_ in zip(self.openbci, self.split_channels(channels), self.split_channels(srb2)):
+        for mod, chs, srb2_ in zip(self.openbci, self.split_channels(channels), self.just_split(srb2)):
             mod.channel_settings(chs, power_down, gain,
                                  input_type, bias, srb2_, srb1)
 
@@ -847,3 +856,14 @@ class Cyton:
         for mod, chs in zip(self.openbci, self.split_channels(channels)):
             mod.leadoff_impedance(chs, *args, **kwargs)
 
+    # # ----------------------------------------------------------------------
+    # def start_stream(self):
+        # """"""
+        # for mod in self.openbci:
+            # mod.start_stream()
+
+    # # ----------------------------------------------------------------------
+    # def stop_stream(self):
+        # """"""
+        # for mod in self.openbci:
+            # mod.stop_stream()

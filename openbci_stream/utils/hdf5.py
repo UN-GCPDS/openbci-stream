@@ -437,8 +437,10 @@ class HDF5Reader:
             for _ in range(nchan):
                 eeg__.append(np.roll(eeg_[ch], -pos))
                 ch += 1
-
-        return np.array(eeg__)[:, :-max(self.offsets_position)]
+        if len(self.offsets_position) > 1:
+            return np.array(eeg__)[:, :-max(self.offsets_position)]
+        else:
+            return np.array(eeg__)
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -457,8 +459,10 @@ class HDF5Reader:
             for _ in range(int(nchan)):
                 aux__.append(np.roll(aux_[ch], -pos))
                 ch += 1
-
-        return np.array(aux__)[:, :-max(self.aux_offsets_position)]
+        if len(self.aux_offsets_position) > 1:
+            return np.array(aux__)[:, :-max(self.aux_offsets_position)]
+        else:
+            return np.array(aux__)
 
     # ----------------------------------------------------------------------
     @cached_property

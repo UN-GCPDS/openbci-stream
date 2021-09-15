@@ -65,3 +65,4 @@ proj.launch-config = {loc('../../brainscore/python-brainscore/brainscore/openbci
                       loc('openbci_stream/utils/openbci_cli.py'): ('project',
         ('stream --host 192.168.1.1',
          ''))}
+proj.main-file = loc('test/t.py')

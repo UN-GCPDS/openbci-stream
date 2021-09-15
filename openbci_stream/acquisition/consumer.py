@@ -77,7 +77,10 @@ class OpenBCIConsumer:
                  host: Optional[str] = 'localhost',
                  topics: Optional[List[str]] = [
                      'eeg', 'aux', 'marker', 'annotation'],
-                 auto_start: Optional[bool] = True) -> None:
+                 auto_start: Optional[bool] = True,
+                 *args,
+                 **kwargs,
+                 ) -> None:
         """"""
 
         self.bootstrap_servers = [f'{host}:9092']
@@ -92,6 +95,8 @@ class OpenBCIConsumer:
                                  capture_stream=False,
                                  montage=montage,
                                  streaming_package_size=streaming_package_size,
+                                 *args,
+                                 **kwargs,
                                  )
 
     # ----------------------------------------------------------------------
