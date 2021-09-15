@@ -245,15 +245,16 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             montage = pickle.loads(montage)
 
         if isinstance(montage, (list, tuple, range)):
-            self._montage = {i: ch for i, ch in enumerate(montage)}
+            self._montage = {i + 1: ch for i, ch in enumerate(montage)}
         elif isinstance(montage, (dict)):
-            self._montage = {i: ch for i, ch in enumerate(montage.values())}
+            self._montage = {i + 1: ch for i,
+                             ch in enumerate(montage.values())}
         else:
             # Default
             if self.daisy:
-                self._montage = {i: f'ch{i+1}' for i in range(16)}
+                self._montage = {i + 1: f'ch{i+1}' for i in range(16)}
             elif not self.daisy:
-                self._montage = {i: f'ch{i+1}' for i in range(8)}
+                self._montage = {i + 1: f'ch{i+1}' for i in range(8)}
 
     # ----------------------------------------------------------------------
     def deactivate_channel(self, channels: List[int]) -> None:
@@ -512,8 +513,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
-                     ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
+                     or ('8' in response.decode(errors='ignore')))
 
         if daisy:
             logging.info('Daisy detected.')
@@ -558,8 +559,11 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     # ----------------------------------------------------------------------
     def start_stream(self) -> None:
         """Create the binary stream channel."""
-        self.binary_stream = BinaryStream(
-            self.streaming_package_size, self.board_id)
+        # self.binary_stream = BinaryStream(
+            # self.streaming_package_size, self.board_id)
+        if not hasattr(set, 'binary_stream'):
+            self.binary_stream = BinaryStream(
+                self.streaming_package_size, self.board_id)
 
         self.reset_buffers()
         self.reset_input_buffer()

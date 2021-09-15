@@ -9,11 +9,21 @@ For examples and descriptions refers to documentation:
 `Data Acquisition - Distributed acquisition <../03-data_acquisition.ipynb/#Distributed-acquisition>`_
 """
 
+import sys
+import logging
+
 import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi, Cyton
 
 from openbci_stream.utils import autokill_process
 autokill_process(name='stream_rpyc')
+
+
+DEBUG = ('--debug' in sys.argv)
+
+if DEBUG:
+    logging.getLogger().setLevel(logging.DEBUG)
+    # logging.getLogger('kafka').setLevel(logging.WARNING)
 
 
 ########################################################################
@@ -46,7 +56,7 @@ class StremamService(rpyc.Service):
         return StremamService.last_service
 
     # ----------------------------------------------------------------------
-    def exposed_CytonR(self, *args, **kwargs):
+    def exposed_Cyton(self, *args, **kwargs):
         """"""
         if StremamService.last_service:
             if not StremamService.last_service.closed:
