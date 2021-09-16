@@ -498,8 +498,9 @@ class HDF5Reader:
         markers = {}
         for mkr in self.f.root.markers:
             t, marker = json.loads(mkr)
+            # markers.setdefault(marker, []).append(np.abs(self.timestamp - ((t * 1000) - self.timestamp_offset)).argmin())
             markers.setdefault(marker, []).append(
-                np.abs(self.timestamp - ((t * 1000) - self.timestamp_offset)).argmin())
+                np.abs(self.timestamp - ((t - self.timestamp_offset) * 1000)).argmin())
 
         return markers
 
@@ -531,9 +532,9 @@ class HDF5Reader:
             self.timestamp_offset = t[0]
             return (t - self.timestamp_offset)
         else:
-            self.timestamp_offset = timestamp[0]
+            self.timestamp_offset = timestamp[0][0]
             self.offsets_position = [0]
-            return np.array(timestamp).reshape(1, -1)
+            return (np.array(timestamp).reshape(1, -1) - self.timestamp_offset) * 1000
 
     # ----------------------------------------------------------------------
     @cached_property
