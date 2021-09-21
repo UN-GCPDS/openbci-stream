@@ -34,6 +34,7 @@ setup(
                       'netifaces',
                       'nmap',
                       'pyserial',
+                      'systemd_service',
                       ],
 
     scripts=[

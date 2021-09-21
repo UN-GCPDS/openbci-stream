@@ -8,5 +8,6 @@ sudo stream_configure_ntpd.sh
 sudo stream_access_point.sh
 sudo stream_eeg systemd
 sudo stream_rpyc systemd
-sudo systemctl enable stream_eeg stream_rpyc
-sudo systemctl start stream_eeg stream_rpyc
+sudo systemctl daemon-reload
+sudo systemctl enable stream_eeg stream_rpyc stream_bin2eeg0 stream_bin2eeg1 stream_bin2eeg2 stream_bin2eeg3
+sudo systemctl start stream_eeg stream_rpyc stream_bin2eeg0 stream_bin2eeg1 stream_bin2eeg2 stream_bin2eeg3

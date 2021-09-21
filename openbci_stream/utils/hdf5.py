@@ -477,7 +477,7 @@ class HDF5Reader:
             return []
 
         anotations = [json.loads(an) for an in self.f.root.annotations]
-        start = datetime.fromtimestamp(self.timestamp[0])
+        start = datetime.fromtimestamp(self.timestamp[0][0])
 
         for index, an in enumerate(anotations):
             onset = (datetime.fromtimestamp(an[0]) - start).total_seconds()
@@ -799,7 +799,7 @@ class HDF5Reader:
             'patientname': self.header.get('patientname', ''),
             'patient_additional': self.header.get('patient_additional', ''),
             'recording_additional': self.header.get('recording_additional', ''),
-            'startdate': datetime.fromtimestamp(self.timestamp[0]),
+            'startdate': datetime.fromtimestamp(self.timestamp[0][0]),
             'technician': self.header.get('technician', ''),
         }
 
