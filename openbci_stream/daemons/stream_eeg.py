@@ -25,7 +25,7 @@ from kafka import KafkaConsumer, KafkaProducer
 from typing import TypeVar, List, Dict, Tuple, Any
 
 
-from queue import Queue as queue
+from queue import LifoQueue as queue
 
 
 from openbci_stream.utils import autokill_process
@@ -107,6 +107,7 @@ class EEG:
                         s.value['context']['timestamp.eeg'] for s in stream]
                     context['timestamp.binary.consume'] = [
                         s.value['context']['timestamp.binary.consume'] for s in stream]
+                    context['buffer'] = data
 
                     logging.debug('Preparing EEG data')
                     cuteeg = min([d[0].shape[1] for d in eeg_data])
