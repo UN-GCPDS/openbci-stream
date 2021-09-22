@@ -20,7 +20,6 @@ if "systemd" in sys.argv:
     daemon3 = Service("stream_bin2eeg3", "stream_bin2eeg 3")
     daemon3.create_timer(
         on_boot_sec=10, after='network.target kafka.service')
-
 else:
     from openbci_stream.daemons.stream_bin2eeg import BinaryToEEG
 
