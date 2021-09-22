@@ -11,7 +11,7 @@ For examples and descriptions refers to documentation:
 
 import sys
 import logging
-
+import requests
 import rpyc
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi, Cyton
 
@@ -24,6 +24,20 @@ DEBUG = ('--debug' in sys.argv)
 if DEBUG:
     logging.getLogger().setLevel(logging.DEBUG)
     # logging.getLogger('kafka').setLevel(logging.WARNING)
+
+
+########################################################################
+class RequestWifi:
+    """"""
+
+    # ----------------------------------------------------------------------
+    def status(self, ip):
+        """Constructor"""
+        response = requests.get(f'http://{ip}/board', timeout=0.3)
+        if response.json()['board_connected']:
+            return response.json()
+        else:
+            return False
 
 
 ########################################################################
@@ -66,6 +80,12 @@ class StremamService(rpyc.Service):
         StremamService.last_service = Cyton(*args, **kwargs)
         StremamService.last_service.is_recycled = False
         return StremamService.last_service
+
+    # ----------------------------------------------------------------------
+    def exposed_Wifi(self, ip):
+        """"""
+        req = RequestWifi()
+        return req.status(ip)
 
 
 # ----------------------------------------------------------------------

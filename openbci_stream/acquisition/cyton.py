@@ -714,6 +714,16 @@ class CytonR:
         return super().__getattribute__(attr)
 
 
+# ----------------------------------------------------------------------
+def wifi(host, ip):
+    """"""
+    rpyc_service = rpyc.connect(host, 18861, config={
+        'allow_public_attrs': True,
+        'allow_pickle': True,
+    })
+    return rpyc_service.root.Wifi(ip)
+
+
 ########################################################################
 class Cyton:
     """
