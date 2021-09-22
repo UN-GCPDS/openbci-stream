@@ -369,13 +369,22 @@ class BinaryToEEG:
         elif stop_byte == 0xc1:
 
             if context['boardmode'] == 'analog':
-                # A7, A6, A5
-                # D13, D12, D11
-                return aux[:, 1::2]
+                if context['connection'] == 'wifi':
+                    # A7, A6, A5
+                    # D13, D12, D11
+                    return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()][:2] for row in aux])
+                else:
+                    # A7, A6, A5
+                    # D13, D12, D11
+                    return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()] for row in aux])
 
             elif context['boardmode'] == 'digital':
-                # D11, D12, D13, D17, D18
-                return np.delete(aux, 4, axis=1)
+                if context['connection'] == 'wifi':
+                    # D11, D12, D17
+                    return aux[:, [0, 1, 3]]
+                else:
+                    # D11, D12, D13, D17, D18
+                    return aux[:, :-1]
 
             elif context['boardmode'] == 'marker':
                 # Some time for some reason, marker not always send back from
@@ -438,4 +447,3 @@ class BinaryToEEG:
 if __name__ == '__main__':
     tranformer = BinaryToEEG(0)
     tranformer.consume()
-

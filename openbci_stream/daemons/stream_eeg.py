@@ -74,86 +74,93 @@ class EEG:
             for record in self.consumer_eegn:
                 logging.info(
                     f"processing {record.topic}:{len(record.value['data'])}")
-
                 eeg_historical[record.topic].put(record)
 
                 count = record.value['context']['parallel_boards']
                 data = [eeg_historical[f'eeg{c}'].qsize()
                         for c in range(count)]
-                if all(data):
-                    logging.debug(f'Preparing stream {data}')
-                    stream = [
-                        eeg_historical[f'eeg{c}'].get() for c in range(count)]
-                    eeg_data = [s.value['data'] for s in stream]
-                    context = stream[0].value['context']
 
-                    # montage
-                    logging.debug('Creating montage')
-                    montage = [s.value['context']['montage'] for s in stream]
-                    montage_ = []
-                    for items, i in zip([list(m.items()) for m in montage], [0] + [len(m) for m in montage][:-1]):
-                        items, i
-                        montage_.extend([(m[0] + i, m[1]) for m in items])
-                    montage = dict(montage_)
+                while min(data) > 1:
 
-                    #  context
-                    logging.debug('Creating context')
-                    context['montage'] = montage
-                    context['timestamp.binary'] = [
-                        s.value['context']['timestamp.binary'] for s in stream]
-                    context['daisy'] = [s.value['context']['daisy']
-                                        for s in stream]
-                    context['timestamp.eeg'] = [
-                        s.value['context']['timestamp.eeg'] for s in stream]
-                    context['timestamp.binary.consume'] = [
-                        s.value['context']['timestamp.binary.consume'] for s in stream]
-                    context['buffer'] = data
+                    if all(data):
+                        logging.debug(f'Preparing stream {data}')
+                        stream = [
+                            eeg_historical[f'eeg{c}'].get() for c in range(count)]
+                        eeg_data = [s.value['data'] for s in stream]
+                        context = stream[0].value['context']
 
-                    logging.debug('Preparing EEG data')
-                    cuteeg = min([d[0].shape[1] for d in eeg_data])
-                    eeg = np.concatenate([d[0][:, :cuteeg]
-                                          for d in eeg_data], axis=0)
-                    if cuteeg:
-                        logging.debug(f'Droped {cuteeg} samples')
+                        # montage
+                        logging.debug('Creating montage')
+                        montage = [s.value['context']['montage']
+                                   for s in stream]
+                        montage_ = []
+                        for items, i in zip([list(m.items()) for m in montage], [0] + [len(m) for m in montage][:-1]):
+                            items, i
+                            montage_.extend([(m[0] + i, m[1])
+                                             for m in items])
+                        montage = dict(montage_)
 
-                    if eeg_data[0][1].size:
-                        logging.debug(f'Preparing AUX data')
-                        cutaux = min([d[1].shape[1] for d in eeg_data])
-                        aux = np.concatenate(
-                            [d[1][:, :cutaux] for d in eeg_data], axis=0)
-                        if cutaux:
-                            logging.debug(f'Droped {cutaux} samples')
-                    else:
-                        logging.debug(f'No Auxiliar data')
-                        aux = None
+                        #  context
+                        logging.debug('Creating context')
+                        context['montage'] = montage
+                        context['timestamp.binary'] = [
+                            s.value['context']['timestamp.binary'] for s in stream]
+                        context['daisy'] = [s.value['context']['daisy']
+                                            for s in stream]
+                        context['timestamp.eeg'] = [
+                            s.value['context']['timestamp.eeg'] for s in stream]
+                        context['timestamp.binary.consume'] = [
+                            s.value['context']['timestamp.binary.consume'] for s in stream]
+                        context['buffer'] = data
 
-                    # EEG
-                    logging.debug(f'Streaming EEG({eeg.shape})')
-                    context['samples'] = eeg.shape[1]
-                    self.producer_eeg.send(
-                        'eeg', {'context': context.copy(), 'data': eeg.copy()})
-                    # fut_eeg = self.producer_eeg.send(
-                        # 'eeg', {'context': context.copy(), 'data': eeg.copy()})
-                    # try:
-                        # fut_eeg.get()
-                    # except Exception as e:
-                        # logging.error(e)
+                        logging.debug('Preparing EEG data')
+                        cuteeg = min([d[0].shape[1] for d in eeg_data])
+                        eeg = np.concatenate([d[0][:, :cuteeg]
+                                              for d in eeg_data], axis=0)
+                        if cuteeg:
+                            logging.debug(f'Droped {cuteeg} samples')
 
-                    # Aux
-                    if aux.size:
-                        logging.debug(f'Streaming AUX({aux.shape})')
-                        context['samples'] = aux.shape[1]
+                        if eeg_data[0][1].size:
+                            logging.debug(f'Preparing AUX data')
+                            cutaux = min([d[1].shape[1] for d in eeg_data])
+                            aux = np.concatenate(
+                                [d[1][:, :cutaux] for d in eeg_data], axis=0)
+                            if cutaux:
+                                logging.debug(f'Droped {cutaux} samples')
+                        else:
+                            logging.debug(f'No Auxiliar data')
+                            aux = None
+
+                        # EEG
+                        logging.debug(f'Streaming EEG({eeg.shape})')
+                        context['samples'] = eeg.shape[1]
                         self.producer_eeg.send(
-                            'aux', {'context': context.copy(), 'data': aux.copy()})
-                        # fut_aux = self.producer_eeg.send(
-                            # 'aux', {'context': context.copy(), 'data': aux.copy()})
+                            'eeg', {'context': context.copy(), 'data': eeg.copy()})
+                        # fut_eeg = self.producer_eeg.send(
+                            # 'eeg', {'context': context.copy(), 'data': eeg.copy()})
                         # try:
-                            # fut_aux.get()
+                            # fut_eeg.get()
                         # except Exception as e:
                             # logging.error(e)
 
-                else:
-                    logging.debug(f'Not enought data {data}')
+                        # Aux
+                        if aux.size:
+                            logging.debug(f'Streaming AUX({aux.shape})')
+                            context['samples'] = aux.shape[1]
+                            self.producer_eeg.send(
+                                'aux', {'context': context.copy(), 'data': aux.copy()})
+                            # fut_aux = self.producer_eeg.send(
+                                # 'aux', {'context': context.copy(), 'data': aux.copy()})
+                            # try:
+                                # fut_aux.get()
+                            # except Exception as e:
+                                # logging.error(e)
+
+                    else:
+                        logging.debug(f'Not enought data {data}')
+
+                    data = [eeg_historical[f'eeg{c}'].qsize()
+                            for c in range(count)]
 
 
 if __name__ == '__main__':
