@@ -513,8 +513,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         if not response:
             return self.daisy_attached()
 
-        daisy = not (('no daisy to attach' in response.decode(errors='ignore'))
-                     or ('8' in response.decode(errors='ignore')))
+        daisy = not (('no daisy to attach' in response.decode(errors='ignore')) or
+                     ('8' in response.decode(errors='ignore')))
 
         if daisy:
             logging.info('Daisy detected.')
@@ -525,7 +525,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     def capture_stream(self) -> None:
         """Create a process for connecting to the stream and capture data from it."""
 
-        # For prevent circular import
+        # To prevent circular imports
         from .consumer import OpenBCIConsumer
 
         self.reset_buffers()
@@ -536,15 +536,22 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
                 for message in stream:
                     if message.topic == 'eeg':
 
-                        eeg, aux = message.value['data']
-
+                        eeg = message.value['data']
                         self._data_eeg.put(eeg)
-                        self._data_aux.put(aux)
 
                         timestamp = np.zeros(
                             message.value['context']['samples'])
                         timestamp[-1] = message.value['context']['timestamp.binary']
                         self._data_timestamp.put(timestamp)
+
+                    elif message.topic == 'aux':
+
+                        aux = message.value['data']
+                        self._data_aux.put(aux)
+
+                        # timestamp = np.zeros(message.value['context']['samples'])
+                        # timestamp[-1] = message.value['context']['timestamp.binary']
+                        # self._data_timestamp.put(timestamp)
 
                     elif message.topic == 'marker':
 
@@ -785,7 +792,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
             aux = self.aux_time_series
 
             writer.add_eeg(eeg, time)
-            writer.add_aux(aux)
+            writer.add_aux(aux, time)
             writer.add_markers(self.markers)
 
             logging.info(

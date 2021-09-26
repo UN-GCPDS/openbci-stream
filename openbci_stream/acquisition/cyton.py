@@ -778,6 +778,9 @@ class Cyton:
 
         self.openbci = []
 
+        if isinstance(endpoint, str):
+            endpoint = [endpoint]
+
         if montage:
             montage = pickle.loads(montage)
             montage = self.split_montage(montage, number_of_channels)
