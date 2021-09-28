@@ -671,47 +671,47 @@ class CytonWiFi(CytonBase):
         self.th_loop.start()
 
 
-########################################################################
-class CytonR:
-    """"""
+# ########################################################################
+# class CytonR:
+    # """"""
 
-    # ----------------------------------------------------------------------
-    def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
-                 daisy: DAISY = 'auto',
-                 montage: Optional[Union[list, dict]] = None,
-                 streaming_package_size: int = 250,
-                 capture_stream: Optional[bool] = False,
-                 number_of_channels: List = [],
-                 ) -> Union[CytonRFDuino, CytonWiFi]:
-        """"""
+    # # ----------------------------------------------------------------------
+    # def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
+                 # daisy: DAISY = 'auto',
+                 # montage: Optional[Union[list, dict]] = None,
+                 # streaming_package_size: int = 250,
+                 # capture_stream: Optional[bool] = False,
+                 # number_of_channels: List = [],
+                 # ) -> Union[CytonRFDuino, CytonWiFi]:
+        # """"""
 
-        if host == 'localhost':
-            host = None
+        # if host == 'localhost':
+            # host = None
 
-        if host:
-            rpyc_service = rpyc.connect(host, 18861, config={
-                'allow_public_attrs': True,
-                'allow_pickle': True,
-            })
-            self.remote_host = getattr(rpyc_service.root, 'Cyton')(
-                mode,
-                endpoint,
-                host=None,
-                daisy=daisy,
-                montage=pickle.dumps(montage),
-                streaming_package_size=streaming_package_size,
-                capture_stream=capture_stream,
-                number_of_channels=number_of_channels,
-            )
+        # if host:
+            # rpyc_service = rpyc.connect(host, 18861, config={
+                # 'allow_public_attrs': True,
+                # 'allow_pickle': True,
+            # })
+            # self.remote_host = getattr(rpyc_service.root, 'Cyton')(
+                # mode,
+                # endpoint,
+                # host=None,
+                # daisy=daisy,
+                # montage=pickle.dumps(montage),
+                # streaming_package_size=streaming_package_size,
+                # capture_stream=capture_stream,
+                # number_of_channels=number_of_channels,
+            # )
 
-    # ----------------------------------------------------------------------
-    def __getattribute__(self, attr: str) -> Any:
-        """Some attributes must be acceded from RPyC."""
+    # # ----------------------------------------------------------------------
+    # def __getattribute__(self, attr: str) -> Any:
+        # """Some attributes must be acceded from RPyC."""
 
-        if super().__getattribute__('remote_host'):
-            return getattr(super().__getattribute__('remote_host'), attr)
+        # if super().__getattribute__('remote_host'):
+            # return getattr(super().__getattribute__('remote_host'), attr)
 
-        return super().__getattribute__(attr)
+        # return super().__getattribute__(attr)
 
 
 # ----------------------------------------------------------------------
@@ -776,41 +776,77 @@ class Cyton:
                  number_of_channels: List = [],
                  ) -> Union[CytonRFDuino, CytonWiFi]:
 
-        self.openbci = []
-
         if isinstance(endpoint, str):
             endpoint = [endpoint]
 
-        if montage:
-            montage = pickle.loads(montage)
-            montage = self.split_montage(montage, number_of_channels)
-        else:
-            montage = [montage] * len(endpoint)
+        if host == 'localhost':
+            host = None
 
-        for board_id, end, mtg in zip(range(len(endpoint)), endpoint, montage):
-            if mode == 'serial':
-                self.openbci.append(CytonRFDuino(end, host, daisy[board_id], mtg,
-                                                 streaming_package_size, capture_stream, board_id, len(
-                                                     number_of_channels)))
-            elif mode == 'wifi':
-                self.openbci.append(CytonWiFi(end, host, daisy[board_id], mtg,
-                                              streaming_package_size, capture_stream, board_id, len(
-                                                  number_of_channels)))
-
-    # ----------------------------------------------------------------------
-    def __getattr__(self, attr):
-        """"""
-        if isinstance(getattr(self.openbci[0], attr), (types.MethodType, types.FunctionType)):
-            # The mthods will be aplied to all boards
-            def wrap(*args, **kwargs):
-                return [getattr(mod, attr)(*args, **kwargs) for mod in self.openbci]
-            return wrap
+        self.remote_host = None
+        self.openbci = None
+        if host:
+            self.openbci = None
+            rpyc_service = rpyc.connect(host, 18861, config={
+                'allow_public_attrs': True,
+                'allow_pickle': True,
+            })
+            self.remote_host = getattr(rpyc_service.root, 'Cyton')(
+                mode,
+                endpoint,
+                host=None,
+                daisy=daisy,
+                montage=pickle.dumps(montage),
+                streaming_package_size=streaming_package_size,
+                capture_stream=capture_stream,
+                number_of_channels=number_of_channels,
+            )
 
         else:
-            # The attribute of the first board will be used by default
-            return getattr(self.openbci[0], attr)
+            openbci = []
+            if montage:
+                montage = pickle.loads(montage)
+                montage = self.split_montage(montage, number_of_channels)
+            else:
+                montage = [montage] * len(endpoint)
+
+            for board_id, end, mtg in zip(range(len(endpoint)), endpoint, montage):
+                if mode == 'serial':
+                    openbci.append(CytonRFDuino(end, host, daisy[board_id], mtg,
+                                                streaming_package_size, capture_stream, board_id, len(
+                        number_of_channels)))
+                elif mode == 'wifi':
+                    openbci.append(CytonWiFi(end, host, daisy[board_id], mtg,
+                                             streaming_package_size, capture_stream, board_id, len(
+                        number_of_channels)))
+
+            self.openbci = openbci
 
     # ----------------------------------------------------------------------
+    def __getattribute__(self, attr: str) -> Any:
+        """Some attributes must be acceded from RPyC."""
+
+        if super().__getattribute__('remote_host'):
+            return getattr(super().__getattribute__('remote_host'), attr)
+        # return super().__getattribute__(attr)
+
+        openbci = super().__getattribute__('openbci')
+        if isinstance(openbci, list):
+
+            if isinstance(getattr(openbci[0], attr), (types.MethodType, types.FunctionType)):
+                # The mthods will be aplied to all boards
+                def wrap(*args, **kwargs):
+                    return [getattr(mod, attr)(*args, **kwargs) for mod in openbci]
+                return wrap
+
+            else:
+                # The attribute of the first board will be used by default
+                return getattr(openbci[0], attr)
+
+        else:
+            return super().__getattribute__(attr)
+
+    # ----------------------------------------------------------------------
+
     def split_montage(self, montage, chs):
         """"""
         split = []
