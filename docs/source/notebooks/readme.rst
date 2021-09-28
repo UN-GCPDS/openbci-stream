@@ -45,7 +45,7 @@ this is achieved by implementing `Kafka <https://kafka.apache.org/>`__
 and their capabilities to create multiple topics for classifying the
 streaming, these topics are used to separate the neurophysiological data
 from the `event markers <05-stream_markers>`__, so the clients can
-subscript to a specific topic for injecting or read content, this means
+subscribe to a specific topic for injecting or read content, this means
 that is possible to implement an event register in a separate process
 that stream markers for all clients in real-time without handle dense
 time-series data. A crucial issue that stays on `time
@@ -79,6 +79,8 @@ Main features
 -  **Markers/Events handler:** Besides the marker boardmode available in
    Cyton, a stream channel for the reading and writing of markers is
    available for use in any development.
+-  **Multiple boards:** Is possible to use multiple OpenBCI boards just
+   by adding multiple endpoints to the commands.
 
 Examples
 --------
@@ -145,3 +147,16 @@ Examples
                 t0 = time.time()
                 if i == 9:
                     break
+
+.. code:: ipython3
+
+    # Acquisition with multiple boards
+    
+    from openbci_stream.acquisition import Cyton
+    openbci = Cyton('wifi', endpoint=['192.68.1.113', '192.68.1.185'], capture_stream=True)
+    openbci.stream(15) # collect data for 15 seconds
+    
+    # asynchronous call
+    openbci.start_stream()
+    time.sleep(15)  # collect data for 15 seconds
+    openbci.stop_stream()
