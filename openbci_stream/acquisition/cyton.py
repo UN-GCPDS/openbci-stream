@@ -769,7 +769,7 @@ class Cyton:
 
     # ----------------------------------------------------------------------
     def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
-                 daisy: DAISY = List[bool],
+                 daisy: Optional[List[DAISY]] = None,
                  montage: Optional[Union[list, dict]] = None,
                  streaming_package_size: int = 250,
                  capture_stream: Optional[bool] = False,
@@ -781,6 +781,11 @@ class Cyton:
 
         if host == 'localhost':
             host = None
+
+        if daisy is None:
+            daisy = [False for _ in endpoint]
+        elif isinstance(daisy, bool):
+            daisy = [daisy]
 
         self.remote_host = None
         self.openbci = None
