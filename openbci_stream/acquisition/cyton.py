@@ -210,20 +210,24 @@ class CytonRFDuino(CytonBase):
             host = None
 
         if host:
-            rpyc_service = rpyc.connect(host, 18861, config={
-                'allow_public_attrs': True,
-                'allow_pickle': True,
-            })
-            self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
-                port,
-                host=None,
-                daisy=daisy,
-                capture_stream=capture_stream,
-                montage=pickle.dumps(montage),
-                streaming_package_size=streaming_package_size,
-                board_id=board_id,
-                parallel_boards=parallel_boards,
-            )
+            try:
+                rpyc_service = rpyc.connect(host, 18861, config={
+                    'allow_public_attrs': True,
+                    'allow_pickle': True,
+                })
+                self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
+                    port,
+                    host=None,
+                    daisy=daisy,
+                    capture_stream=capture_stream,
+                    montage=pickle.dumps(montage),
+                    streaming_package_size=streaming_package_size,
+                    board_id=board_id,
+                    parallel_boards=parallel_boards,
+                )
+            except socket.gaierror:
+                logging.error("'openbci_rpyc' daemon are running?")
+
             return
 
         if port is None:
