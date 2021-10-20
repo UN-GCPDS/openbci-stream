@@ -13,6 +13,8 @@ import sys
 import logging
 import requests
 import rpyc
+
+from systemd_service import Service
 from openbci_stream.acquisition import CytonRFDuino, CytonWiFi, Cyton
 
 from openbci_stream.utils import autokill_process
@@ -86,6 +88,15 @@ class StremamService(rpyc.Service):
         """"""
         req = RequestWifi()
         return req.status(ip)
+
+    # ----------------------------------------------------------------------
+    def exposed_RestartServices(self):
+        """"""
+        services = ['stream_bin2eeg0', 'stream_bin2eeg1',
+                    'stream_bin2eeg2', 'stream_bin2eeg3', 'stream_eeg']
+
+        for service in services:
+            Service(service).restart()
 
 
 # ----------------------------------------------------------------------

@@ -137,6 +137,7 @@ dmypy.json
 *.wpu
 *.h5
 
+test
 test/my_theme.xml
 sandbox
 /bci_framework/default_projects/*/captures

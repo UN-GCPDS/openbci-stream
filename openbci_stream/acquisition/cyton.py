@@ -728,6 +728,16 @@ def wifi(host, ip):
     return rpyc_service.root.Wifi(ip)
 
 
+# ----------------------------------------------------------------------
+def restart_services(host):
+    """"""
+    rpyc_service = rpyc.connect(host, 18861, config={
+        'allow_public_attrs': True,
+        'allow_pickle': True,
+    })
+    return rpyc_service.root.RestartServices()
+
+
 ########################################################################
 class Cyton:
     """
