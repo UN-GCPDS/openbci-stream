@@ -118,7 +118,7 @@ class EEG:
                         eeg = np.concatenate([d[0][:, :cuteeg]
                                               for d in eeg_data], axis=0)
                         if cuteeg:
-                            logging.debug(f'Droped {cuteeg} samples')
+                            logging.debug(f'>Loaded {cuteeg} samples')
 
                         if eeg_data[0][1].size:
                             logging.debug(f'Preparing AUX data')
@@ -126,7 +126,7 @@ class EEG:
                             aux = np.concatenate(
                                 [d[1][:, :cutaux] for d in eeg_data], axis=0)
                             if cutaux:
-                                logging.debug(f'Droped {cutaux} samples')
+                                logging.debug(f'Loaded {cutaux} samples')
                         else:
                             logging.debug(f'No Auxiliar data')
                             aux = None

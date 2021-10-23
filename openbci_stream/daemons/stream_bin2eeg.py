@@ -60,13 +60,13 @@ class BinaryToEEG:
         self.producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
                                           compression_type='gzip',
                                           value_serializer=pickle.dumps,
-                                          batch_size=2 ** 16,
+                                          # batch_size=2 ** 16,
                                           )
 
         # self.buffer = Queue(maxsize=33)
 
-        self._last_marker = 0
-        self.counter = 0
+        # self._last_marker = 0
+        # self.counter = 0
 
         self.remnant = b''
         self.offset = None, None
