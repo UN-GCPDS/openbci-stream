@@ -60,17 +60,10 @@ class BinaryToEEG:
         self.producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
                                           compression_type='gzip',
                                           value_serializer=pickle.dumps,
-                                          # batch_size=2 ** 16,
                                           )
-
-        # self.buffer = Queue(maxsize=33)
-
-        # self._last_marker = 0
-        # self.counter = 0
 
         self.remnant = b''
         self.offset = None, None
-        # self._last_aux_shape = 0
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -126,7 +119,6 @@ class BinaryToEEG:
         self.stream([eeg_data, aux], context)
 
     # ----------------------------------------------------------------------
-
     def align_data(self, binary: bytes) -> Tuple[np.ndarray, bytes]:
         """Align data following the headers and footers.
 

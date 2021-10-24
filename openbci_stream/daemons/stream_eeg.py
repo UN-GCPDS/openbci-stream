@@ -80,7 +80,7 @@ class EEG:
                 data = [eeg_historical[f'eeg{c}'].qsize()
                         for c in range(count)]
 
-                while min(data) > 1:
+                while min(data) > 0:
 
                     if all(data):
                         logging.debug(f'Preparing stream {data}')
