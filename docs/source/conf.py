@@ -239,7 +239,6 @@ autodoc_mock_imports = [
     'pyedflib',
     'netifaces',
     'nmap',
-    'rawutil',
     'kafka',
     'rpyc',
     'serial',

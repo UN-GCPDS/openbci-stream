@@ -17,7 +17,7 @@ import struct
 from functools import cached_property
 import numpy as np
 from datetime import datetime
-import rawutil
+# import rawutil
 import logging
 
 from kafka import KafkaConsumer, KafkaProducer
@@ -216,8 +216,10 @@ class BinaryToEEG:
             if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
 
-        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
+                              # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array([struct.unpack('>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk)
+                             for chunk in [bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)]]).reshape(-1, 8)
         eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
@@ -272,8 +274,10 @@ class BinaryToEEG:
             if there is a Daisy board `CHANNELS` is 16, otherwise is 8.
         """
 
-        eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
+                              # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array([struct.unpack('>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk)
+                             for chunk in [bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)]]).reshape(-1, 8)
         eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
@@ -362,13 +366,20 @@ class BinaryToEEG:
 
             if context['boardmode'] == 'analog':
                 if context['connection'] == 'wifi':
-                    # A7, A6, A5
-                    # D13, D12, D11
-                    return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()][:2] for row in aux])
+                    # A7, A6
+                    # D13, D12
+
+                    # 2.36 ms ± 89.7 µs
+                    # return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()][:2] for row in aux])
+
+                    # 185 µs ± 3.27 µs
+                    return np.array([struct.unpack('>hhh', a.astype('i1').tobytes())[:2] for a in aux])
+
                 else:
                     # A7, A6, A5
                     # D13, D12, D11
-                    return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()] for row in aux])
+                    # return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()] for row in aux])
+                    return np.array([struct.unpack('>hhh', a.astype('i1').tobytes()) for a in aux])
 
             elif context['boardmode'] == 'digital':
                 if context['connection'] == 'wifi':

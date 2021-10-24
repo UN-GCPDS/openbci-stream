@@ -24,7 +24,6 @@ setup(
     install_requires=['ntplib',
                       'tables',
                       'numpy',
-                      'rawutil',
                       'mne',
                       'requests',
                       'colorama',

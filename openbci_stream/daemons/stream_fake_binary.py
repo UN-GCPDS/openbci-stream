@@ -1,7 +1,7 @@
 import pickle
 from datetime import datetime
 
-import rawutil
+# import rawutil
 import numpy as np
 from kafka import KafkaProducer
 
@@ -24,7 +24,10 @@ data['context']['created'] = datetime.now().timestamp()
 def aux_(values): return list(struct.pack(
     '>hhh', *(np.array(values) * (16 / 0.002)).astype(int).tolist()))
 
-def eeg_(values): return [rawutil.pack('>u', v // 24) for v in values.tolist()]
+def eeg_(values): return [rawutil.pack('>u', v // 24)
+                          for v in values.tolist()]
+
+
 def t0(): return ((time.time() * 10) // 1)
 
 
