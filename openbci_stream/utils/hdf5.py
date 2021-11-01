@@ -18,17 +18,60 @@ For examples and descriptions refers to documentation:
 """
 
 import os
-import shutil
 import json
+import shutil
 import logging
+from functools import wraps
 from datetime import datetime, date
-from functools import cached_property
 from typing import Dict, Any, Optional, Text, List, TypeVar, Union, Tuple
-# import ntplib
+
 import mne
 import tables
 import numpy as np
 from scipy.interpolate import interp1d
+
+try:
+    from functools import cached_property
+
+except:
+    logging.warning('cached_property not found!!')
+    logging.warning('Move to Python 3.9 could be a good idea ;)')
+    try:
+        import asyncio
+    except (ImportError, SyntaxError):
+        asyncio = None
+
+    class cached_property(object):
+        """
+        A property that is only computed once per instance and then replaces itself
+        with an ordinary attribute. Deleting the attribute resets the property.
+        Source: https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
+        """  # noqa
+
+        def __init__(self, func):
+            self.__doc__ = getattr(func, "__doc__")
+            self.func = func
+
+        def __get__(self, obj, cls):
+            if obj is None:
+                return self
+
+            if asyncio and asyncio.iscoroutinefunction(self.func):
+                return self._wrap_in_coroutine(obj)
+
+            value = obj.__dict__[self.func.__name__] = self.func(obj)
+            return value
+
+        def _wrap_in_coroutine(self, obj):
+            @wraps(obj)
+            @asyncio.coroutine
+            def wrapper():
+                future = asyncio.ensure_future(self.func(obj))
+                obj.__dict__[self.func.__name__] = future
+                return future
+
+            return wrapper()
+
 
 try:
     import pyedflib
@@ -549,12 +592,12 @@ class HDF5Reader:
                 np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
             t = timestamp[:, :-max(self.aux_offsets_position)
                           ].mean(axis=0) * 1000
-            self.timestamp_offset = t[0]
-            return (t - self.timestamp_offset)
+            self.aux_timestamp_offset = t[0]
+            return (t - self.aux_timestamp_offset)
         else:
-            self.timestamp_offset = timestamp[0]
+            self.aux_timestamp_offset = timestamp[0][0]
             self.aux_offsets_position = [0]
-            return np.array(timestamp).reshape(1, -1)
+            return (np.array(timestamp).reshape(1, -1) - self.aux_timestamp_offset) * 1000
 
     # # ----------------------------------------------------------------------
     # @cached_property
@@ -880,6 +923,38 @@ class HDF5Reader:
 
         shutil.make_archive(filename, 'zip', tmp_dir)
 
+    # ----------------------------------------------------------------------
+    def get_rises(self, signal, timestamp, lower, upper):
+        """"""
+        raw = signal.copy()
 
+        raw[raw < lower] = 1e5
+        raw[raw > upper] = 1e5
+        raw = raw - raw.min()
+        raw[raw > 1e4] = raw.min()
 
+        raw[raw <= raw.mean()] = 0
+        raw[raw > raw.mean()] = 1
 
+        raw = np.diff(raw, prepend=0)
+        raw[raw < 0] = 0
+
+        return timestamp[raw == 1]
+
+    # ----------------------------------------------------------------------
+    def fix_markers(self, target_markers, rises, range_=2000):
+        """"""
+        global_ = {}
+        for mk in target_markers:
+
+            offsets = []
+            for m in self.markers[mk]:
+                Q = rises[abs(rises - m).argmin()]
+                if abs(Q - m) < range_:
+                    offsets.append([m, Q])
+
+            offsets = np.array(offsets)
+            self.markers[f'{mk}_fixed'] = offsets[:, 1]
+            global_[mk] = np.median(np.diff(offsets))
+
+        return global_

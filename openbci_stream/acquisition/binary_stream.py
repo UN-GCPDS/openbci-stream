@@ -84,7 +84,6 @@ class BinaryStream:
 
         if len(self.accumulated) >= size:
             data['data'] = self.accumulated[:size]
-            # data['context']['created'] = datetime.now().timestamp()
             data['context']['timestamp.binary'] = datetime.now().timestamp()
             self.producer.send(self.topic, data)
             self.accumulated = self.accumulated[size:]
