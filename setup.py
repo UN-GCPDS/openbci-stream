@@ -56,7 +56,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
 
-    python_requires='>=3.8',
+    python_requires='>=3.7',
 
     classifiers=[
        'Development Status :: 4 - Beta',
