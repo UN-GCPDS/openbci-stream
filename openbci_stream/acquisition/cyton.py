@@ -862,8 +862,7 @@ class Cyton:
             # The attribute of the first board will be used by default
             return getattr(openbci[0], attr)
 
-        else:
-            return super().__getattribute__(attr)
+        return super().__getattribute__(attr)
 
     # ----------------------------------------------------------------------
 
