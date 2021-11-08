@@ -290,7 +290,7 @@ nbsphinx_prolog = """
     <style>
         .nbinput .prompt,
         .nboutput .prompt {
-            display: none;
+                display: none;
     }
     </style>
 """
