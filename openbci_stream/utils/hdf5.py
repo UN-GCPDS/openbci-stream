@@ -473,7 +473,7 @@ class HDF5Reader:
         eeg_ = np.array(self.f.root.eeg_data).T
 
         if self.offsets_position is None:
-            self.timestamp
+            _ = self.timestamp
 
         eeg__ = []
         ch = 0
@@ -492,7 +492,7 @@ class HDF5Reader:
         aux_ = np.array(self.f.root.aux_data).T
 
         if self.aux_offsets_position is None:
-            self.aux_timestamp
+            _ = self.aux_timestamp
 
         aux__ = []
         ch = 0
@@ -535,7 +535,7 @@ class HDF5Reader:
         if not hasattr(self.f.root, 'markers'):
             return {}
 
-        self.timestamp
+        _ = self.timestamp
 
         markers = {}
         for mkr in self.f.root.markers:
