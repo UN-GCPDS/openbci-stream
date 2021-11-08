@@ -33,7 +33,7 @@ from scipy.interpolate import interp1d
 try:
     from functools import cached_property
 
-except:
+except ImportError:
     logging.warning('cached_property not found!!')
     logging.warning('Move to Python 3.9 could be a good idea ;)')
     try:
@@ -75,8 +75,9 @@ except:
 
 try:
     import pyedflib
-except:
+except Exception as e:
     logging.warning("'pyedflib' is needed for export to EDF")
+    logging.warning(e)
 # Custom type var
 timestamp_ = TypeVar('timesamp', float, np.float)
 
@@ -88,11 +89,11 @@ def np2json_serializer(obj):
     """hdf5 handler needs Python classic data types."""
     if isinstance(obj, np.integer):
         return int(obj)
-    elif isinstance(obj, np.floating):
+    if isinstance(obj, np.floating):
         return float(obj)
-    elif isinstance(obj, np.ndarray):
+    if isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif isinstance(obj, datetime):
+    if isinstance(obj, datetime):
         return obj.__str__()
 
 
@@ -482,8 +483,7 @@ class HDF5Reader:
                 ch += 1
         if len(self.offsets_position) > 1:
             return np.array(eeg__)[:, :-max(self.offsets_position)]
-        else:
-            return np.array(eeg__)
+        return np.array(eeg__)
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -504,8 +504,7 @@ class HDF5Reader:
                 ch += 1
         if len(self.aux_offsets_position) > 1:
             return np.array(aux__)[:, :-max(self.aux_offsets_position)]
-        else:
-            return np.array(aux__)
+        return np.array(aux__)
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -574,10 +573,10 @@ class HDF5Reader:
                           ].mean(axis=0) * 1000
             self.timestamp_offset = t[0]
             return (t - self.timestamp_offset)
-        else:
-            self.timestamp_offset = timestamp[0][0]
-            self.offsets_position = [0]
-            return (np.array(timestamp).reshape(1, -1) - self.timestamp_offset) * 1000
+
+        self.timestamp_offset = timestamp[0][0]
+        self.offsets_position = [0]
+        return (np.array(timestamp).reshape(1, -1) - self.timestamp_offset) * 1000
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -594,10 +593,10 @@ class HDF5Reader:
                           ].mean(axis=0) * 1000
             self.aux_timestamp_offset = t[0]
             return (t - self.aux_timestamp_offset)
-        else:
-            self.aux_timestamp_offset = timestamp[0][0]
-            self.aux_offsets_position = [0]
-            return (np.array(timestamp).reshape(1, -1) - self.aux_timestamp_offset) * 1000
+
+        self.aux_timestamp_offset = timestamp[0][0]
+        self.aux_offsets_position = [0]
+        return (np.array(timestamp).reshape(1, -1) - self.aux_timestamp_offset) * 1000
 
     # # ----------------------------------------------------------------------
     # @cached_property

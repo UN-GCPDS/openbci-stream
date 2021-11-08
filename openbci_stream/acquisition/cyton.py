@@ -258,9 +258,9 @@ class CytonRFDuino(CytonBase):
         """
 
         if os.name == 'nt':
-            prefix = 'COM{}',
+            prefix = ('COM{}')
         elif os.name == 'posix':
-            prefix = '/dev/ttyACM{}', '/dev/ttyUSB{}',
+            prefix = ('/dev/ttyACM{}', '/dev/ttyUSB{}')
 
         for pref in prefix:
             for i in range(20):
@@ -270,7 +270,8 @@ class CytonRFDuino(CytonBase):
                     if d.write(self.START_STREAM):
                         d.close()
                         return port
-                except:
+                except Exception as e:
+                    logging.warning(e)
                     continue
 
     # ----------------------------------------------------------------------
@@ -290,8 +291,9 @@ class CytonRFDuino(CytonBase):
 
         try:
             return self.device.read(size)
-        except:
+        except Exception as e:
             # If there is no data yet, call again
+            logging.warning(e)
             return self.read(size)
 
     # ----------------------------------------------------------------------
@@ -474,11 +476,12 @@ class CytonWiFi(CytonBase):
             s.close()
             return local_ip_address
 
-        except:
+        except Exception as e:
             logging.warning('Impossible to detect a network connection, the WiFi'
                             'module and this machine must share the same network.')
             logging.warning(f'If you are using this machine as server (access point) '
                             f'the address {DEFAULT_LOCAL_IP} will be used.')
+            logging.warning(e)
 
             return DEFAULT_LOCAL_IP
 
@@ -657,9 +660,8 @@ class CytonWiFi(CytonBase):
         if response:
             if response.status_code == 200:
                 return
-            else:
-                logging.warning(
-                    f"Error code: {response.status_code} {response.text}")
+            logging.warning(
+                f"Error code: {response.status_code} {response.text}")
 
     # ----------------------------------------------------------------------
     def close(self) -> None:
@@ -857,9 +859,8 @@ class Cyton:
                     return [getattr(mod, attr)(*args, **kwargs) for mod in openbci]
                 return wrap
 
-            else:
-                # The attribute of the first board will be used by default
-                return getattr(openbci[0], attr)
+            # The attribute of the first board will be used by default
+            return getattr(openbci[0], attr)
 
         else:
             return super().__getattribute__(attr)
