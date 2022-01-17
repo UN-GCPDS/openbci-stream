@@ -178,7 +178,7 @@ latex_documents = [
     # (master_doc, 'OpenBCI-Stream.tex',
     # 'OpenBCI-Stream: Drivers para la adquisición se señales de neurofisiológicas con OpenBCI', 'Grupo de Control y Procesamiento Digital de Señales', 'manual'),
     (master_doc, 'OpenBCI-Stream.tex',
-     'OpenBCI-Stream Documentation', 'Yeison Cardona', 'manual'),
+     'OpenBCI-Stream Documentation', 'DunderLab SAS', 'manual'),
 ]
 
 
@@ -312,8 +312,6 @@ with open('index.rst', 'w') as file:
     file.write(f"""
 .. include:: {notebooks_dir}/readme.rst
 
-Navigation
-----------
 
 .. toctree::
    :maxdepth: 2

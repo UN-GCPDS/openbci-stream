@@ -1,8 +1,6 @@
 
 .. include:: notebooks/readme.rst
 
-Navigation
-----------
 
 .. toctree::
    :maxdepth: 2
