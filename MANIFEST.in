@@ -1,0 +1,7 @@
+recursive-include openbci_stream/ *
+recursive-exclude openbci_stream/daemons/openbci_stream/ *
+recursive-exclude openbci_stream/utils/openbci_stream/ *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude examples/ *
+recursive-exclude docs/ *
