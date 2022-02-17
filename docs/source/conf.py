@@ -313,19 +313,25 @@ with open('index.rst', 'w') as file:
 .. include:: {notebooks_dir}/readme.rst
 
 
+Content
+-------
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :name: mastertoc
 
    {notebooks}
 
 
-Indices and tables
-------------------
+.. only:: html
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    Docstrings
+    ==========
+
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
+    """)
 
     """)
 
