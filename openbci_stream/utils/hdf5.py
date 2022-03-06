@@ -983,10 +983,10 @@ class HDF5Reader:
         return timestamp[raw == 1]
 
     # ----------------------------------------------------------------------
-    def fix_markers(self, target_markers, rises, range_=2000):
+    def fix_markers(self, target_markers, rises, range_=2000, overwrite=False):
         """"""
         global_ = {}
-        for mk in target_markers:
+        for mk in list(target_markers)[:]:
 
             offsets = []
             for m in self.markers[mk]:
@@ -996,7 +996,10 @@ class HDF5Reader:
 
             if len(offsets):
                 offsets = np.array(offsets)
-                self.markers[f'{mk}_fixed'] = offsets[:, 1]
+                if overwrite:
+                    self.markers[mk] = offsets[:, 1]
+                else:
+                    self.markers[f'{mk}_fixed'] = offsets[:, 1]
                 global_[mk] = np.median(np.diff(offsets))
 
         return global_
