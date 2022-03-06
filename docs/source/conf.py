@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('exts'))
 # -- Project information -----------------------------------------------------
 
 project = 'OpenBCI-Stream'
-copyright = '2019-2021, Yeison Cardona'
+copyright = '2019-2022, Yeison Cardona'
 author = 'Yeison Cardona'
 
 # The short X.Y version

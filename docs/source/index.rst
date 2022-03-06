@@ -20,6 +20,7 @@ Navigation
    notebooks/A2-electrodes_impedance
    notebooks/A3-server-based_acquisition
    notebooks/A4-system_latencies
+   notebooks/A5-markers_synchronization
 
 
 Indices and tables
