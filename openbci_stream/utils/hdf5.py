@@ -445,14 +445,19 @@ class HDF5Reader:
     # ----------------------------------------------------------------------
     def __repr__(self):
         """"""
-        info = "=" * 50
+        sep = "=" * 10
+
+        info = sep
         info += f"\n{self.filename}\n"
         info += str(datetime.fromtimestamp(self.header['datetime']))
-        info += '\n' + "=" * 50 + '\n'
+        info += '\n' + sep + '\n'
         info += f'MARKERS: {list(self.markers.keys())}\n'
         for k in self.header:
             info += f"{k.upper()}: {self.header[k]}\n"
-        info += "=" * 50
+        ts = self.header['shape'][1] / self.header['sample_rate']
+        info += f"DURATION: {ts:.1f} seconds ({ts/60:.1f} minutes)\n"
+
+        info += sep
         return info
 
     # ----------------------------------------------------------------------
@@ -654,7 +659,7 @@ class HDF5Reader:
         # return timestamp
 
     # ----------------------------------------------------------------------
-    @cached_property
+    @property
     def classes_indexes(self) -> Dict[str, int]:
         """The standard for classes and indexes."""
         return {key: (i + 1) for i, key in enumerate(self.markers.keys())}
@@ -680,7 +685,7 @@ class HDF5Reader:
         self.f.close()
 
     # ----------------------------------------------------------------------
-    def get_epochs(self, tmax: int, tmin: Optional[int] = 0, markers: Union[None, List[str]] = None, **kwargs) -> mne.EpochsArray:
+    def get_epochs(self, tmax: int, tmin: Optional[int] = 0, ref=None, markers: Union[None, List[str]] = None, preprocess=None, eeg=None, **kwargs) -> mne.EpochsArray:
         """Create an `EpochsArray` object with the `MNE` library.
 
         This method auto crop the data in regard to markers also will drop
@@ -703,6 +708,8 @@ class HDF5Reader:
         epochs
             An MNE Epochs object.
         """
+        if eeg is None:
+            eeg = self.eeg
 
         if 'montage' in self.header:
             montage = self.header['montage']
@@ -741,6 +748,13 @@ class HDF5Reader:
         if markers is None:
             markers = self.classes_indexes.keys()
 
+        if ref:
+            if isinstance(ref, str):
+                n = list(channels_names).index(ref)
+                eeg = eeg - eeg[n]
+            else:
+                eeg = eeg - ref
+
         classes = []
         data = []
         no_fit = 0
@@ -751,8 +765,8 @@ class HDF5Reader:
                 i0 = int(start + (tmin * sampling_rate))
                 i1 = int(start + (tmax * sampling_rate))
 
-                if i1 < self.eeg.shape[1]:
-                    data.append(self.eeg[:, i0:i1])
+                if i1 < eeg.shape[1]:
+                    data.append(eeg[:, i0:i1])
                     classes.append(class_)
                 else:
                     no_fit += 1
@@ -763,11 +777,32 @@ class HDF5Reader:
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
 
-        return mne.EpochsArray(np.array(data), info, events=events, tmin=tmin, event_id=event_id, **kwargs)
+        length = (tmax * sampling_rate) - (tmin * sampling_rate)
+        data = list(filter(lambda d: d.shape[-1] == int(length), data))
+
+        if preprocess:
+            data = preprocess(np.array(data))
+        else:
+            data = np.array(data)
+
+        # if ref:
+            # if isinstance(ref, str):
+                # n = list(self.header['channels'].values()).index(ref)
+                # data = data - data[n]
+            # else:
+                # data = data - ref
+
+        # raw = mne.io.RawArray(data, info, first_samp=0,
+                              # copy='auto', verbose=None)
+        # return mne.Epochs(raw, events=events, tmin=tmin, event_id=event_id, **kwargs)
+
+        return mne.EpochsArray(data, info, events=events, tmin=tmin, event_id=event_id, **kwargs)
 
     # ----------------------------------------------------------------------
-    def to_edf(self, filename: str) -> None:
+    def to_edf(self, filename: str, eeg=None) -> None:
         """Export to EDF file."""
+        if eeg is None:
+            eeg = self.eeg
 
         if 'sample_rate' in self.header:
             sampling_rate = self.header['sample_rate']
@@ -779,7 +814,7 @@ class HDF5Reader:
         edf_data_list = []
 
         for i, channel in enumerate(self.header['channels']):
-            data = self.eeg[i]
+            data = eeg[i]
             if data.max() == data.min():
                 max_, min_ = 1, -1
             else:
@@ -857,7 +892,7 @@ class HDF5Reader:
         f.close()
 
     # ----------------------------------------------------------------------
-    def get_data(self, tmax: int, tmin: Optional[int] = 0, markers: Union[None, List[str]] = None, **kwargs) -> Tuple[np.ndarray]:
+    def get_data(self, tmax: int, tmin: Optional[int] = 0, ref=None, markers: Union[None, List[str]] = None, eeg=None, preprocess=None, **kwargs) -> Tuple[np.ndarray]:
         """Create an `EpochsArray` object with the `MNE` library.
 
         This method auto crop the data in regard to markers also will drop
@@ -883,7 +918,8 @@ class HDF5Reader:
             List of classes
         """
 
-        epochs = self.get_epochs(tmax, tmin, markers)
+        epochs = self.get_epochs(
+            tmax, tmin, ref, markers, eeg=eeg, preprocess=preprocess, **kwargs)
         return epochs._data, epochs.events[:, 2]
 
     # # ----------------------------------------------------------------------
@@ -899,8 +935,11 @@ class HDF5Reader:
             # return 0
 
     # ----------------------------------------------------------------------
-    def to_npy(self, filename, tmin=None, tmax=None):
+    def to_npy(self, filename, eeg=None, tmin=None, tmax=None):
         """"""
+        if eeg is None:
+            eeg = self.eeg
+
         filename = os.path.abspath(filename)
         tmp_dir = os.path.join(os.path.dirname(filename), 'tmp_dir_npy')
         if os.path.exists(tmp_dir):
@@ -908,11 +947,11 @@ class HDF5Reader:
         os.mkdir(tmp_dir)
 
         if (tmin is None) and (tmax is None):
-            np.save(os.path.join(tmp_dir, 'eeg'), self.eeg)
+            np.save(os.path.join(tmp_dir, 'eeg'), eeg)
             np.save(os.path.join(tmp_dir, 'timestamp'), self.timestamp)
         else:
-            eeg, classes = self.get_data(tmin=tmin, tmax=tmax)
-            np.save(os.path.join(tmp_dir, 'eeg'), eeg)
+            eeg_, classes = self.get_data(eeg, tmin=tmin, tmax=tmax)
+            np.save(os.path.join(tmp_dir, 'eeg'), eeg_)
             np.save(os.path.join(tmp_dir, 'classes'), classes)
 
         np.save(os.path.join(tmp_dir, 'markers'), self.markers)
@@ -932,8 +971,11 @@ class HDF5Reader:
         raw = raw - raw.min()
         raw[raw > 1e4] = raw.min()
 
-        raw[raw <= raw.mean()] = 0
-        raw[raw > raw.mean()] = 1
+        # raw[raw <= raw.mean()] = 0
+        # raw[raw > raw.mean()] = 1
+        m = (raw.max() - raw.min()) / 2
+        raw[raw <= m] = 0
+        raw[raw > m] = 1
 
         raw = np.diff(raw, prepend=0)
         raw[raw < 0] = 0
@@ -952,8 +994,9 @@ class HDF5Reader:
                 if abs(Q - m) < range_:
                     offsets.append([m, Q])
 
-            offsets = np.array(offsets)
-            self.markers[f'{mk}_fixed'] = offsets[:, 1]
-            global_[mk] = np.median(np.diff(offsets))
+            if len(offsets):
+                offsets = np.array(offsets)
+                self.markers[f'{mk}_fixed'] = offsets[:, 1]
+                global_[mk] = np.median(np.diff(offsets))
 
         return global_
