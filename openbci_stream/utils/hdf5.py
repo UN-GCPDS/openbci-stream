@@ -546,6 +546,10 @@ class HDF5Reader:
         for mkr in self.f.root.markers:
             t, marker = json.loads(mkr)
             # markers.setdefault(marker, []).append(np.abs(self.timestamp - ((t * 1000) - self.timestamp_offset)).argmin())
+
+            if isinstance(t, str):
+                t = datetime.strptime(t, "%Y-%m-%d %H:%M:%S.%f").timestamp()
+
             markers.setdefault(marker, []).append(
                 np.abs(self.timestamp - ((t - self.timestamp_offset) * 1000)).argmin())
 
