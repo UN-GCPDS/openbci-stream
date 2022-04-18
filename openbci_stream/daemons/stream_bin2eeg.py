@@ -116,6 +116,7 @@ class BinaryToEEG:
         logging.debug(
             f'deserialized eeg_data({eeg_data.shape}), aux({aux.shape})'
         )
+        logging.debug(f'IDs: {ids}')
 
         # Stream
         context['samples'] = eeg_data.shape[1]

@@ -137,6 +137,7 @@ class EEG:
                         context['sample_ids'] = [
                             s.value['context']['sample_ids'] for s in stream
                         ]
+                        logging.debug(f"IDs: {context['sample_ids']}")
 
                         logging.debug('Preparing EEG data')
                         cuteeg = min([d[0].shape[1] for d in eeg_data])
