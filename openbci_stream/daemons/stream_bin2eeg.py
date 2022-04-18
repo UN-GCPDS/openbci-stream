@@ -17,6 +17,7 @@ import struct
 from functools import cached_property
 import numpy as np
 from datetime import datetime
+
 # import rawutil
 import logging
 
@@ -26,7 +27,7 @@ from typing import TypeVar, Dict, Tuple, Any
 # from openbci_stream.utils import autokill_process
 # autokill_process(name='binary_2_eeg')
 
-DEBUG = ('--debug' in sys.argv)
+DEBUG = '--debug' in sys.argv
 
 if DEBUG:
     logging.getLogger().setLevel(logging.DEBUG)
@@ -43,7 +44,7 @@ class BinaryToEEG:
     enables an `auto-kill process <openbci_stream.utils.pid_admin.rst#module-openbci_stream.utils.pid_admin>`_
     """
 
-    BIN_HEADER = 0xa0
+    BIN_HEADER = 0xA0
     LAST_AUX_SHAPE = 0
 
     # ----------------------------------------------------------------------
@@ -51,16 +52,18 @@ class BinaryToEEG:
         """"""
         self.board_id = board_id
 
-        self.consumer_binary = KafkaConsumer(bootstrap_servers=['localhost:9092'],
-                                             value_deserializer=pickle.loads,
-                                             auto_offset_reset='latest',
-                                             )
+        self.consumer_binary = KafkaConsumer(
+            bootstrap_servers=['localhost:9092'],
+            value_deserializer=pickle.loads,
+            auto_offset_reset='latest',
+        )
         self.consumer_binary.subscribe([f'binary{self.board_id}'])
 
-        self.producer_eeg = KafkaProducer(bootstrap_servers=['localhost:9092'],
-                                          compression_type='gzip',
-                                          value_serializer=pickle.dumps,
-                                          )
+        self.producer_eeg = KafkaProducer(
+            bootstrap_servers=['localhost:9092'],
+            compression_type='gzip',
+            value_serializer=pickle.dumps,
+        )
 
         self.remnant = b''
         self.offset = None, None
@@ -73,7 +76,7 @@ class BinaryToEEG:
         # vref = 4.5  # for V
         vref = 4500000  # for uV
 
-        return vref / (gain * ((2 ** 23) - 1))
+        return vref / (gain * ((2**23) - 1))
 
     # ----------------------------------------------------------------------
     def consume(self) -> None:
@@ -96,9 +99,10 @@ class BinaryToEEG:
         context = buffer['context']
         context['timestamp.binary.consume'] = datetime.now().timestamp()
 
-        # Deserialice data
+        # Deserialize data
         logging.debug(
-            f'Aligning data: renmant({len(self.remnant)}), buffer({len(buffer["data"])})')
+            f'Aligning data: renmant({len(self.remnant)}), buffer({len(buffer["data"])})'
+        )
         data, self.remnant = self.align_data(self.remnant + buffer['data'])
         logging.debug('aligned')
         if not data.shape[0]:
@@ -106,14 +110,17 @@ class BinaryToEEG:
             self.remnant = b''  # reset deserialicig
             return
         logging.debug(
-            f'Deserilizing data: data({data.shape}), context({context})')
-        eeg_data, aux = self.deserialize(data, context)
+            f'Deserilizing data: data({data.shape}), context({context})'
+        )
+        eeg_data, aux, ids = self.deserialize(data, context)
         logging.debug(
-            f'deserialized eeg_data({eeg_data.shape}), aux({aux.shape})')
+            f'deserialized eeg_data({eeg_data.shape}), aux({aux.shape})'
+        )
 
         # Stream
         context['samples'] = eeg_data.shape[1]
         context['timestamp.eeg'] = datetime.now().timestamp()
+        context['sample_ids'] = ids
 
         logging.debug(f'Streaming')
         self.stream([eeg_data, aux], context)
@@ -139,8 +146,10 @@ class BinaryToEEG:
 
         # Search for the the first index with a `BIN_HEADER`
         logging.debug('Looking for BIN_HEADER')
-        start = [np.median(np.roll(data, -i, axis=0)[::33])
-                 == self.BIN_HEADER for i in range(33)].index(True)
+        start = [
+            np.median(np.roll(data, -i, axis=0)[::33]) == self.BIN_HEADER
+            for i in range(33)
+        ].index(True)
 
         if (start == 0) and (data.shape[0] % 33 == 0):
             logging.debug('No alignment necesary')
@@ -151,7 +160,8 @@ class BinaryToEEG:
             logging.debug('Alingnig...')
             end = (data.shape[0] - start) % 33
             logging.debug(
-                f'Alingnig data({len(data)}) at data({start}:-{end})')
+                f'Alingnig data({len(data)}) at data({start}:-{end})'
+            )
             data_aligned = data[start:-end]
             logging.debug('Saving remnant')
             remnant = binary[-end:]
@@ -176,8 +186,10 @@ class BinaryToEEG:
 
         # EGG
         eeg_data = data[:, 2:26]
+        ids = data[:, 1]
         eeg_data = getattr(self, f'deserialize_eeg_{context["connection"]}')(
-            eeg_data, data[:, 1], context)
+            eeg_data, ids, context
+        )
 
         # Auxiliar
         stop_byte = int((np.median(data[:, -1])))
@@ -187,11 +199,13 @@ class BinaryToEEG:
         # Stream
         channels = np.array(list(context['montage'].keys())) - 1
 
-        return eeg_data.T[channels], aux.T
+        return eeg_data.T[channels], aux.T, ids
         # self.stream([eeg_data.T[channels], aux.T], eeg_data.shape[0], context)
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_wifi(self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
+    def deserialize_eeg_wifi(
+        self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]
+    ) -> np.ndarray:
         """From signed 24-bits integer to signed 32-bits integer by channels.
 
         The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
@@ -217,9 +231,17 @@ class BinaryToEEG:
         """
 
         # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
-        eeg_data = np.array([struct.unpack('>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk)
-                             for chunk in [bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)]]).reshape(-1, 8)
+        # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array(
+            [
+                struct.unpack(
+                    '>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk
+                )
+                for chunk in [
+                    bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)
+                ]
+            ]
+        ).reshape(-1, 8)
         eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
@@ -227,7 +249,8 @@ class BinaryToEEG:
             # # If offset, the pair index condition must change
             if np.array(self.offset[0]).any():
                 eeg_data = np.concatenate(
-                    [[self.offset[0]], eeg_data], axis=0)
+                    [[self.offset[0]], eeg_data], axis=0
+                )
                 ids = np.concatenate([[self.offset[1]], ids], axis=0)
                 # pair = not pair
 
@@ -248,7 +271,9 @@ class BinaryToEEG:
         return eeg_data
 
     # ----------------------------------------------------------------------
-    def deserialize_eeg_serial(self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
+    def deserialize_eeg_serial(
+        self, eeg: np.ndarray, ids: np.ndarray, context: Dict[str, Any]
+    ) -> np.ndarray:
         """From signed 24-bits integer to signed 32-bits integer by channels.
 
         The `Cyton data format <https://docs.openbci.com/docs/02Cyton/CytonDataFormat>`_
@@ -275,9 +300,17 @@ class BinaryToEEG:
         """
 
         # eeg_data = np.array([[rawutil.unpack('>u', bytes(ch))[0]
-                              # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
-        eeg_data = np.array([struct.unpack('>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk)
-                             for chunk in [bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)]]).reshape(-1, 8)
+        # for ch in row.reshape(-1, 3).tolist()] for row in eeg])
+        eeg_data = np.array(
+            [
+                struct.unpack(
+                    '>i', (b'\0' if chunk[0] < 128 else b'\xff') + chunk
+                )
+                for chunk in [
+                    bytes(ch.tolist()) for ch in eeg.reshape(-1, 3)
+                ]
+            ]
+        ).reshape(-1, 8)
         eeg_data = eeg_data * self.scale_factor_eeg
 
         if context['daisy']:
@@ -287,7 +320,8 @@ class BinaryToEEG:
             # If offset, the even index condition must change
             if np.array(self.offset[0]).any():
                 eeg_data = np.concatenate(
-                    [[self.offset[0]], eeg_data], axis=0)
+                    [[self.offset[0]], eeg_data], axis=0
+                )
                 ids = np.concatenate([[self.offset[1]], ids], axis=0)
                 even = not even
 
@@ -305,10 +339,26 @@ class BinaryToEEG:
                 daisy = eeg_data[::2]
                 board = eeg_data[1::2]
 
-            board = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(
-                p.shape[0]), p) for p in board.T]).T
-            daisy = np.array([np.interp(np.arange(0, p.shape[0], 0.5), np.arange(
-                p.shape[0]), p) for p in daisy.T]).T
+            board = np.array(
+                [
+                    np.interp(
+                        np.arange(0, p.shape[0], 0.5),
+                        np.arange(p.shape[0]),
+                        p,
+                    )
+                    for p in board.T
+                ]
+            ).T
+            daisy = np.array(
+                [
+                    np.interp(
+                        np.arange(0, p.shape[0], 0.5),
+                        np.arange(p.shape[0]),
+                        p,
+                    )
+                    for p in daisy.T
+                ]
+            ).T
 
             eeg = np.concatenate([np.stack(board), np.stack(daisy)], axis=1)
 
@@ -319,7 +369,9 @@ class BinaryToEEG:
 
     # ----------------------------------------------------------------------
     @classmethod
-    def deserialize_aux(cls, stop_byte: int, aux: int, context: Dict[str, Any]) -> np.ndarray:
+    def deserialize_aux(
+        cls, stop_byte: int, aux: int, context: Dict[str, Any]
+    ) -> np.ndarray:
         """Determine the content of `AUX` bytes and format it.
 
         Auxialiar data could contain different kind of information: accelometer,
@@ -356,13 +408,20 @@ class BinaryToEEG:
         """
 
         # Standard with accel
-        if stop_byte == 0xc0:
-            return 0.002 * \
-                np.array([struct.unpack('>hhh', a.astype('i1').tobytes())
-                          for a in aux]) / 16
+        if stop_byte == 0xC0:
+            return (
+                0.002
+                * np.array(
+                    [
+                        struct.unpack('>hhh', a.astype('i1').tobytes())
+                        for a in aux
+                    ]
+                )
+                / 16
+            )
 
         # Standard with raw aux
-        elif stop_byte == 0xc1:
+        elif stop_byte == 0xC1:
 
             if context['boardmode'] == 'analog':
                 if context['connection'] == 'wifi':
@@ -373,13 +432,25 @@ class BinaryToEEG:
                     # return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()][:2] for row in aux])
 
                     # 185 µs ± 3.27 µs
-                    return np.array([struct.unpack('>hhh', a.astype('i1').tobytes())[:2] for a in aux])
+                    return np.array(
+                        [
+                            struct.unpack('>hhh', a.astype('i1').tobytes())[
+                                :2
+                            ]
+                            for a in aux
+                        ]
+                    )
 
                 else:
                     # A7, A6, A5
                     # D13, D12, D11
                     # return np.array([[rawutil.unpack('>H', bytes(ch))[0] for ch in row.reshape(-1, 2).tolist()] for row in aux])
-                    return np.array([struct.unpack('>hhh', a.astype('i1').tobytes()) for a in aux])
+                    return np.array(
+                        [
+                            struct.unpack('>hhh', a.astype('i1').tobytes())
+                            for a in aux
+                        ]
+                    )
 
             elif context['boardmode'] == 'digital':
                 if context['connection'] == 'wifi':
@@ -399,23 +470,23 @@ class BinaryToEEG:
                 return a
 
         # User defined
-        elif stop_byte == 0xc2:
+        elif stop_byte == 0xC2:
             pass
 
         # Time stamped set with accel
-        elif stop_byte == 0xc3:
+        elif stop_byte == 0xC3:
             pass
 
         # Time stamped with accel
-        elif stop_byte == 0xc4:
+        elif stop_byte == 0xC4:
             pass
 
         # Time stamped set with raw auxcalculate_sample_rate
-        elif stop_byte == 0xc5:
+        elif stop_byte == 0xC5:
             pass
 
         # Time stamped with raw aux
-        elif stop_byte == 0xc6:
+        elif stop_byte == 0xC6:
             pass
 
         return np.zeros(cls.LAST_AUX_SHAPE)
@@ -433,16 +504,17 @@ class BinaryToEEG:
 
         """
 
-        data_ = {'context': context.copy(),
-                 'data': data.copy(),
-                 }
+        data_ = {
+            'context': context.copy(),
+            'data': data.copy(),
+        }
 
         self.producer_eeg.send(f'eeg{self.board_id}', data_)
         # future = self.producer_eeg.send(f'eeg{self.board_id}', data_)
         # try:
-            # future.get()
+        # future.get()
         # except Exception as e:
-            # logging.error(e)
+        # logging.error(e)
 
         logging.debug(f"streamed ({data[0].shape}, {data[1].shape}) samples")
 
