@@ -27,7 +27,7 @@ QUEUE = TypeVar('Queue')
 
 ########################################################################
 class CytonConstants:
-    """Default constants defined in the `Cyton SDK <https://docs.openbci.com/docs/02Cyton/CytonSDK>`_"""
+    """Default constants defined in the `Cyton SDK <https://docs.openbci.com/Cyton/CytonSDK/>`_"""
 
     VREF = 4.5
 
@@ -169,8 +169,8 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
     The Cyton data format and SDK define all interactions and capabilities of
     the board, the full instructions can be found in the official documentation.
 
-      * https://docs.openbci.com/Hardware/03-Cyton_Data_Format
-      * https://docs.openbci.com/OpenBCI%20Software/04-OpenBCI_Cyton_SDK
+      * https://docs.openbci.com/Cyton/CytonDataFormat/
+      * https://docs.openbci.com/Cyton/CytonSDK/
 
     daisy
         Daisy board can be detected on runtime or declare it specifically.
@@ -292,7 +292,7 @@ class CytonBase(CytonConstants, metaclass=ABCMeta):
         waits 300 ms for a response. Is possible to send a raw bytes, a
         `CytonConstants` attribute or the constant name e.g.
 
-        >>> comand(b'~4')
+        >>> command(b'~4')
         >>> command(CytonConstants.SAMPLE_RATE_1KSPS)
         >>> command('SAMPLE_RATE_1KSPS')
 
