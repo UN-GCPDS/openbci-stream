@@ -267,7 +267,7 @@ class BinaryToEEG:
             else:
                 self.offset = None, None
 
-            return eeg_data.reshape(-1, 16)
+            return eeg_data.reshape(-1, 16), ids
 
         return eeg_data, ids
 

@@ -193,14 +193,17 @@ class CytonRFDuino(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, port: Optional = None, host: Optional[str] = None,
-                 daisy: DAISY = 'auto',
-                 montage: Optional[Union[list, dict]] = None,
-                 streaming_package_size: int = 250,
-                 capture_stream: bool = False,
-                 board_id: str = '0',
-                 parallel_boards: int = 1,
-                 ) -> None:
+    def __init__(
+        self,
+        port: Optional = None,
+        host: Optional[str] = None,
+        daisy: DAISY = 'auto',
+        montage: Optional[Union[list, dict]] = None,
+        streaming_package_size: int = 250,
+        capture_stream: bool = False,
+        board_id: str = '0',
+        parallel_boards: int = 1,
+    ) -> None:
         """"""
 
         self.remote_host = None
@@ -211,11 +214,17 @@ class CytonRFDuino(CytonBase):
 
         if host:
             try:
-                rpyc_service = rpyc.connect(host, 18861, config={
-                    'allow_public_attrs': True,
-                    'allow_pickle': True,
-                })
-                self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
+                rpyc_service = rpyc.connect(
+                    host,
+                    18861,
+                    config={
+                        'allow_public_attrs': True,
+                        'allow_pickle': True,
+                    },
+                )
+                self.remote_host = getattr(
+                    rpyc_service.root, self.__class__.__name__
+                )(
                     port,
                     host=None,
                     daisy=daisy,
@@ -239,13 +248,23 @@ class CytonRFDuino(CytonBase):
             logging.error("No device was auto detected.")
             sys.exit()
 
-        self.device = serial.Serial(port, 115200, timeout=0.3,
-                                    write_timeout=0.01,
-                                    parity=serial.PARITY_NONE,
-                                    stopbits=serial.STOPBITS_ONE)
+        self.device = serial.Serial(
+            port,
+            115200,
+            timeout=0.3,
+            write_timeout=0.01,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+        )
 
-        super().__init__(daisy, montage, streaming_package_size,
-                         capture_stream, board_id, parallel_boards)
+        super().__init__(
+            daisy,
+            montage,
+            streaming_package_size,
+            capture_stream,
+            board_id,
+            parallel_boards,
+        )
 
     # ----------------------------------------------------------------------
     def _get_serial_ports(self) -> Optional[str]:
@@ -258,7 +277,7 @@ class CytonRFDuino(CytonBase):
         """
 
         if os.name == 'nt':
-            prefix = ('COM{}')
+            prefix = 'COM{}'
         elif os.name == 'posix':
             prefix = ('/dev/ttyACM{}', '/dev/ttyUSB{}')
 
@@ -309,8 +328,11 @@ class CytonRFDuino(CytonBase):
         super().close()
 
     # ----------------------------------------------------------------------
-    def _stream_data(self, size: Optional[int] = 2**8,
-                     kafka_context: Optional[Dict] = {}) -> None:
+    def _stream_data(
+        self,
+        size: Optional[int] = 2**8,
+        kafka_context: Optional[Dict] = {},
+    ) -> None:
         """Write binary raw into a kafka producer.
 
         This method will feed the producer while the serial device has data to
@@ -328,9 +350,10 @@ class CytonRFDuino(CytonBase):
         while binary := self.read(size):
             try:
                 # kafka_context.update({'created': datetime.now().timestamp()})
-                data = {'context': kafka_context,
-                        'data': binary,
-                        }
+                data = {
+                    'context': kafka_context,
+                    'data': binary,
+                }
                 self.binary_stream.stream(data)
             except serial.SerialException as e:
                 logging.error(e)
@@ -341,23 +364,28 @@ class CytonRFDuino(CytonBase):
         streaming into a Kafka producer.
         """
 
-        kafka_context = {'daisy': self.daisy,
-                         'boardmode': self.boardmode,
-                         'montage': self.montage,
-                         'connection': 'serial',
-                         'gain': self._get_gain(),
-                         'parallel_boards': self.parallel_boards,
-                         }
+        kafka_context = {
+            'daisy': self.daisy,
+            'boardmode': self.boardmode,
+            'montage': self.montage,
+            'connection': 'serial',
+            'gain': self._get_gain(),
+            'parallel_boards': self.parallel_boards,
+        }
 
         self.command(self.START_STREAM)
         super().start_stream()
 
         # Thread for read data
-        if hasattr(self, "thread_data_collect") and self.thread_data_collect.isAlive():
+        if (
+            hasattr(self, "thread_data_collect")
+            and self.thread_data_collect.isAlive()
+        ):
             pass
         else:
-            self.thread_data_collect = Thread(target=self._stream_data,
-                                              args=(2**8, kafka_context))
+            self.thread_data_collect = Thread(
+                target=self._stream_data, args=(2**8, kafka_context)
+            )
             self.thread_data_collect.start()
 
     # ----------------------------------------------------------------------
@@ -382,10 +410,19 @@ class CytonRFDuino(CytonBase):
 
         default = 24
         response = self.command(self.QUERY_REGISTER)
-        registers = {reg.split(',')[0]: reg.split(',')[1:]
-                     for reg in filter(None, response.decode().split('\n'))}
-        gains = [self.AD1299_GAIN_REGISTER.get(''.join(registers.get(
-            f'CH{i}SET', '')[3:6]).replace(' ', ''), default) for i in range(1, 9)]
+        registers = {
+            reg.split(',')[0]: reg.split(',')[1:]
+            for reg in filter(None, response.decode().split('\n'))
+        }
+        gains = [
+            self.AD1299_GAIN_REGISTER.get(
+                ''.join(registers.get(f'CH{i}SET', '')[3:6]).replace(
+                    ' ', ''
+                ),
+                default,
+            )
+            for i in range(1, 9)
+        ]
         return gains
 
 
@@ -419,12 +456,17 @@ class CytonWiFi(CytonBase):
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, ip_address: str, host: str = None, daisy: DAISY = 'auto',
-                 montage: Optional[Union[list, dict]] = None,
-                 streaming_package_size: int = 250,
-                 capture_stream: Optional[bool] = False,
-                 board_id: str = '0',
-                 parallel_boards: int = 1, ) -> None:
+    def __init__(
+        self,
+        ip_address: str,
+        host: str = None,
+        daisy: DAISY = 'auto',
+        montage: Optional[Union[list, dict]] = None,
+        streaming_package_size: int = 250,
+        capture_stream: Optional[bool] = False,
+        board_id: str = '0',
+        parallel_boards: int = 1,
+    ) -> None:
         """"""
         self.remote_host = None
 
@@ -437,11 +479,17 @@ class CytonWiFi(CytonBase):
 
         if host:
             try:
-                rpyc_service = rpyc.connect(host, 18861, config={
-                    'allow_public_attrs': True,
-                    'allow_pickle': True,
-                })
-                self.remote_host = getattr(rpyc_service.root, self.__class__.__name__)(
+                rpyc_service = rpyc.connect(
+                    host,
+                    18861,
+                    config={
+                        'allow_public_attrs': True,
+                        'allow_pickle': True,
+                    },
+                )
+                self.remote_host = getattr(
+                    rpyc_service.root, self.__class__.__name__
+                )(
                     self._ip_address,
                     host=None,
                     daisy=daisy,
@@ -456,8 +504,14 @@ class CytonWiFi(CytonBase):
 
             return
 
-        super().__init__(daisy, montage, streaming_package_size,
-                         capture_stream, board_id, parallel_boards)
+        super().__init__(
+            daisy,
+            montage,
+            streaming_package_size,
+            capture_stream,
+            board_id,
+            parallel_boards,
+        )
 
         self._create_tcp_server()
         time.sleep(5)  # secure delay
@@ -477,10 +531,14 @@ class CytonWiFi(CytonBase):
             return local_ip_address
 
         except Exception as e:
-            logging.warning('Impossible to detect a network connection, the WiFi'
-                            'module and this machine must share the same network.')
-            logging.warning(f'If you are using this machine as server (access point) '
-                            f'the address {DEFAULT_LOCAL_IP} will be used.')
+            logging.warning(
+                'Impossible to detect a network connection, the WiFi'
+                'module and this machine must share the same network.'
+            )
+            logging.warning(
+                f'If you are using this machine as server (access point) '
+                f'the address {DEFAULT_LOCAL_IP} will be used.'
+            )
             logging.warning(e)
 
             return DEFAULT_LOCAL_IP
@@ -504,7 +562,8 @@ class CytonWiFi(CytonBase):
         try:
             logging.info(f"Sending command: '{data}'")
             response = requests.post(
-                f"http://{self._ip_address}/command", json={'command': data})
+                f"http://{self._ip_address}/command", json={'command': data}
+            )
         except requests.exceptions.ConnectionError as msg:
             if 'Connection aborted' in str(msg):
                 time.sleep(0.3)
@@ -520,7 +579,8 @@ class CytonWiFi(CytonBase):
         else:
             if response:
                 logging.warning(
-                    f"Error code: {response.status_code} {response.text}")
+                    f"Error code: {response.status_code} {response.text}"
+                )
             self._readed = None
 
     # ----------------------------------------------------------------------
@@ -547,7 +607,8 @@ class CytonWiFi(CytonBase):
         response = requests.get(f"http://{self._ip_address}/stream/start")
         if response.status_code != 200:
             logging.warning(
-                f"Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start")
+                f"Unable to start streaming.\nCheck API for status code {response.status_code} on /stream/start"
+            )
 
     # ----------------------------------------------------------------------
     def stop_stream(self) -> None:
@@ -559,7 +620,8 @@ class CytonWiFi(CytonBase):
         response = requests.get(f"http://{self._ip_address}/stream/stop")
         if response.status_code != 200:
             logging.warning(
-                f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/stop")
+                f"Unable to stop streaming.\nCheck API for status code {response.status_code} on /stream/stop"
+            )
 
         self.binary_stream.close()
         asyncore.close_all()
@@ -581,21 +643,23 @@ class CytonWiFi(CytonBase):
         """Create TCP server, this server will handle the streaming EEG data."""
 
         # kafka_context = {
-            # 'daisy': self.daisy,
-            # 'boardmode': self.boardmode,
-            # 'montage': self.montage,
-            # 'connection': 'wifi',
+        # 'daisy': self.daisy,
+        # 'boardmode': self.boardmode,
+        # 'montage': self.montage,
+        # 'connection': 'wifi',
         # }
 
-        self.local_wifi_server = WiFiShieldTCPServer(self._local_ip_address,
-                                                     lambda: getattr(
-                                                         self, 'binary_stream'),
-                                                     self.kafka_context,
-                                                     )
-        self.local_wifi_server_port = self.local_wifi_server.socket.getsockname()[
-            1]
+        self.local_wifi_server = WiFiShieldTCPServer(
+            self._local_ip_address,
+            lambda: getattr(self, 'binary_stream'),
+            self.kafka_context,
+        )
+        self.local_wifi_server_port = (
+            self.local_wifi_server.socket.getsockname()[1]
+        )
         logging.info(
-            f"Open socket on {self._local_ip_address}:{self.local_wifi_server_port}")
+            f"Open socket on {self._local_ip_address}:{self.local_wifi_server_port}"
+        )
 
     # ----------------------------------------------------------------------
     def _start_tcp_client(self):
@@ -619,32 +683,40 @@ class CytonWiFi(CytonBase):
             self._gain = board_info['gains']
             self.local_wifi_server.set_gain(self._gain)
 
-        # res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
-                                     # json={
-                                        # 'ip': self._local_ip_address,
-                                        # 'port': self.local_wifi_server_port,
-                                        # 'output': 'json',
-                                        # 'delimiter': True,
-                                        # 'latency': 1000,
-                                         # })
-        res_tcp_post = requests.post(f"http://{self._ip_address}/tcp",
-                                     json={
-                                        'ip': self._local_ip_address,
-                                        'port': self.local_wifi_server_port,
-                                        'output': 'raw',
-                                        'latency': 1000,
-                                         })
+        # res_tcp_post = requests.post(
+        # f"http://{self._ip_address}/tcp",
+        # json={
+        # 'ip': self._local_ip_address,
+        # 'port': self.local_wifi_server_port,
+        # 'output': 'json',
+        # 'delimiter': True,
+        # 'sample_numbers': True,
+        # 'timestamps': True,
+        # 'latency': 200000,
+        # },
+        # )
+        res_tcp_post = requests.post(
+            f"http://{self._ip_address}/tcp",
+            json={
+                'ip': self._local_ip_address,
+                'port': self.local_wifi_server_port,
+                'output': 'raw',
+                'latency': 1000,
+            },
+        )
         if res_tcp_post.status_code == 200:
             tcp_status = res_tcp_post.json()
             if tcp_status['connected']:
                 logging.info("WiFi Shield to Python TCP Socket Established")
             else:
                 raise RuntimeWarning(
-                    "WiFi Shield is not able to connect to local server.")
+                    "WiFi Shield is not able to connect to local server."
+                )
 
         else:
             logging.warning(
-                f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}")
+                f"status_code {res_tcp_post.status_code}:{res_tcp_post.reason}"
+            )
 
     # ----------------------------------------------------------------------
     def set_latency(self, latency: int) -> None:
@@ -652,7 +724,11 @@ class CytonWiFi(CytonBase):
         response = None
         try:
             response = requests.post(
-                f"http://{self._ip_address}/latency", json={'latency': latency, })
+                f"http://{self._ip_address}/latency",
+                json={
+                    'latency': latency,
+                },
+            )
         except Exception as e:
             logging.warning(f"Error on setting latency '{data}': {e}")
             return
@@ -661,7 +737,8 @@ class CytonWiFi(CytonBase):
             if response.status_code == 200:
                 return
             logging.warning(
-                f"Error code: {response.status_code} {response.text}")
+                f"Error code: {response.status_code} {response.text}"
+            )
 
     # ----------------------------------------------------------------------
     def close(self) -> None:
@@ -673,70 +750,90 @@ class CytonWiFi(CytonBase):
     # ----------------------------------------------------------------------
     def _start_loop(self):
         """Start the TCP server on a thread asyncore loop."""
-        self.th_loop = Thread(target=asyncore.loop, args=(), )
+        self.th_loop = Thread(
+            target=asyncore.loop,
+            args=(),
+        )
         self.th_loop.start()
 
 
 # ########################################################################
 # class CytonR:
-    # """"""
+# """"""
 
-    # # ----------------------------------------------------------------------
-    # def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
-                 # daisy: DAISY = 'auto',
-                 # montage: Optional[Union[list, dict]] = None,
-                 # streaming_package_size: int = 250,
-                 # capture_stream: Optional[bool] = False,
-                 # number_of_channels: List = [],
-                 # ) -> Union[CytonRFDuino, CytonWiFi]:
-        # """"""
+# # ----------------------------------------------------------------------
+# def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
+# daisy: DAISY = 'auto',
+# montage: Optional[Union[list, dict]] = None,
+# streaming_package_size: int = 250,
+# capture_stream: Optional[bool] = False,
+# number_of_channels: List = [],
+# ) -> Union[CytonRFDuino, CytonWiFi]:
+# """"""
 
-        # if host == 'localhost':
-            # host = None
+# if host == 'localhost':
+# host = None
 
-        # if host:
-            # rpyc_service = rpyc.connect(host, 18861, config={
-                # 'allow_public_attrs': True,
-                # 'allow_pickle': True,
-            # })
-            # self.remote_host = getattr(rpyc_service.root, 'Cyton')(
-                # mode,
-                # endpoint,
-                # host=None,
-                # daisy=daisy,
-                # montage=pickle.dumps(montage),
-                # streaming_package_size=streaming_package_size,
-                # capture_stream=capture_stream,
-                # number_of_channels=number_of_channels,
-            # )
+# if host:
+# rpyc_service = rpyc.connect(host, 18861, config={
+# 'allow_public_attrs': True,
+# 'allow_pickle': True,
+# })
+# self.remote_host = getattr(rpyc_service.root, 'Cyton')(
+# mode,
+# endpoint,
+# host=None,
+# daisy=daisy,
+# montage=pickle.dumps(montage),
+# streaming_package_size=streaming_package_size,
+# capture_stream=capture_stream,
+# number_of_channels=number_of_channels,
+# )
 
-    # # ----------------------------------------------------------------------
-    # def __getattribute__(self, attr: str) -> Any:
-        # """Some attributes must be acceded from RPyC."""
+# # ----------------------------------------------------------------------
+# def __getattribute__(self, attr: str) -> Any:
+# """Some attributes must be acceded from RPyC."""
 
-        # if super().__getattribute__('remote_host'):
-            # return getattr(super().__getattribute__('remote_host'), attr)
+# if super().__getattribute__('remote_host'):
+# return getattr(super().__getattribute__('remote_host'), attr)
 
-        # return super().__getattribute__(attr)
+# return super().__getattribute__(attr)
 
 
 # ----------------------------------------------------------------------
 def wifi(host, ip):
     """"""
-    rpyc_service = rpyc.connect(host, 18861, config={
-        'allow_public_attrs': True,
-        'allow_pickle': True,
-    })
-    return rpyc_service.root.Wifi(ip)
+
+    if host == None or host == 'localhost':
+        from ..daemons.stream_rpyc import RequestWifi
+
+        request = RequestWifi()
+        response = request.status(ip)
+        return response
+
+    else:
+        rpyc_service = rpyc.connect(
+            host,
+            18861,
+            config={
+                'allow_public_attrs': True,
+                'allow_pickle': True,
+            },
+        )
+        return rpyc_service.root.Wifi(ip)
 
 
 # ----------------------------------------------------------------------
 def restart_services(host):
     """"""
-    rpyc_service = rpyc.connect(host, 18861, config={
-        'allow_public_attrs': True,
-        'allow_pickle': True,
-    })
+    rpyc_service = rpyc.connect(
+        host,
+        18861,
+        config={
+            'allow_public_attrs': True,
+            'allow_pickle': True,
+        },
+    )
     return rpyc_service.root.RestartServices()
 
 
@@ -784,13 +881,17 @@ class Cyton:
     """
 
     # ----------------------------------------------------------------------
-    def __init__(self, mode: MODE, endpoint: Union[str, List] = None, host: str = None,
-                 daisy: Optional[List[DAISY]] = None,
-                 montage: Optional[Union[list, dict]] = None,
-                 streaming_package_size: int = 250,
-                 capture_stream: Optional[bool] = False,
-                 number_of_channels: List = [],
-                 ) -> Union[CytonRFDuino, CytonWiFi]:
+    def __init__(
+        self,
+        mode: MODE,
+        endpoint: Union[str, List] = None,
+        host: str = None,
+        daisy: Optional[List[DAISY]] = None,
+        montage: Optional[Union[list, dict]] = None,
+        streaming_package_size: int = 250,
+        capture_stream: Optional[bool] = False,
+        number_of_channels: List = [],
+    ) -> Union[CytonRFDuino, CytonWiFi]:
 
         if isinstance(endpoint, str):
             endpoint = [endpoint]
@@ -807,10 +908,14 @@ class Cyton:
         self.openbci = None
         if host:
             self.openbci = None
-            rpyc_service = rpyc.connect(host, 18861, config={
-                'allow_public_attrs': True,
-                'allow_pickle': True,
-            })
+            rpyc_service = rpyc.connect(
+                host,
+                18861,
+                config={
+                    'allow_public_attrs': True,
+                    'allow_pickle': True,
+                },
+            )
             self.remote_host = getattr(rpyc_service.root, 'Cyton')(
                 mode,
                 endpoint,
@@ -825,20 +930,40 @@ class Cyton:
         else:
             openbci = []
             if montage:
-                montage = pickle.loads(montage)
+                # montage = pickle.loads(montage)
                 montage = self.split_montage(montage, number_of_channels)
             else:
                 montage = [montage] * len(endpoint)
 
-            for board_id, end, mtg in zip(range(len(endpoint)), endpoint, montage):
+            for board_id, end, mtg in zip(
+                range(len(endpoint)), endpoint, montage
+            ):
                 if mode == 'serial':
-                    openbci.append(CytonRFDuino(end, host, daisy[board_id], mtg,
-                                                streaming_package_size, capture_stream, board_id, len(
-                        number_of_channels)))
+                    openbci.append(
+                        CytonRFDuino(
+                            end,
+                            host,
+                            daisy[board_id],
+                            mtg,
+                            streaming_package_size,
+                            capture_stream,
+                            board_id,
+                            len(number_of_channels),
+                        )
+                    )
                 elif mode == 'wifi':
-                    openbci.append(CytonWiFi(end, host, daisy[board_id], mtg,
-                                             streaming_package_size, capture_stream, board_id, len(
-                        number_of_channels)))
+                    openbci.append(
+                        CytonWiFi(
+                            end,
+                            host,
+                            daisy[board_id],
+                            mtg,
+                            streaming_package_size,
+                            capture_stream,
+                            board_id,
+                            len(number_of_channels),
+                        )
+                    )
 
             self.openbci = openbci
 
@@ -853,10 +978,17 @@ class Cyton:
         openbci = super().__getattribute__('openbci')
         if isinstance(openbci, list):
 
-            if isinstance(getattr(openbci[0], attr), (types.MethodType, types.FunctionType)):
+            if isinstance(
+                getattr(openbci[0], attr),
+                (types.MethodType, types.FunctionType),
+            ):
                 # The mthods will be aplied to all boards
                 def wrap(*args, **kwargs):
-                    return [getattr(mod, attr)(*args, **kwargs) for mod in openbci]
+                    return [
+                        getattr(mod, attr)(*args, **kwargs)
+                        for mod in openbci
+                    ]
+
                 return wrap
 
             # The attribute of the first board will be used by default
@@ -909,14 +1041,21 @@ class Cyton:
             mod.activate_channel(chs)
 
     # ----------------------------------------------------------------------
-    def channel_settings(self, channels, power_down, gain, input_type, bias, srb2, srb1) -> None:
+    def channel_settings(
+        self, channels, power_down, gain, input_type, bias, srb2, srb1
+    ) -> None:
         """"""
         if isinstance(srb2, (bytes, str)):
             srb2 = [srb2] * len(channels)
 
-        for mod, chs, srb2_ in zip(self.openbci, self.split_channels(channels), self.just_split(srb2)):
-            mod.channel_settings(chs, power_down, gain,
-                                 input_type, bias, srb2_, srb1)
+        for mod, chs, srb2_ in zip(
+            self.openbci,
+            self.split_channels(channels),
+            self.just_split(srb2),
+        ):
+            mod.channel_settings(
+                chs, power_down, gain, input_type, bias, srb2_, srb1
+            )
 
     # ----------------------------------------------------------------------
     def leadoff_impedance(self, channels, *args, **kwargs) -> None:
@@ -926,12 +1065,12 @@ class Cyton:
 
     # # ----------------------------------------------------------------------
     # def start_stream(self):
-        # """"""
-        # for mod in self.openbci:
-            # mod.start_stream()
+    # """"""
+    # for mod in self.openbci:
+    # mod.start_stream()
 
     # # ----------------------------------------------------------------------
     # def stop_stream(self):
-        # """"""
-        # for mod in self.openbci:
-            # mod.stop_stream()
+    # """"""
+    # for mod in self.openbci:
+    # mod.stop_stream()
