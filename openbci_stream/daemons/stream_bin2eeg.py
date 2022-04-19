@@ -188,9 +188,9 @@ class BinaryToEEG:
         # EGG
         eeg_data = data[:, 2:26]
         ids = data[:, 1]
-        eeg_data = getattr(self, f'deserialize_eeg_{context["connection"]}')(
-            eeg_data, ids, context
-        )
+        eeg_data, ids = getattr(
+            self, f'deserialize_eeg_{context["connection"]}'
+        )(eeg_data, ids, context)
 
         # Auxiliar
         stop_byte = int((np.median(data[:, -1])))
@@ -269,7 +269,7 @@ class BinaryToEEG:
 
             return eeg_data.reshape(-1, 16)
 
-        return eeg_data
+        return eeg_data, ids
 
     # ----------------------------------------------------------------------
     def deserialize_eeg_serial(
@@ -366,7 +366,7 @@ class BinaryToEEG:
         else:
             eeg = eeg_data
 
-        return eeg
+        return eeg, ids
 
     # ----------------------------------------------------------------------
     @classmethod

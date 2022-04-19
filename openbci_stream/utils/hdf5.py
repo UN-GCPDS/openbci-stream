@@ -98,7 +98,9 @@ def np2json_serializer(obj):
 
 
 # ----------------------------------------------------------------------
-def interpolate_datetime(timestamp: List[timestamp_], length: Optional[int] = None) -> List[timestamp_]:
+def interpolate_datetime(
+    timestamp: List[timestamp_], length: Optional[int] = None
+) -> List[timestamp_]:
     """Interpolate uncomplete timestamp list.
 
     The input timestamp list must be a list of timestamps separated by zeros,
@@ -179,12 +181,13 @@ class HDF5Writer:
         else:
             header2 = {'shape': self.array_eeg.shape}
         # if self.host_ntp:
-            # client = ntplib.NTPClient()
-            # header2.update(
-                # {'end-offset': client.request(self.host_ntp).offset * 1000})
+        # client = ntplib.NTPClient()
+        # header2.update(
+        # {'end-offset': client.request(self.host_ntp).offset * 1000})
 
         self.array_hdr.append(
-            [json.dumps(header2, default=np2json_serializer)])
+            [json.dumps(header2, default=np2json_serializer)]
+        )
         self.f.close()
 
     # ----------------------------------------------------------------------
@@ -198,7 +201,12 @@ class HDF5Writer:
             dim, _ = timestamp.shape
             atom_dtm = tables.Float64Atom()
             self.array_dtm = self.f.create_earray(
-                self.f.root, 'timestamp', atom_dtm, shape=(dim, 0), title='EEG timestamp')
+                self.f.root,
+                'timestamp',
+                atom_dtm,
+                shape=(dim, 0),
+                title='EEG timestamp',
+            )
 
         self.array_dtm.append(timestamp)
 
@@ -214,12 +222,19 @@ class HDF5Writer:
             dim, _ = timestamp.shape
             atom_dtm = tables.Float64Atom()
             self.array_aux_dtm = self.f.create_earray(
-                self.f.root, 'aux_timestamp', atom_dtm, shape=(dim, 0), title='AUX timestamp')
+                self.f.root,
+                'aux_timestamp',
+                atom_dtm,
+                shape=(dim, 0),
+                title='AUX timestamp',
+            )
 
         self.array_aux_dtm.append(timestamp)
 
     # ----------------------------------------------------------------------
-    def add_header(self, header: Dict[str, Any], host: Optional[str] = None) -> None:
+    def add_header(
+        self, header: Dict[str, Any], host: Optional[str] = None
+    ) -> None:
         """Set the header for hdf5 file.
 
         A header is basically a dictionary with all kinds of useful information.
@@ -245,13 +260,14 @@ class HDF5Writer:
           * **technician:** str with the technicians name.
         """
         # if host:
-            # client = ntplib.NTPClient()
-            # header.update(
-                # {'start-offset': client.request(host).offset * 1000, })
+        # client = ntplib.NTPClient()
+        # header.update(
+        # {'start-offset': client.request(host).offset * 1000, })
         # self.host_ntp = host
 
         self.array_hdr.append(
-            [json.dumps(header, default=np2json_serializer)])
+            [json.dumps(header, default=np2json_serializer)]
+        )
 
     # ----------------------------------------------------------------------
     def add_marker(self, marker: Any, timestamp: timestamp_) -> None:
@@ -266,7 +282,8 @@ class HDF5Writer:
             long description, e.g artifacts.
         """
         self.array_mkr.append(
-            [json.dumps([timestamp, marker], default=np2json_serializer)])
+            [json.dumps([timestamp, marker], default=np2json_serializer)]
+        )
 
     # ----------------------------------------------------------------------
     def add_markers(self, markers: Dict[str, List[timestamp_]]) -> None:
@@ -294,7 +311,9 @@ class HDF5Writer:
                 self.add_marker(marker, timestamp)
 
     # ----------------------------------------------------------------------
-    def add_annotation(self, onset: timestamp_, duration: int = 0, description: str = '') -> None:
+    def add_annotation(
+        self, onset: timestamp_, duration: int = 0, description: str = ''
+    ) -> None:
         """Add EDF annotations to the hdf5 file.
 
         These annotations will be exported with EDF file and follow the format
@@ -319,7 +338,13 @@ class HDF5Writer:
         """
 
         self.array_anno.append(
-            [json.dumps([onset, duration, description], default=np2json_serializer)])
+            [
+                json.dumps(
+                    [onset, duration, description],
+                    default=np2json_serializer,
+                )
+            ]
+        )
 
     # ----------------------------------------------------------------------
     def add_eeg(self, eeg_data: np.ndarray, timestamp: np.ndarray) -> None:
@@ -339,25 +364,32 @@ class HDF5Writer:
             self.channels, _ = eeg_data.shape
             atom_eeg = tables.Float64Atom()
             self.array_eeg = self.f.create_earray(
-                self.f.root, 'eeg_data', atom_eeg, shape=(self.channels, 0), title='EEG time series')
+                self.f.root,
+                'eeg_data',
+                atom_eeg,
+                shape=(self.channels, 0),
+                title='EEG time series',
+            )
 
         if self.channels != eeg_data.shape[0]:
             logging.warning(
-                f'The number of channels {self.channels} can not be changed!')
+                f'The number of channels {self.channels} can not be changed!'
+            )
             return
 
         self.array_eeg.append(eeg_data)
 
         # if isinstance(timestamp, (np.ndarray, list, tuple)):
 
-        assert timestamp.shape[1] == eeg_data.shape[
-            1], f"Is not recommended add data and timestamp from different sizes. {len(timestamp)} != {eeg_data.shape[1]}"
+        assert (
+            timestamp.shape[1] == eeg_data.shape[1]
+        ), f"Is not recommended add data and timestamp from different sizes. {len(timestamp)} != {eeg_data.shape[1]}"
         self.add_timestamp(timestamp)
 
         # elif timestamp != None:
-            # timestamp_ = np.zeros(eeg_data.shape[1])
-            # timestamp_[-1] = timestamp
-            # self.add_timestamp(timestamp_)
+        # timestamp_ = np.zeros(eeg_data.shape[1])
+        # timestamp_[-1] = timestamp
+        # self.add_timestamp(timestamp_)
 
     # ----------------------------------------------------------------------
     def add_aux(self, aux_data: np.ndarray, timestamp: np.ndarray) -> None:
@@ -377,16 +409,53 @@ class HDF5Writer:
             channels, _ = aux_data.shape
             atom_eeg = tables.Float64Atom()
             self.array_aux = self.f.create_earray(
-                self.f.root, 'aux_data', atom_eeg, shape=(channels, 0), title='Auxiliar data')
+                self.f.root,
+                'aux_data',
+                atom_eeg,
+                shape=(channels, 0),
+                title='Auxiliar data',
+            )
 
         try:
             self.array_aux.append(aux_data)
 
-            assert timestamp.shape[1] == aux_data.shape[1], f"Is not\
+            assert (
+                timestamp.shape[1] == aux_data.shape[1]
+            ), f"Is not\
             recommended add data and timestamp from different sizes.\
             {len(timestamp)} != {aux_data.shape[1]}"
             self.add_aux_timestamp(timestamp)
 
+        except Exception as e:
+            logging.warning(e)
+
+    # ----------------------------------------------------------------------
+    def add_sampleid(self, aux_data: np.ndarray) -> None:
+        """Write AUX data into the hdf5 file.
+
+        The shape of aux data cannot be changed after the first write.
+
+        Parameters
+        ----------
+        aux_data
+            OpenBCI aux data defined in `board modes <../notebooks/04-board_modes.ipynb>`_
+        timestamp
+            The timestamp for this data.
+        """
+
+        if self.sample_id is None:
+            channels, _ = aux_data.shape
+            atom_eeg = tables.Float64Atom()
+            self.sample_id = self.f.create_earray(
+                self.f.root,
+                'sample_id',
+                atom_eeg,
+                shape=(channels, 0),
+                title='Sample ID',
+            )
+
+        try:
+            self.sample_id.append(aux_data)
         except Exception as e:
             logging.warning(e)
 
@@ -403,15 +472,27 @@ class HDF5Writer:
         atom_json = tables.StringAtom(itemsize=2**15)
 
         self.array_hdr = self.f.create_earray(
-            self.f.root, 'header', atom_json, shape=(0,), title='HEADER')
+            self.f.root, 'header', atom_json, shape=(0,), title='HEADER'
+        )
         self.array_eeg = None
         self.array_aux = None
+        self.sample_id = None
         self.array_dtm = None
         self.array_aux_dtm = None
         self.array_mkr = self.f.create_earray(
-            self.f.root, 'markers', atom_json, shape=(0,), title='EEG markers')
+            self.f.root,
+            'markers',
+            atom_json,
+            shape=(0,),
+            title='EEG markers',
+        )
         self.array_anno = self.f.create_earray(
-            self.f.root, 'annotations', atom_json, shape=(0,), title='EEG annotations')
+            self.f.root,
+            'annotations',
+            atom_json,
+            shape=(0,),
+            title='EEG annotations',
+        )
 
     # ----------------------------------------------------------------------
     def __exit__(self, exc_type: Text, exc_val: Text, exc_tb: Text) -> None:
@@ -467,8 +548,9 @@ class HDF5Reader:
         header = json.loads(self.f.root.header[0])
         header.update(json.loads(self.f.root.header[1]))
         if 'channels' in header:
-            header['channels'] = {int(k): header['channels'][k]
-                                  for k in header['channels']}
+            header['channels'] = {
+                int(k): header['channels'][k] for k in header['channels']
+            }
         return header
 
     # ----------------------------------------------------------------------
@@ -482,12 +564,14 @@ class HDF5Reader:
 
         eeg__ = []
         ch = 0
-        for pos, nchan in zip(self.offsets_position, self.header['channels_by_board']):
+        for pos, nchan in zip(
+            self.offsets_position, self.header['channels_by_board']
+        ):
             for _ in range(nchan):
                 eeg__.append(np.roll(eeg_[ch], -pos))
                 ch += 1
         if len(self.offsets_position) > 1:
-            return np.array(eeg__)[:, :-max(self.offsets_position)]
+            return np.array(eeg__)[:, : -max(self.offsets_position)]
         return np.array(eeg__)
 
     # ----------------------------------------------------------------------
@@ -501,15 +585,24 @@ class HDF5Reader:
 
         aux__ = []
         ch = 0
-        split = [aux_.shape[0] / len(self.header['channels_by_board'])] * \
-            len(self.header['channels_by_board'])
+        split = [
+            aux_.shape[0] / len(self.header['channels_by_board'])
+        ] * len(self.header['channels_by_board'])
         for pos, nchan in zip(self.aux_offsets_position, split):
             for _ in range(int(nchan)):
                 aux__.append(np.roll(aux_[ch], -pos))
                 ch += 1
         if len(self.aux_offsets_position) > 1:
-            return np.array(aux__)[:, :-max(self.aux_offsets_position)]
+            return np.array(aux__)[:, : -max(self.aux_offsets_position)]
         return np.array(aux__)
+
+    # ----------------------------------------------------------------------
+    @cached_property
+    def sample_id(self) -> np.ndarray:
+        """The EEG data of the hdf file in the shape of (`channels, time`)."""
+        sample_id_ = np.array(self.f.root.sample_id).T
+
+        return np.array(sample_id_)
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -551,21 +644,24 @@ class HDF5Reader:
                 t = datetime.strptime(t, "%Y-%m-%d %H:%M:%S.%f").timestamp()
 
             markers.setdefault(marker, []).append(
-                np.abs(self.timestamp - ((t - self.timestamp_offset) * 1000)).argmin())
+                np.abs(
+                    self.timestamp - ((t - self.timestamp_offset) * 1000)
+                ).argmin()
+            )
 
         return markers
 
     # # ----------------------------------------------------------------------
     # @cached_property
     # def markers_relative(self) -> Dict[str, List[int]]:
-        # """A dictionary with the markers and milliseconds as values."""
-        # markers_relative = {}
-        # for key in self.markers:
-            # locs = self.markers[key]
-            # markers_relative[key] = [
-                # np.abs(self.timestamp - loc).argmin() for loc in locs]
+    # """A dictionary with the markers and milliseconds as values."""
+    # markers_relative = {}
+    # for key in self.markers:
+    # locs = self.markers[key]
+    # markers_relative[key] = [
+    # np.abs(self.timestamp - loc).argmin() for loc in locs]
 
-        # return markers_relative
+    # return markers_relative
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -577,15 +673,21 @@ class HDF5Reader:
         if timestamp.shape[0] > 1:
             target = timestamp[:, 0].max()
             self.offsets_position = [
-                np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
-            t = timestamp[:, :-max(self.offsets_position)
-                          ].mean(axis=0) * 1000
+                np.argmin(abs(ts - target))
+                for ts in timestamp[: timestamp.shape[0]]
+            ]
+            t = (
+                timestamp[:, : -max(self.offsets_position)].mean(axis=0)
+                * 1000
+            )
             self.timestamp_offset = t[0]
-            return (t - self.timestamp_offset)
+            return t - self.timestamp_offset
 
         self.timestamp_offset = timestamp[0][0]
         self.offsets_position = [0]
-        return (np.array(timestamp).reshape(1, -1) - self.timestamp_offset) * 1000
+        return (
+            np.array(timestamp).reshape(1, -1) - self.timestamp_offset
+        ) * 1000
 
     # ----------------------------------------------------------------------
     @cached_property
@@ -597,43 +699,49 @@ class HDF5Reader:
         if timestamp.shape[0] > 1:
             target = timestamp[:, 0].max()
             self.aux_offsets_position = [
-                np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
-            t = timestamp[:, :-max(self.aux_offsets_position)
-                          ].mean(axis=0) * 1000
+                np.argmin(abs(ts - target))
+                for ts in timestamp[: timestamp.shape[0]]
+            ]
+            t = (
+                timestamp[:, : -max(self.aux_offsets_position)].mean(axis=0)
+                * 1000
+            )
             self.aux_timestamp_offset = t[0]
-            return (t - self.aux_timestamp_offset)
+            return t - self.aux_timestamp_offset
 
         self.aux_timestamp_offset = timestamp[0][0]
         self.aux_offsets_position = [0]
-        return (np.array(timestamp).reshape(1, -1) - self.aux_timestamp_offset) * 1000
+        return (
+            np.array(timestamp).reshape(1, -1) - self.aux_timestamp_offset
+        ) * 1000
 
     # # ----------------------------------------------------------------------
     # @cached_property
     # def array_timestamp(self) -> List[timestamp_]:
-        # """A list of timestamps for EEG data."""
+    # """A list of timestamps for EEG data."""
 
-        # timestamp = self.f.root.timestamp
-        # target = timestamp[:, 0].max()
-        # self.offsets_position = [
-            # np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
+    # timestamp = self.f.root.timestamp
+    # target = timestamp[:, 0].max()
+    # self.offsets_position = [
+    # np.argmin(abs(ts - target)) for ts in timestamp[:timestamp.shape[0]]]
 
-        # return timestamp[:, :-max(self.offsets_position)]
+    # return timestamp[:, :-max(self.offsets_position)]
 
     # # ----------------------------------------------------------------------
     # @cached_property
     # def timestamp_relative(self, fast=False) -> List[int]:
-        # """A list of timestamps in milliseconds.
+    # """A list of timestamps in milliseconds.
 
-        # If `fast` the a simple relation between sample rate and data length is
-        # calculate instead.
-        # """
-        # return self.timestamp
+    # If `fast` the a simple relation between sample rate and data length is
+    # calculate instead.
+    # """
+    # return self.timestamp
 
-        # # if fast:
-            # # return np.linspace(0, (self.eeg.shape[1] / self.header['sample_rate']) * 1000, self.eeg.shape[1])
-        # # else:
-            # # m = (self.timestamp - self.timestamp[0]) * 1e3
-            # # return np.array(np.round(m), dtype=int)
+    # # if fast:
+    # # return np.linspace(0, (self.eeg.shape[1] / self.header['sample_rate']) * 1000, self.eeg.shape[1])
+    # # else:
+    # # m = (self.timestamp - self.timestamp[0]) * 1e3
+    # # return np.array(np.round(m), dtype=int)
 
     # ----------------------------------------------------------------------
 
@@ -642,25 +750,24 @@ class HDF5Reader:
         """A list with the same length of EEG with markers as numbers."""
         classes = np.zeros(self.timestamp.shape)
         for marker in self.markers:
-            classes[self.markers[marker]
-                    ] = self.classes_indexes[marker]
+            classes[self.markers[marker]] = self.classes_indexes[marker]
         return classes
 
     # # ----------------------------------------------------------------------
     # @cached_property
     # def aux_timestamp_(self) -> List[timestamp_]:
-        # """A list of timestamps for AUX data."""
-        # return self._timestamp(self.aux.shape[1])
+    # """A list of timestamps for AUX data."""
+    # return self._timestamp(self.aux.shape[1])
 
     # # ----------------------------------------------------------------------
     # def _timestamp(self) -> List[timestamp_]:
-        # """Interpolate the timestamps in the case of zeros in it."""
-        # timestamp = self.f.root.timestamp
+    # """Interpolate the timestamps in the case of zeros in it."""
+    # timestamp = self.f.root.timestamp
 
-        # # if timestamp[timestamp == 0].size > 0:
-            # # timestamp = interpolate_datetime(timestamp, length)
+    # # if timestamp[timestamp == 0].size > 0:
+    # # timestamp = interpolate_datetime(timestamp, length)
 
-        # return timestamp
+    # return timestamp
 
     # ----------------------------------------------------------------------
     @property
@@ -689,7 +796,16 @@ class HDF5Reader:
         self.f.close()
 
     # ----------------------------------------------------------------------
-    def get_epochs(self, tmax: int, tmin: Optional[int] = 0, ref=None, markers: Union[None, List[str]] = None, preprocess=None, eeg=None, **kwargs) -> mne.EpochsArray:
+    def get_epochs(
+        self,
+        tmax: int,
+        tmin: Optional[int] = 0,
+        ref=None,
+        markers: Union[None, List[str]] = None,
+        preprocess=None,
+        eeg=None,
+        **kwargs,
+    ) -> mne.EpochsArray:
         """Create an `EpochsArray` object with the `MNE` library.
 
         This method auto crop the data in regard to markers also will drop
@@ -735,18 +851,18 @@ class HDF5Reader:
 
         # Remove channels that not correspond with the montage
         montage = mne.channels.make_standard_montage(montage)
-        channels_names = set(channels).intersection(
-            set(montage.ch_names))
-        channels_missings = set(channels).difference(
-            set(montage.ch_names))
+        channels_names = set(channels).intersection(set(montage.ch_names))
+        channels_missings = set(channels).difference(set(montage.ch_names))
 
         if channels_missings:
             logging.warning(
                 f"Missing {channels_missings} channels in {montage} montage.\n"
-                f"Missing channels will be removed from MNE Epochs")
+                f"Missing channels will be removed from MNE Epochs"
+            )
 
         info = mne.create_info(
-            list(channels_names), sfreq=sampling_rate, ch_types="eeg")
+            list(channels_names), sfreq=sampling_rate, ch_types="eeg"
+        )
         info.set_montage(montage)
 
         if markers is None:
@@ -776,7 +892,8 @@ class HDF5Reader:
                     no_fit += 1
         if no_fit:
             logging.warning(
-                f'{no_fit} trials have markers but not EEG data associated.')
+                f'{no_fit} trials have markers but not EEG data associated.'
+            )
 
         event_id = {mk: self.classes_indexes[mk] for mk in markers}
         events = [[i, 1, event_id[cls]] for i, cls in enumerate(classes)]
@@ -790,17 +907,19 @@ class HDF5Reader:
             data = np.array(data)
 
         # if ref:
-            # if isinstance(ref, str):
-                # n = list(self.header['channels'].values()).index(ref)
-                # data = data - data[n]
-            # else:
-                # data = data - ref
+        # if isinstance(ref, str):
+        # n = list(self.header['channels'].values()).index(ref)
+        # data = data - data[n]
+        # else:
+        # data = data - ref
 
         # raw = mne.io.RawArray(data, info, first_samp=0,
-                              # copy='auto', verbose=None)
+        # copy='auto', verbose=None)
         # return mne.Epochs(raw, events=events, tmin=tmin, event_id=event_id, **kwargs)
 
-        return mne.EpochsArray(data, info, events=events, tmin=tmin, event_id=event_id, **kwargs)
+        return mne.EpochsArray(
+            data, info, events=events, tmin=tmin, event_id=event_id, **kwargs
+        )
 
     # ----------------------------------------------------------------------
     def to_edf(self, filename: str, eeg=None) -> None:
@@ -829,8 +948,8 @@ class HDF5Reader:
                 'sample_rate': sampling_rate,
                 'physical_max': max_,
                 'physical_min': min_,
-                'digital_max': 2 ** 12,
-                'digital_min': -2 ** 12,
+                'digital_max': 2**12,
+                'digital_min': -(2**12),
                 'transducer': '',
                 'prefilter': '',
             }
@@ -848,8 +967,8 @@ class HDF5Reader:
                 'sample_rate': sampling_rate,
                 'physical_max': max_,
                 'physical_min': min_,
-                'digital_max': 2 ** 12,
-                'digital_min': -2 ** 12,
+                'digital_max': 2**12,
+                'digital_min': -(2**12),
                 'transducer': '',
                 'prefilter': '',
             }
@@ -863,8 +982,8 @@ class HDF5Reader:
                 'sample_rate': sampling_rate,
                 'physical_max': max(self.classes_indexes.values()),
                 'physical_min': min(self.classes_indexes.values()),
-                'digital_max': 2 ** 12,
-                'digital_min': -2 ** 12,
+                'digital_max': 2**12,
+                'digital_min': -(2**12),
                 'transducer': '',
                 'prefilter': '',
             }
@@ -879,13 +998,18 @@ class HDF5Reader:
             'patientcode': self.header.get('patientcode', ''),
             'patientname': self.header.get('patientname', ''),
             'patient_additional': self.header.get('patient_additional', ''),
-            'recording_additional': self.header.get('recording_additional', ''),
+            'recording_additional': self.header.get(
+                'recording_additional', ''
+            ),
             'startdate': datetime.fromtimestamp(self.timestamp[0][0]),
             'technician': self.header.get('technician', ''),
         }
 
-        f = pyedflib.EdfWriter(filename, len(
-            edf_channel_info), file_type=pyedflib.FILETYPE_EDFPLUS)
+        f = pyedflib.EdfWriter(
+            filename,
+            len(edf_channel_info),
+            file_type=pyedflib.FILETYPE_EDFPLUS,
+        )
 
         f.setHeader(header)
         f.setSignalHeaders(edf_channel_info)
@@ -896,7 +1020,16 @@ class HDF5Reader:
         f.close()
 
     # ----------------------------------------------------------------------
-    def get_data(self, tmax: int, tmin: Optional[int] = 0, ref=None, markers: Union[None, List[str]] = None, eeg=None, preprocess=None, **kwargs) -> Tuple[np.ndarray]:
+    def get_data(
+        self,
+        tmax: int,
+        tmin: Optional[int] = 0,
+        ref=None,
+        markers: Union[None, List[str]] = None,
+        eeg=None,
+        preprocess=None,
+        **kwargs,
+    ) -> Tuple[np.ndarray]:
         """Create an `EpochsArray` object with the `MNE` library.
 
         This method auto crop the data in regard to markers also will drop
@@ -923,20 +1056,27 @@ class HDF5Reader:
         """
 
         epochs = self.get_epochs(
-            tmax, tmin, ref, markers, eeg=eeg, preprocess=preprocess, **kwargs)
+            tmax,
+            tmin,
+            ref,
+            markers,
+            eeg=eeg,
+            preprocess=preprocess,
+            **kwargs,
+        )
         return epochs._data, epochs.events[:, 2]
 
     # # ----------------------------------------------------------------------
     # @cached_property
     # def offset(self) -> float:
-        # """Calculate the timestamps offset in seconds."""
-        # if self.offset_correction and 'start-offset' in self.header and 'end-offset' in self.header:
-            # start, end = self.header['start-offset'], self.header['end-offset']
-            # return (start + (start - end) / self.header['shape'][1]) / 1000
-        # else:
-            # if self.offset_correction:
-                # logging.info('No offsets values to perform correction')
-            # return 0
+    # """Calculate the timestamps offset in seconds."""
+    # if self.offset_correction and 'start-offset' in self.header and 'end-offset' in self.header:
+    # start, end = self.header['start-offset'], self.header['end-offset']
+    # return (start + (start - end) / self.header['shape'][1]) / 1000
+    # else:
+    # if self.offset_correction:
+    # logging.info('No offsets values to perform correction')
+    # return 0
 
     # ----------------------------------------------------------------------
     def to_npy(self, filename, eeg=None, tmin=None, tmax=None):
@@ -987,7 +1127,9 @@ class HDF5Reader:
         return timestamp[raw == 1]
 
     # ----------------------------------------------------------------------
-    def fix_markers(self, target_markers, rises, range_=2000, overwrite=False):
+    def fix_markers(
+        self, target_markers, rises, range_=2000, overwrite=False
+    ):
         """"""
         global_ = {}
         for mk in list(target_markers)[:]:

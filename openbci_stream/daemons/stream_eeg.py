@@ -139,22 +139,24 @@ class EEG:
                         ]
                         logging.debug(f"IDs: {context['sample_ids']}")
 
+                        # NO CUT DATA
+
                         logging.debug('Preparing EEG data')
-                        cuteeg = min([d[0].shape[1] for d in eeg_data])
+                        # cuteeg = min([d[0].shape[1] for d in eeg_data])
                         eeg = np.concatenate(
-                            [d[0][:, :cuteeg] for d in eeg_data], axis=0
+                            [d[0] for d in eeg_data], axis=0
                         )
-                        if cuteeg:
-                            logging.debug(f'>Loaded {cuteeg} samples')
+                        # if cuteeg:
+                        # logging.debug(f'>Loaded {cuteeg} samples')
 
                         if eeg_data[0][1].size:
                             logging.debug(f'Preparing AUX data')
-                            cutaux = min([d[1].shape[1] for d in eeg_data])
+                            # cutaux = min([d[1].shape[1] for d in eeg_data])
                             aux = np.concatenate(
-                                [d[1][:, :cutaux] for d in eeg_data], axis=0
+                                [d[1] for d in eeg_data], axis=0
                             )
-                            if cutaux:
-                                logging.debug(f'Loaded {cutaux} samples')
+                            # if cutaux:
+                            # logging.debug(f'Loaded {cutaux} samples')
                         else:
                             logging.debug(f'No Auxiliar data')
                             aux = None
