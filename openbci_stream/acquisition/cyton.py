@@ -929,8 +929,10 @@ class Cyton:
 
         else:
             openbci = []
+
             if montage:
-                # montage = pickle.loads(montage)
+                if isinstance(montage, (bytes, str)):
+                    montage = pickle.loads(montage)
                 montage = self.split_montage(montage, number_of_channels)
             else:
                 montage = [montage] * len(endpoint)
@@ -997,7 +999,6 @@ class Cyton:
         return super().__getattribute__(attr)
 
     # ----------------------------------------------------------------------
-
     def split_montage(self, montage, chs):
         """"""
         split = []
@@ -1007,7 +1008,10 @@ class Cyton:
             montage = list(montage.values())
 
         for i in chs:
-            split.append({(j + 1): montage.pop(0) for j in range(i)})
+            if len(montage) < i:
+                split.append({(j + 1): montage.pop(0) for j in range(len(montage))})
+            else:
+                split.append({(j + 1): montage.pop(0) for j in range(i)})
         return split
 
     # ----------------------------------------------------------------------

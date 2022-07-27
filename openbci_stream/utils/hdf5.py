@@ -1128,7 +1128,12 @@ class HDF5Reader:
 
     # ----------------------------------------------------------------------
     def fix_markers(
-        self, target_markers, rises, range_=2000, overwrite=False
+        self,
+        target_markers,
+        rises,
+        range_=2000,
+        overwrite=False,
+        sufix='_fixed',
     ):
         """"""
         global_ = {}
@@ -1145,7 +1150,34 @@ class HDF5Reader:
                 if overwrite:
                     self.markers[mk] = offsets[:, 1]
                 else:
-                    self.markers[f'{mk}_fixed'] = offsets[:, 1]
+                    self.markers[f'{mk}{sufix}'] = offsets[:, 1]
                 global_[mk] = np.median(np.diff(offsets))
 
         return global_
+
+    # ----------------------------------------------------------------------
+    def generate_bad_markers(self, d=1000, label='sample'):
+        """"""
+        samples = self.sample_id[0]
+        timestamp = self.timestamp[0]
+        timestamp = np.linspace(timestamp[0], timestamp[-1], len(samples))
+
+        diff = np.diff(samples)
+        diff[diff == -255] = 0
+        diff = np.abs(diff)
+
+        args = np.argwhere(diff > 1)[:, 0]
+        arr = timestamp[args]
+
+        groups = [[arr[0]]]
+        for s in arr[1:]:
+            added = False
+            for g in groups:
+                if np.mean(g + [s]) - d / 2 < s < np.mean(g + [s]) + d / 2:
+                    g.append(s)
+                    added = True
+                    break
+            if not added:
+                groups.append([s])
+
+        self.markers[f'BAD:{label}'] = list(map(np.mean, groups))

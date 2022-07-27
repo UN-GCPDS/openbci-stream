@@ -11,6 +11,5 @@ if sys.argv[-1] == "systemd":
 else:
     from openbci_stream.daemons.stream_rpyc import start_service
 
-    print("Run 'stream_rpyc systemd' as superuser for create the daemon.")
+    print("Run 'stream_rpyc systemd' as superuser to create the daemon.")
     start_service()
-
