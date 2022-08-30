@@ -1009,7 +1009,7 @@ class Cyton:
 
         for i in chs:
             if len(montage) < i:
-                split.append({(j + 1): montage.pop(0) for j in range(len(montage))})
+                split.append(montage)
             else:
                 split.append({(j + 1): montage.pop(0) for j in range(i)})
         return split
